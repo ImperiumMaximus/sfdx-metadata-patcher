@@ -1,0 +1,37 @@
+{
+  "general": {
+    "flags": {
+      "loglevel": "logging level for this command invocation"
+    },
+    "errors": {
+      "noOrgFound": "No org configuration found for name %s"
+    },
+    "infos": {
+      "done": "done"
+    }
+  },
+  "metadata": {
+    "patch": {
+      "description": "patches source metadata files in order to solve common Salesforce deployment bugs or to modifly on the fly API endpoints",
+      "flags": {
+        "env": "Environment name used to select the correct patch set from sfdx-project.json",
+        "outsourcedir": "the output directory to store the patched source files",
+        "outmanifestdir": "the output directory to store the patched manifest file (package.xml)",
+        "rootdir": "the input directory that contains the source files to be patched",
+        "inmanifestdir": "the input manifest (package.xml) file describing the contents of the source files",
+        "fixes": "file path of a JSON that describes the set of fixes and/or patches  to be made",
+        "propfile": "file path o a key-value declaration to be loaded as part of the environment variables to be seen by the command"
+      },
+      "infos": {
+        "executingDelLwc": "Executing task delLwc...",
+        "executingPreDeployFixes": "Executing task preDeployFixes...",
+        "executingFixUnfiledPublic": "Executing task fixEmailUnfiledPublicFolder...",
+        "copyingToFolder": "Copying to %s",
+        "inPlacePatch": "Patching in place"
+      },
+      "warns": {
+        "missingConfiguration": "Missing configuration in sfdx-project.json"
+      }
+    }
+  }
+}

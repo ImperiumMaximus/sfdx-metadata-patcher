@@ -1,4 +1,4 @@
-import Logger = require("pino");
+import * as pino from 'pino';
 
 export enum LoggerLevel {
   TRACE = 10,
@@ -10,35 +10,27 @@ export enum LoggerLevel {
 }
 
 export class Mdata {
-  private static logger: Logger;
-  /*private static defaultFolder: string;
-  private static projectDirectories: string[];
-  private static pluginConfig;*/
-  private static isJsonFormatEnabled: boolean;
-  /*private static ux: UX;
-  private static sourceApiVersion: any;*/
-
   public static setLogLevel(logLevel: string, isJsonFormatEnabled: boolean) {
     logLevel = logLevel.toLowerCase();
     this.isJsonFormatEnabled = isJsonFormatEnabled;
 
     if (!isJsonFormatEnabled) {
-      this.logger = Logger({
-        name: "mdata",
+      this.logger = pino({
+        name: 'mdata',
         level: logLevel,
         prettyPrint: {
           levelFirst: true, // --levelFirst
           colorize: true,
           translateTime: true,
-          ignore: "pid,hostname" // --ignore
+          ignore: 'pid,hostname' // --ignore
         }
       });
     } else {
-      //do nothing for now, need to put pino to move to file
+      // do nothing for now, need to put pino to move to file
     }
   }
 
-  public static log(message: any, logLevel: LoggerLevel) {
+  public static log(message: string, logLevel: LoggerLevel) {
     if (this.logger === null || this.logger === undefined) return;
     if (this.isJsonFormatEnabled) return;
     switch (logLevel) {
@@ -62,4 +54,13 @@ export class Mdata {
         break;
     }
   }
+
+  private static logger: pino.Logger;
+  /*private static defaultFolder: string;
+  private static projectDirectories: string[];
+  private static pluginConfig;*/
+  private static isJsonFormatEnabled: boolean;
+  /*private static ux: UX;
+  private static sourceApiVersion: any;*/
+
 }

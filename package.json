@@ -65,6 +65,7 @@
     "posttest": "tslint -p test -t stylish",
     "prepack": "rm -rf lib && tsc -b && oclif-dev manifest && oclif-dev readme",
     "test": "nyc --extension .ts mocha --forbid-only \"test/**/*.test.ts\"",
+    "coverage": "nyc report --reporter text-lcov --extension .ts > coverage.lcov",
     "version": "oclif-dev readme && git add README.md"
   }
 }

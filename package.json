@@ -47,11 +47,11 @@
   ],
   "license": "MIT",
   "oclif": {
-    "commands": "./lib/commands",
+    "commands": "./src/commands",
     "bin": "sfdx",
     "topics": {
-      "hello": {
-        "description": "Commands to say hello."
+      "mdata": {
+        "description": "Commands to manipulate Salesforce Metadata."
       }
     },
     "devPlugins": [

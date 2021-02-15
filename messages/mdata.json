@@ -30,6 +30,7 @@
         "inPlacePatch": "Patching in place"
       },
       "warns": {
+        "missingFile": "Missing file %s/%s",
         "missingConfiguration": "Missing configuration in sfdx-project.json"
       }
     }

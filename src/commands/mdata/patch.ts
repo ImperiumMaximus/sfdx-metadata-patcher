@@ -1,3 +1,12 @@
+/*
+ * mdata:patch command
+ * Parses sfdx-project.json plugins.mdataPatches section for applying patches to Salesforce Metadata API Files
+ * in order to overcome common issues when deploying certain kind of metadata, e.g. Profiles or other stuff
+ * that depends on the usernames.
+ * The code structure and functionality takes heavily inspiration from Michele Triaca's (https://github.com/micheletriaca)
+ * original implementation using gulp with the legacy "src/" folder structure.
+ * This has been ported and adapted to work as a SF CLI plugin supporting the source "force-app" folder structure
+ **/
 import { flags, SfdxCommand } from '@salesforce/command';
 import { Messages, SfdxProject } from '@salesforce/core';
 import { AnyJson, JsonMap } from '@salesforce/ts-types';

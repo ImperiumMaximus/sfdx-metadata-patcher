@@ -83,6 +83,7 @@ export default class Patch extends SfdxCommand {
 
     const project = await SfdxProject.resolve();
     const config: JsonMap = await project.resolveProjectConfig();
+    console.log(JSON.stringify(config));
 
     if (!config.plugins || !config.plugins['mdataPatches']) {
       Mdata.log(messages.getMessage('metadata.patch.warns.missingConfiguration'), LoggerLevel.WARN);
@@ -91,6 +92,8 @@ export default class Patch extends SfdxCommand {
 
     this.fixes = Object.assign({}, config.plugins['mdataPatches'][this.flags.env] || {});
     this.baseDir = this.flags.rootDir || config.packageDirectories[0].path;
+
+    console.log('FIXES: ' + JSON.stringify(this.fixes))
 
     Mdata.log(messages.getMessage('metadata.patch.infos.executingPreDeployFixes'), LoggerLevel.INFO);
     await this.preDeployFixes();
@@ -107,10 +110,12 @@ export default class Patch extends SfdxCommand {
     return new Promise((resolve, reject) => {
       const parser = new xml2js.Parser({ explicitArray: true });
       const data = fs.readFileSync(xmlFile);
+      console.log('DATA:' + data)
       parser.parseString(data, (err, result) => {
         if (err) {
           reject(err);
         }
+        console.log(result)
         resolve(result);
       });
     });
@@ -125,7 +130,7 @@ export default class Patch extends SfdxCommand {
     const self = this;
     _.each(_.keys(this.fixes), async path => {
       if (glob.hasMagic(path)) {
-        glob(`${self.baseDir}/${path}`, (err, files) => {
+        glob.glob(`${self.baseDir}/${path}`, (err, files) => {
           _.each(files, patchFile);
         });
       } else if (fs.existsSync(`${self.baseDir}/${path}`)) {

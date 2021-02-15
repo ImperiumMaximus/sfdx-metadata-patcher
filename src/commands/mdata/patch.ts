@@ -20,15 +20,6 @@ export default class Patch extends SfdxCommand {
 
   public static description = messages.getMessage('metadata.patch.description');
 
-  // Comment this out if your command does not require an org username
-  // protected static requiresUsername = true;
-
-  // Comment this out if your command does not support a hub org username
-  // protected static supportsDevhubUsername = true;
-
-  // Set this to true if your command requires a project workspace; 'requiresProject' is false by default
-  // protected static requiresProject = true;
-
   protected static flagsConfig = {
     env: flags.string({
       char: 'e',
@@ -74,8 +65,8 @@ export default class Patch extends SfdxCommand {
    // Set this to true if your command requires a project workspace; 'requiresProject' is false by default
    protected static requiresProject = true;
 
-   protected baseDir;
-   protected fixes;
+   protected baseDir: string;
+   protected fixes: AnyJson;
    protected manifest;
 
   public async run(): Promise<AnyJson> {
@@ -125,7 +116,7 @@ export default class Patch extends SfdxCommand {
     const self = this;
     _.each(_.keys(this.fixes), async path => {
       if (glob.hasMagic(path)) {
-        glob(`${self.baseDir}/${path}`, (err, files) => {
+        glob.glob(`${self.baseDir}/${path}`, (err, files) => {
           _.each(files, patchFile);
         });
       } else if (fs.existsSync(`${self.baseDir}/${path}`)) {
@@ -172,6 +163,12 @@ export default class Patch extends SfdxCommand {
     fs.writeFileSync(xmlFile, builder.buildObject(obj));
   }
 
+  public maybeCreateTag(xml, tag, value) {
+    if (!Object.prototype.hasOwnProperty.call(xml, tag)) {
+      xml[tag] = value;
+    }
+  }
+
   public async processConf(xml, conf): Promise<void> {
     let token = xml;
     if (conf.where) token = jsonQuery(conf.where, { data: xml });
@@ -190,7 +187,7 @@ export default class Patch extends SfdxCommand {
 
     if (conf.concat) {
       _.each(conf.concat, tk => {
-        token.push(tk);
+        token[0] = Object.assign(token[0], tk);
       });
     }
 
@@ -213,6 +210,7 @@ export default class Patch extends SfdxCommand {
     if (conf.disablePermissions && token[0].userPermissions) {
       _.each(conf.disablePermissions, perm => {
         if (_.findIndex(token[0].userPermissions, (p: GenericEntity) => p.name[0] === perm) === -1) {
+          this.maybeCreateTag(token[0], 'userPermissions', []);
           token[0].userPermissions.push({
             enabled: false,
             name: perm
@@ -244,6 +242,7 @@ export default class Patch extends SfdxCommand {
     if (conf.disableTabs) {
       _.each(conf.disableTabs, perm => {
         if (_.findIndex(token[0].tabVisibilities, (t: CustomTab) => t.tab[0] === perm) === -1) {
+          this.maybeCreateTag(token[0], 'tabVisibilities', []);
           token[0].tabVisibilities.push({
             tab: perm,
             visibility: 'Hidden'
@@ -255,6 +254,7 @@ export default class Patch extends SfdxCommand {
     if (conf.disableApplications) {
       _.each(conf.disableApplications, app => {
         if (_.findIndex(token[0].applicationVisibilities, (t: CustomApplication) => t.application[0] === app) === -1) {
+          this.maybeCreateTag(token[0], 'applicationVisibilities', []);
           token[0].applicationVisibilities.push({
             application: app,
             default: 'false',
@@ -267,6 +267,7 @@ export default class Patch extends SfdxCommand {
     if (conf.enableTabs) {
       _.each(conf.enableTabs, perm => {
         if (_.findIndex(token[0].tabVisibilities, (t: CustomTab) => t.tab[0] === perm) === -1) {
+          this.maybeCreateTag(token[0], 'tabVisibilities', []);
           token[0].tabVisibilities.push({
             tab: perm,
             visibility: 'DefaultOn'
@@ -278,6 +279,7 @@ export default class Patch extends SfdxCommand {
     if (conf.disableObjects) {
       _.each(conf.disableObjects, obj => {
         if (_.findIndex(token[0].objectPermissions, (o: ObjectPermission) => o.object[0] === obj) === -1) {
+          this.maybeCreateTag(token[0], 'objectPermissions', []);
           token[0].objectPermissions.push({
             allowCreate: false,
             allowDelete: false,

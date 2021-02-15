@@ -93,8 +93,6 @@ export default class Patch extends SfdxCommand {
     this.fixes = Object.assign({}, config.plugins['mdataPatches'][this.flags.env] || {});
     this.baseDir = this.flags.rootDir || config.packageDirectories[0].path;
 
-    console.log('FIXES: ' + JSON.stringify(this.fixes))
-
     Mdata.log(messages.getMessage('metadata.patch.infos.executingPreDeployFixes'), LoggerLevel.INFO);
     await this.preDeployFixes();
     Mdata.log(messages.getMessage('general.infos.done'), LoggerLevel.INFO);
@@ -110,12 +108,10 @@ export default class Patch extends SfdxCommand {
     return new Promise((resolve, reject) => {
       const parser = new xml2js.Parser({ explicitArray: true });
       const data = fs.readFileSync(xmlFile);
-      console.log('DATA:' + data)
       parser.parseString(data, (err, result) => {
         if (err) {
           reject(err);
         }
-        console.log(result)
         resolve(result);
       });
     });

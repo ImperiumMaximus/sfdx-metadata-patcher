@@ -27,6 +27,8 @@ describe('mdata:patch', () => {
 
   describe('patch profile', () => {
 
+    let writeFileSyncStub;
+
     test
       .do(() => {
         stubMethod($$.SANDBOXES.PROJECT, SfdxProject.prototype, 'resolveProjectConfig').callsFake(() => { return {
@@ -82,7 +84,7 @@ describe('mdata:patch', () => {
                 "devShared": {
                   "main/default/profiles/*": {
                     "where": "Profile",
-                    "deletePermissionBlocks": ["ManageSearchPromotionRules"]
+                    "deletePermissionBlocks": ["ManageSearchPromotionRules", "SelectFilesFromSalesforce"]
                   }
                 }
               }
@@ -101,11 +103,30 @@ describe('mdata:patch', () => {
             return ""
           }
         })
+
+        writeFileSyncStub = stubMethod($$.SANDBOX, fs, 'writeFileSync');
       })
       .stdout()
       .command(['mdata:patch', '-e', 'devShared'])
-      .it('runs mdata:patch -e devShared', ctx => {
-        expect(ctx.stdout).to.contain('');
+      .it('runs mdata:patch with a specific environment name', ctx => {
+        expect(writeFileSyncStub.args[0][0]).to.equal('force-app/main/default/profiles/Admin.profile-meta.xml');
+        expect(writeFileSyncStub.args[0][1]).to.contain(`<userPermissions>
+        <enabled>true</enabled>
+        <name>ManageReportsInPubFolders</name>
+    </userPermissions>`)
+        expect(writeFileSyncStub.args[0][1]).to.not.contain(`<userPermissions>
+        <enabled>true</enabled>
+        <name>ManageSearchPromotionRules</name>
+    </userPermissions>`)
+        expect(writeFileSyncStub.args[1][0]).to.equal('force-app/main/default/profiles/Custom%3A Sales Profile.profile-meta.xml');
+        expect(writeFileSyncStub.args[1][1]).to.contain(`<userPermissions>
+        <enabled>true</enabled>
+        <name>SubmitMacrosAllowed</name>
+    </userPermissions>`)
+        expect(writeFileSyncStub.args[1][1]).to.not.contain(`<userPermissions>
+        <enabled>true</enabled>
+        <name>SelectFilesFromSalesforce</name>
+    </userPermissions>`)
       });
   })
 

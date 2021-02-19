@@ -11,7 +11,6 @@ import { flags, SfdxCommand } from '@salesforce/command';
 import { Messages, SfdxProject } from '@salesforce/core';
 import { AnyJson, JsonMap } from '@salesforce/ts-types';
 import * as fs from 'fs';
-import * as fsExtra from 'fs-extra';
 import * as glob from 'glob';
 import * as jsonQuery from 'json-query';
 import * as _ from 'lodash';
@@ -44,11 +43,6 @@ export default class Patch extends SfdxCommand {
       char: 's',
       default: 'main/default',
       description: messages.getMessage('metadata.patch.flags.subpath')
-    }),
-    inmanifestdir: flags.string({
-      char: 'x',
-      default: 'manifest',
-      description: messages.getMessage('metadata.patch.flags.inmanifestdir')
     }),
     loglevel: flags.enum({
       description: messages.getMessage('general.flags.loglevel'),
@@ -107,10 +101,6 @@ export default class Patch extends SfdxCommand {
     return '';
   }
 
-  public async readManifest(): Promise<AnyJson> {
-    return await this.parseXml(`${this.flags.inmanifestdir}/package.xml`);
-  }
-
   public async parseXml(xmlFile: string): Promise<AnyJson> {
     return new Promise((resolve, reject) => {
       const parser = new xml2js.Parser({ explicitArray: true });
@@ -122,11 +112,6 @@ export default class Patch extends SfdxCommand {
         resolve(result);
       });
     });
-  }
-
-  public async fixEmailUnfiledPublicFolder(): Promise<void> {
-    const emailTemplate = _.find(this.manifest.Package.types, t => t.name[0] === 'EmailTemplate');
-    if (emailTemplate) emailTemplate.members = _.filter(emailTemplate.members, m => m !== 'unfiled$public');
   }
 
   public async preDeployFixes(): Promise<void> {
@@ -152,18 +137,6 @@ export default class Patch extends SfdxCommand {
         await self.writeXml(f, xml);
       }
     });
-  }
-
-  public async writeManifest(): Promise<void> {
-    let manifestDir;
-    if (!this.flags.inmanifestdir) {
-      manifestDir = this.flags.inmanifestdir;
-    } else {
-      await fsExtra.emptyDir(this.flags.inmanifestdir);
-      manifestDir = this.flags.inmanifestdir;
-    }
-
-    await this.writeXml(`${manifestDir}/package.xml`, this.manifest);
   }
 
   public async writeXml(xmlFile: string, obj: unknown): Promise<void> {

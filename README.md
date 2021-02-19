@@ -113,5 +113,5 @@ _See code: [lib/commands/mdata/patch.js](https://github.com/ImperiumMaximus/sfdx
     }
   }
 ```
-_See schema definition: [docs/README.md](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.4/docs/README.md)_
+_See schema definition: [docs/README.md](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.5/docs/README.md)_
 <!-- examplesstop -->

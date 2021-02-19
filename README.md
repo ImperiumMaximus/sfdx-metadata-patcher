@@ -60,3 +60,58 @@ OPTIONS
 
 _See code: [lib/commands/mdata/patch.js](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.4/lib/commands/mdata/patch.js)_
 <!-- commandsstop -->
+
+<!-- examples -->
+## Sample sfdx-project.json
+```javascript
+  {
+    "packageDirectories": [
+      {
+        "path": "force-app",
+        "default": true
+      }
+    ],
+    "namespace": "",
+    "sfdcLoginUrl": "https://login.salesforce.com",
+    "sourceApiVersion": "50.0",
+    "plugins": {
+      "mdataPatches": {
+        "default": {
+          "main/default/sites/*": {
+            "where": "CustomSite",
+            "replace": {
+              "siteAdmin": "replacedUserName@myCoolDomain.com",
+              "siteGuestRecordDefaultOwner": "replacedUserName2@myCoolDomain.com",
+            },
+            "filter": ["siteAdmin", "siteGuestRecordDefaultOwner"]
+          },
+          "main/default/profiles/Admin.profile-meta.xml": {
+            "where": "Profile",
+            "deleteFieldPermissions": ["Account.Active__c", "Account.CustomerPriority__c"],
+            "disablePermissions": ["ManageSearchPromotionRules", "ManageSandboxes"]
+          }
+        },
+        "uat": {
+          "main/default/sites/*": {
+            "where": "CustomSite",
+            "concat": [{ testConcat: ["sampleString"] }, { testConcatNested: [{ nestedTag: ["coolString"] }] }],
+            "replace": {
+              "siteAdmin": "replacedUserName@myCoolDomain.com",
+              "siteGuestRecordDefaultOwner": "replacedUserName2@myCoolDomain.com",
+            }
+          },
+          "main/default/profiles/*": {
+            "where": "Profile",
+            "disableObjects": ["Product2", "TestSharing__c"],
+            "enableTabs": ["standard-Contact", "TestSharing__c"],
+            "disableApplications": ["standard__LightningSales", "standard__ServiceConsole"],
+            "disableTabs": ["standard-Contact", "CustomObject__c"],
+            "deletePermissionBlocks": ["ManageSearchPromotionRules", "SelectFilesFromSalesforce"]
+          }
+        }
+      }
+    }
+  }
+```
+_See schema definition: [docs/README.md](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.4/docs/README.md)_
+<!-- examplesstop -->

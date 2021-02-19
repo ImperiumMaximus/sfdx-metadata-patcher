@@ -16,6 +16,7 @@
     "tslib": "^1"
   },
   "devDependencies": {
+    "@adobe/jsonschema2md": "^5.0.2",
     "@oclif/dev-cli": "^1",
     "@oclif/plugin-help": "^2",
     "@oclif/test": "^1",
@@ -66,6 +67,7 @@
     "prepack": "rm -rf lib && tsc -b && oclif-dev manifest",
     "test": "nyc --extension .ts mocha --forbid-only \"test/**/*.test.ts\"",
     "coverage": "nyc report --reporter text-lcov --extension .ts > coverage.lcov",
-    "version": "oclif-dev readme && git add README.md"
+    "version": "oclif-dev readme && git add README.md",
+    "jsonschema": "jsonschema2md -d schemas -o docs"
   }
 }

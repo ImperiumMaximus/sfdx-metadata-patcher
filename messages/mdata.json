@@ -20,7 +20,8 @@
         "rootdir": "the input directory that contains the source files to be patched",
         "inmanifestdir": "the input manifest (package.xml) file describing the contents of the source files",
         "fixes": "file path of a JSON that describes the set of fixes and/or patches  to be made",
-        "propfile": "file path o a key-value declaration to be loaded as part of the environment variables to be seen by the command"
+        "propfile": "file path o a key-value declaration to be loaded as part of the environment variables to be seen by the command",
+        "subpath": "Optional subpath(s) between the root dir and the actual sources dir (where the profiles/, classes/, etc. are stored)"
       },
       "infos": {
         "executingDelLwc": "Executing task delLwc...",
@@ -30,7 +31,7 @@
         "inPlacePatch": "Patching in place"
       },
       "warns": {
-        "missingFile": "Missing file %s/%s",
+        "missingFile": "Missing file %s",
         "missingConfiguration": "Missing configuration in sfdx-project.json"
       }
     }

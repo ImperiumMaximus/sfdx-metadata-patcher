@@ -1,8 +1,9 @@
+/* tslint:disable no-var-requires */
 import { Command, Hook } from '@oclif/config';
 import { Config, ConfigAggregator, Org, SfdxProject } from '@salesforce/core';
 import { getString, JsonMap } from '@salesforce/ts-types';
-import * as substrings from 'common-substrings';
 import Patch from '../../commands/mdata/patch';
+const substrings = require('common-substrings');
 
 type HookFunction = (this: Hook.Context, options: HookOptions) => void;
 

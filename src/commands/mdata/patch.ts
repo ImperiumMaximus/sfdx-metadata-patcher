@@ -11,10 +11,10 @@ import { flags, SfdxCommand } from '@salesforce/command';
 import { Messages, SfdxProject } from '@salesforce/core';
 import { AnyJson, JsonMap } from '@salesforce/ts-types';
 import * as fs from 'fs';
-import * as fsExtra from 'fs-extra';
 import * as glob from 'glob';
 import * as jsonQuery from 'json-query';
 import * as _ from 'lodash';
+import path = require('path');
 import * as xml2js from 'xml2js';
 import { LoggerLevel, Mdata } from '../../mdata';
 
@@ -39,10 +39,10 @@ export default class Patch extends SfdxCommand {
       char: 'r',
       description: messages.getMessage('metadata.patch.flags.rootdir')
     }),
-    inmanifestdir: flags.string({
-      char: 'x',
-      default: 'manifest',
-      description: messages.getMessage('metadata.patch.flags.inmanifestdir')
+    subpath: flags.string({
+      char: 's',
+      default: 'main/default',
+      description: messages.getMessage('metadata.patch.flags.subpath')
     }),
     loglevel: flags.enum({
       description: messages.getMessage('general.flags.loglevel'),
@@ -90,17 +90,15 @@ export default class Patch extends SfdxCommand {
     }
 
     this.fixes = Object.assign({}, config.plugins['mdataPatches'][this.flags.env] || {});
-    this.baseDir = this.flags.rootDir || config.packageDirectories[0].path;
+    this.baseDir = path.join(this.flags.rootdir || config.packageDirectories[0].path, this.flags.subpath);
+
+    Mdata.log('Base Dir: ' + this.baseDir, LoggerLevel.INFO);
 
     Mdata.log(messages.getMessage('metadata.patch.infos.executingPreDeployFixes'), LoggerLevel.INFO);
     await this.preDeployFixes();
     Mdata.log(messages.getMessage('general.infos.done'), LoggerLevel.INFO);
 
     return '';
-  }
-
-  public async readManifest(): Promise<AnyJson> {
-    return await this.parseXml(`${this.flags.inmanifestdir}/package.xml`);
   }
 
   public async parseXml(xmlFile: string): Promise<AnyJson> {
@@ -116,27 +114,22 @@ export default class Patch extends SfdxCommand {
     });
   }
 
-  public async fixEmailUnfiledPublicFolder(): Promise<void> {
-    const emailTemplate = _.find(this.manifest.Package.types, t => t.name[0] === 'EmailTemplate');
-    if (emailTemplate) emailTemplate.members = _.filter(emailTemplate.members, m => m !== 'unfiled$public');
-  }
-
   public async preDeployFixes(): Promise<void> {
     const self = this;
-    _.each(_.keys(this.fixes), async path => {
-      if (glob.hasMagic(path)) {
-        glob.glob(`${self.baseDir}/${path}`, (err, files) => {
+    _.each(_.keys(this.fixes), async filePath => {
+      if (glob.hasMagic(filePath)) {
+        glob.glob(path.join(self.baseDir, filePath), (err, files) => {
           _.each(files, patchFile);
         });
-      } else if (fs.existsSync(`${self.baseDir}/${path}`)) {
-        await patchFile(`${self.baseDir}/${path}`);
+      } else if (fs.existsSync(path.join(self.baseDir, filePath))) {
+        await patchFile(path.join(self.baseDir, filePath));
       } else {
-        Mdata.log(messages.getMessage('metadata.patch.warns.missingFile', [self.baseDir, path]), LoggerLevel.WARN);
+        Mdata.log(messages.getMessage('metadata.patch.warns.missingFile', [path.join(self.baseDir, filePath)]), LoggerLevel.WARN);
       }
 
       async function patchFile(f) {
         const xml = await self.parseXml(f);
-        let confs = self.fixes[path];
+        let confs = self.fixes[filePath];
         if (!_.isArray(confs)) confs = [confs];
         _.each(confs, async conf => {
           await self.processConf(xml, conf);
@@ -144,18 +137,6 @@ export default class Patch extends SfdxCommand {
         await self.writeXml(f, xml);
       }
     });
-  }
-
-  public async writeManifest(): Promise<void> {
-    let manifestDir;
-    if (!this.flags.inmanifestdir) {
-      manifestDir = this.flags.inmanifestdir;
-    } else {
-      await fsExtra.emptyDir(this.flags.inmanifestdir);
-      manifestDir = this.flags.inmanifestdir;
-    }
-
-    await this.writeXml(`${manifestDir}/package.xml`, this.manifest);
   }
 
   public async writeXml(xmlFile: string, obj: unknown): Promise<void> {

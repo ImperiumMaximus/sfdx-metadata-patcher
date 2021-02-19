@@ -1122,6 +1122,11 @@ commander@^2.12.1, commander@^2.9.0:
   resolved "https://registry.yarnpkg.com/commander/-/commander-2.20.3.tgz#fd485e84c03eb4881c20722ba48035e8531aeb33"
   integrity sha512-GpVkmM8vF2vQUkj2LvZmD35JxeJOLCwJ9cUkugyk2nuhbv3+mJvpLYYt+0+USMxE+oj+ey/lJEnhZw75x/OMcQ==
 
+common-substrings@^3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/common-substrings/-/common-substrings-3.0.1.tgz#1dcf4c32ab91b2017244b7446293f8e7b34d577e"
+  integrity sha512-pj8OMxcMONQ5ebK/iMMaonBh8IbmPDeXlqFESa9rXiA21o+SEkBW6Sn86rjNV4P+QKLxysCMuT7o4HZ8v3ft3Q==
+
 commondir@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/commondir/-/commondir-1.0.1.tgz#ddd800da0c66127393cca5950ea968a3aaf1253b"

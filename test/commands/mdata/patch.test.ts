@@ -61,13 +61,13 @@ describe('mdata:patch', () => {
             "plugins": {
               "mdataPatches": {
                 "default": {
-                  "main/default/profiles/NonExistent.profile-meta.xml": {
+                  "profiles/NonExistent.profile-meta.xml": {
                     "where": "Profile",
                     "deletePermissionBlocks": ["ManageSearchPromotionRules", "ViewEventLogFiles"]
                   }
                 },
                 "devShared": {
-                  "main/default/profiles/*": {
+                  "profiles/*": {
                     "where": "Profile",
                     "deletePermissionBlocks": ["ShowCompanyNameAsUserBadge"]
                   }
@@ -81,7 +81,7 @@ describe('mdata:patch', () => {
       .stdout()
       .command(['mdata:patch', '-e', 'default'])
       .it('runs mdata:patch on a non-existent file with the default environment name', ctx => {
-        expect(ctx.stdout).to.contain(messages.getMessage('metadata.patch.warns.missingFile', ['force-app', 'main/default/profiles/NonExistent.profile-meta.xml']));
+        expect(ctx.stdout).to.contain(messages.getMessage('metadata.patch.warns.missingFile', ['force-app/main/default/profiles/NonExistent.profile-meta.xml']));
       });
 
     test
@@ -100,13 +100,13 @@ describe('mdata:patch', () => {
             "plugins": {
               "mdataPatches": {
                 "default": {
-                  "main/default/profiles/*": {
+                  "profiles/*": {
                     "where": "Profile",
                     "deletePermissionBlocks": ["ManageSearchPromotionRules", "ViewEventLogFiles"]
                   }
                 },
                 "devShared": {
-                  "main/default/profiles/*": {
+                  "profiles/*": {
                     "where": "Profile",
                     "deletePermissionBlocks": ["ShowCompanyNameAsUserBadge"]
                   }
@@ -160,7 +160,7 @@ describe('mdata:patch', () => {
             "plugins": {
               "mdataPatches": {
                 "devShared": {
-                  "main/default/profiles/*": {
+                  "profiles/*": {
                     "where": "Profile",
                     "deletePermissionBlocks": ["ManageSearchPromotionRules", "SelectFilesFromSalesforce"]
                   }
@@ -210,11 +210,11 @@ describe('mdata:patch', () => {
             "plugins": {
               "mdataPatches": {
                 "devShared": {
-                  "main/default/profiles/Admin.profile-meta.xml": {
+                  "profiles/Admin.profile-meta.xml": {
                     "where": "Profile",
                     "disablePermissions": ["ManageSearchPromotionRules", "ManageSandboxes"]
                   },
-                  "main/default/profiles/Custom%3A Sales Profile.profile-meta.xml": {
+                  "profiles/Custom%3A Sales Profile.profile-meta.xml": {
                     "where": "Profile",
                     "disablePermissions": ["UseWebLink", "ManageSearchPromotionRules"]
                   }
@@ -271,7 +271,7 @@ describe('mdata:patch', () => {
             "plugins": {
               "mdataPatches": {
                 "devShared": {
-                  "main/default/profiles/*": {
+                  "profiles/*": {
                     "where": "Profile",
                     "deleteFieldPermissions": ["Account.Active__c", "Account.CustomerPriority__c"]
                   },
@@ -336,7 +336,7 @@ describe('mdata:patch', () => {
             "plugins": {
               "mdataPatches": {
                 "default": {
-                  "main/default/profiles/*": {
+                  "profiles/*": {
                     "where": "Profile",
                     "disableTabs": ["standard-Contact", "CustomObject__c"]
                   },
@@ -394,7 +394,7 @@ describe('mdata:patch', () => {
             "plugins": {
               "mdataPatches": {
                 "default": {
-                  "main/default/profiles/*": {
+                  "profiles/*": {
                     "where": "Profile",
                     "disableApplications": ["standard__LightningSales", "standard__ServiceConsole"]
                   },
@@ -449,7 +449,7 @@ describe('mdata:patch', () => {
             "plugins": {
               "mdataPatches": {
                 "default": {
-                  "main/default/profiles/*": {
+                  "profiles/*": {
                     "where": "Profile",
                     "enableTabs": ["standard-Contact", "TestSharing__c"]
                   },
@@ -500,7 +500,7 @@ describe('mdata:patch', () => {
             "plugins": {
               "mdataPatches": {
                 "default": {
-                  "main/default/profiles/*": {
+                  "profiles/*": {
                     "where": "Profile",
                     "disableObjects": ["Product2", "TestSharing__c"]
                   },
@@ -591,7 +591,7 @@ describe('mdata:patch', () => {
             "plugins": {
               "mdataPatches": {
                 "default": {
-                  "main/default/sites/*": {
+                  "sites/*": {
                     "where": "CustomSite",
                     "replace": {
                       "siteAdmin": "replacedUserName@myCoolDomain.com",
@@ -600,7 +600,7 @@ describe('mdata:patch', () => {
                   }
                 },
                 "devShared": {
-                  "main/default/sites/*": {
+                  "sites/*": {
                     "where": "CustomSite",
                     "replace": {
                       "siteAdmin": "replacedUserName@myCoolDomain.com.devShared",
@@ -640,7 +640,7 @@ describe('mdata:patch', () => {
             "plugins": {
               "mdataPatches": {
                 "default": {
-                  "main/default/sites/*": {
+                  "sites/*": {
                     "where": "CustomSite",
                     "replace": {
                       "siteAdmin": "replacedUserName@myCoolDomain.com",
@@ -649,7 +649,7 @@ describe('mdata:patch', () => {
                   }
                 },
                 "devShared": {
-                  "main/default/sites/*": {
+                  "sites/*": {
                     "where": "CustomSite",
                     "filter": ["siteAdmin", "siteGuestRecordDefaultOwner"]
                   }
@@ -688,7 +688,7 @@ describe('mdata:patch', () => {
             "plugins": {
               "mdataPatches": {
                 "default": {
-                  "main/default/sites/*": {
+                  "sites/*": {
                     "where": "CustomSite",
                     "replace": {
                       "siteAdmin": "replacedUserName@myCoolDomain.com",
@@ -697,7 +697,7 @@ describe('mdata:patch', () => {
                   }
                 },
                 "devShared": {
-                  "main/default/sites/*": {
+                  "sites/*": {
                     "where": "CustomSite",
                     "concat": [{ testConcat: ["sampleString"] }, { testConcatNested: [{ nestedTag: ["coolString"] }] }]
                   }

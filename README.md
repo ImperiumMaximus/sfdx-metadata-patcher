@@ -20,13 +20,12 @@ A Salesforce DX Plugin to hotpatch metadata before deployments
 ```sh-session
 $ sfdx plugins:install sfdx-metadata-patcher
 ```
-<!-- usage -->
 ## Usage
 ```sh-session
 $ sfdx mdata:patch --help
 ```
-<!-- commands -->
 ## Commands
+<!-- commands -->
 * [`sfdx mdata:patch [-e <string>] [-r <string>] [-x <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-mdatapatch--e-string--r-string--x-string---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
 
 ## `sfdx mdata:patch [-e <string>] [-r <string>] [-x <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
@@ -59,5 +58,5 @@ OPTIONS
                                                                                     this command invocation
 ```
 
-_See code: [src/commands/mdata/patch.js](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.1/src/commands/mdata/patch.js)_
+_See code: [lib/commands/mdata/patch.js](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.4/lib/commands/mdata/patch.js)_
 <!-- commandsstop -->

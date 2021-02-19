@@ -76,8 +76,9 @@ _See code: [lib/commands/mdata/patch.js](https://github.com/ImperiumMaximus/sfdx
     "sourceApiVersion": "50.0",
     "plugins": {
       "mdataPatches": {
+        "hook": true,
         "default": {
-          "main/default/sites/*": {
+          "sites/*": {
             "where": "CustomSite",
             "replace": {
               "siteAdmin": "replacedUserName@myCoolDomain.com",
@@ -85,14 +86,14 @@ _See code: [lib/commands/mdata/patch.js](https://github.com/ImperiumMaximus/sfdx
             },
             "filter": ["siteAdmin", "siteGuestRecordDefaultOwner"]
           },
-          "main/default/profiles/Admin.profile-meta.xml": {
+          "profiles/Admin.profile-meta.xml": {
             "where": "Profile",
             "deleteFieldPermissions": ["Account.Active__c", "Account.CustomerPriority__c"],
             "disablePermissions": ["ManageSearchPromotionRules", "ManageSandboxes"]
           }
         },
         "uat": {
-          "main/default/sites/*": {
+          "sites/*": {
             "where": "CustomSite",
             "concat": [{ testConcat: ["sampleString"] }, { testConcatNested: [{ nestedTag: ["coolString"] }] }],
             "replace": {
@@ -100,7 +101,7 @@ _See code: [lib/commands/mdata/patch.js](https://github.com/ImperiumMaximus/sfdx
               "siteGuestRecordDefaultOwner": "replacedUserName2@myCoolDomain.com",
             }
           },
-          "main/default/profiles/*": {
+          "profiles/*": {
             "where": "Profile",
             "disableObjects": ["Product2", "TestSharing__c"],
             "enableTabs": ["standard-Contact", "TestSharing__c"],

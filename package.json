@@ -10,6 +10,7 @@
     "@oclif/errors": "^1",
     "@salesforce/command": "^2",
     "@salesforce/core": "^2",
+    "common-substrings": "^3.0.1",
     "json-query": "^2.2.2",
     "pino": "^6.11.1",
     "pino-pretty": "^4.5.0",
@@ -53,6 +54,9 @@
       "mdata": {
         "description": "Commands to manipulate Salesforce Metadata."
       }
+    },
+    "hooks": {
+      "predeploy": "./lib/hooks/predeploy/mdataPatch"
     },
     "devPlugins": [
       "@oclif/plugin-help"

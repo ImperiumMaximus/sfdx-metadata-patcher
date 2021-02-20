@@ -2,8 +2,8 @@
 
 import { Config, ConfigAggregator, Org, SfdxProject } from '@salesforce/core';
 import { getString, JsonMap } from '@salesforce/ts-types';
-import * as path from 'path';
 import * as fs from 'fs';
+import * as path from 'path';
 import Patch from '../../commands/mdata/patch';
 import { HookFunction } from '../../mdata';
 const substrings = require('common-substrings');

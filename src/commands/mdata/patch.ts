@@ -15,9 +15,10 @@ import * as fsExtra from 'fs-extra';
 import * as glob from 'glob';
 import * as jsonQuery from 'json-query';
 import * as _ from 'lodash';
+import * as micromatch from 'micromatch';
 import path = require('path');
 import * as xml2js from 'xml2js';
-import { LoggerLevel, Mdata } from '../../mdata';
+import { LoggerLevel, Mdata, WorkspaceMdapiElement } from '../../mdata';
 
 // Initialize Messages with the current plugin directory
 Messages.importMessagesDirectory(__dirname);
@@ -39,6 +40,10 @@ export default class Patch extends SfdxCommand {
     rootdir: flags.string({
       char: 'r',
       description: messages.getMessage('metadata.patch.flags.rootdir')
+    }),
+    mdapimapfile: flags.string({
+      char: 'm',
+      description: messages.getMessage('metadata.patch.flags.mdapimapfile')
     }),
     subpath: flags.string({
       char: 's',
@@ -101,7 +106,11 @@ export default class Patch extends SfdxCommand {
     Mdata.log('Base Dir: ' + this.baseDir, LoggerLevel.INFO);
 
     Mdata.log(messages.getMessage('metadata.patch.infos.executingPreDeployFixes'), LoggerLevel.INFO);
-    await this.preDeployFixes();
+    if (!this.flags.mdapimapfile || !fs.existsSync(this.flags.mdapimapfile)) {
+      await this.preDeployFixes();
+    } else {
+      await this.preDeployFixesHook();
+    }
     Mdata.log(messages.getMessage('general.infos.done'), LoggerLevel.INFO);
 
     return '';
@@ -142,9 +151,47 @@ export default class Patch extends SfdxCommand {
         Mdata.log(messages.getMessage('metadata.patch.warns.missingFile', [path.join(self.baseDir, filePath)]), LoggerLevel.WARN);
       }
 
-      async function patchFile(f) {
+      async function patchFile(f: string) {
         const xml = await self.parseXml(f);
         let confs = self.fixes[filePath];
+        if (!_.isArray(confs)) confs = [confs];
+        _.each(confs, async conf => {
+          await self.processConf(xml, conf);
+        });
+        await self.writeXml(f, xml);
+      }
+    });
+  }
+
+  public async preDeployFixesHook(): Promise<void> {
+    const self = this;
+    const mdapiMapParsed = JSON.parse(fs.readFileSync(this.flags.mdapimapfile, 'utf-8').toString());
+    const mdapiMapFiles = Object.keys(mdapiMapParsed);
+    _.each(_.keys(this.fixes), async filePath => {
+      const wrkSpcPaths: string[] = micromatch(mdapiMapFiles, path.join('**', filePath));
+      if (wrkSpcPaths.length) {
+        wrkSpcPaths.forEach(async wrkSpcPath => {
+          const wrkSpcFile: WorkspaceMdapiElement = mdapiMapParsed[wrkSpcPath];
+          if (Object.prototype.hasOwnProperty.call(MDATANAME_TO_XMLTAG, wrkSpcFile.metadataName)) {
+            const fixes = Object.assign({}, this.fixes[filePath]);
+            if (fixes.where) {
+              const fullName = wrkSpcFile.fullName.replace(`${wrkSpcFile.mdapiType}.`, '');
+              fixes.where = `${MDATANAME_TO_XMLTAG[wrkSpcFile.metadataName]}[fullName=${fullName}]`;
+            }
+            Mdata.log(`Patching ${path.join(self.baseDir, wrkSpcFile.mdapiFilePath)} with fixes: ${JSON.stringify(fixes)}`,  LoggerLevel.INFO);
+            await patchFile(path.join(self.baseDir, wrkSpcFile.mdapiFilePath), fixes);
+          } else {
+            Mdata.log(`Patching ${path.join(self.baseDir, wrkSpcFile.mdapiFilePath)} with fixes: ${JSON.stringify(this.fixes[filePath])}`,  LoggerLevel.INFO);
+            await patchFile(path.join(self.baseDir, wrkSpcFile.mdapiFilePath), this.fixes[filePath]);
+          }
+        });
+      } else {
+        Mdata.log(messages.getMessage('metadata.patch.warns.missingFile', [path.join(self.baseDir, filePath)]), LoggerLevel.WARN);
+      }
+
+      async function patchFile(f: string, fixes: AnyJson) {
+        const xml = await self.parseXml(f);
+        let confs = fixes;
         if (!_.isArray(confs)) confs = [confs];
         _.each(confs, async conf => {
           await self.processConf(xml, conf);
@@ -332,3 +379,15 @@ interface GenericEntity {
   name?: string[];
   fullName?: string[];
 }
+
+const MDATANAME_TO_XMLTAG = {
+  BusinessProcess: 'CustomObject.businessProcesses',
+  CompactLayout: 'CustomObject.compactLayouts',
+  CustomField: 'CustomObject.fields',
+  FieldSet: 'CustomObject.fieldSets',
+  ListView: 'CustomObject.listViews',
+  RecordType: 'CustomObject.recordTypes',
+  SharingReason: 'CustomObject.sharingReasons',
+  ValidationRule: 'CustomObject.validationRules',
+  WebLink: 'CustomObject.WebLinks'
+};

@@ -1,7 +1,7 @@
 {
   "name": "sfdx-metadata-patcher",
   "description": "A Salesforce DX Plugin to hotpatch metadata before deployments",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "author": "Raffaele Fioratto",
   "bugs": "https://github.com/ImperiumMaximus/sfdx-metadata-patcher/issues",
   "dependencies": {
@@ -10,8 +10,10 @@
     "@oclif/errors": "^1",
     "@salesforce/command": "^2",
     "@salesforce/core": "^2",
+    "@types/micromatch": "^4.0.1",
     "common-substrings": "^3.0.1",
     "json-query": "^2.2.2",
+    "micromatch": "^4.0.2",
     "pino": "^6.11.1",
     "pino-pretty": "^4.5.0",
     "tslib": "^1"

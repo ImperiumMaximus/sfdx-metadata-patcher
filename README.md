@@ -26,9 +26,9 @@ $ sfdx mdata:patch --help
 ```
 ## Commands
 <!-- commands -->
-* [`sfdx mdata:patch [-e <string>] [-r <string>] [-x <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-mdatapatch--e-string--r-string--x-string---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
+* [`sfdx mdata:patch [-e <string>] [-r <string>] [-m <string>] [-s <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-mdatapatch--e-string--r-string--m-string--s-string---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
 
-## `sfdx mdata:patch [-e <string>] [-r <string>] [-x <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
+## `sfdx mdata:patch [-e <string>] [-r <string>] [-m <string>] [-s <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
 patches source metadata files in order to solve common Salesforce deployment bugs or to modifly on the fly API endpoints
 
@@ -36,7 +36,7 @@ patches source metadata files in order to solve common Salesforce deployment bug
 patches source metadata files in order to solve common Salesforce deployment bugs or to modifly on the fly API endpoints
 
 USAGE
-  $ sfdx mdata:patch [-e <string>] [-r <string>] [-x <string>] [--json] [--loglevel 
+  $ sfdx mdata:patch [-e <string>] [-r <string>] [-m <string>] [-s <string>] [--json] [--loglevel 
   trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
 
 OPTIONS
@@ -44,13 +44,20 @@ OPTIONS
                                                                                     used to select the correct patch set
                                                                                     from sfdx-project.json
 
+  -m, --mdapimapfile=mdapimapfile                                                   file with JSON that maps workspaces
+                                                                                    files (using source structure) to
+                                                                                    mdapi files. Not intended to be used
+                                                                                    when invoked directly, but when
+                                                                                    invoked by CLI Pre Deploy Hook.
+
   -r, --rootdir=rootdir                                                             the input directory that contains
                                                                                     the source files to be patched
 
-  -x, --inmanifestdir=inmanifestdir                                                 [default: manifest] the input
-                                                                                    manifest (package.xml) file
-                                                                                    describing the contents of the
-                                                                                    source files
+  -s, --subpath=subpath                                                             [default: main/default] Optional
+                                                                                    subpath(s) between the root dir and
+                                                                                    the actual sources dir (where the
+                                                                                    profiles/, classes/, etc. are
+                                                                                    stored)
 
   --json                                                                            format output as json
 
@@ -58,7 +65,7 @@ OPTIONS
                                                                                     this command invocation
 ```
 
-_See code: [lib/commands/mdata/patch.js](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.4/lib/commands/mdata/patch.js)_
+_See code: [lib/commands/mdata/patch.js](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.5/lib/commands/mdata/patch.js)_
 <!-- commandsstop -->
 
 <!-- examples -->

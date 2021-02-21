@@ -10,7 +10,7 @@ const substrings = require('common-substrings');
 
 export const hook: HookFunction = async options => {
   // Run only on the deploy command, not the push command
-  if (options.commandId === 'force:source:deploy' && options.result &&
+  if ((options.commandId === 'force:source:deploy' || options.commandId === 'force:source:push')  && options.result &&
       Object.keys(options.result).length && options.result[Object.keys(options.result)[0]].workspaceElements.length) {
 
     const project = await SfdxProject.resolve();
@@ -45,7 +45,6 @@ export const hook: HookFunction = async options => {
     const aliasOrUsername = getString(configAggregator.getInfo(Config.DEFAULT_USERNAME), 'value');
 
     const mdapimapJsonFile = path.join(tmpPath, `mdapimap_${Date.now()}.json`);
-    console.log(JSON.stringify(wrkSpcElToMdapiFilePath));
     fs.writeFileSync(mdapimapJsonFile, JSON.stringify(wrkSpcElToMdapiFilePath));
 
     const patchCommandArgv = ['-e', aliasOrUsername, '-r', tmpPath, '-s', '', '-m', mdapimapJsonFile];

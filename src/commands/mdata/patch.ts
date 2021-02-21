@@ -126,15 +126,31 @@ export default class Patch extends SfdxCommand {
 
   public async preDeployFixes(): Promise<void> {
     const self = this;
-    _.each(_.keys(this.fixes), async filePath => {
+    await _.reduce(_.keys(this.fixes), async (prevFixPromise, filePath) => {
+      await prevFixPromise;
       if (glob.hasMagic(filePath)) {
-        glob.glob(path.join(self.baseDir, filePath), (err, files) => {
-          _.each(files, patchFile);
-        });
+        const files = await getGlobFiles(path.join(self.baseDir, filePath));
+        return _.reduce(files, async (prevPatchPromise, f) => {
+          await prevPatchPromise;
+          return patchFile(f);
+        }, Promise.resolve());
       } else if (fs.existsSync(path.join(self.baseDir, filePath))) {
-        await patchFile(path.join(self.baseDir, filePath));
+        return patchFile(path.join(self.baseDir, filePath));
       } else {
         Mdata.log(messages.getMessage('metadata.patch.warns.missingFile', [path.join(self.baseDir, filePath)]), LoggerLevel.WARN);
+        return Promise.resolve();
+      }
+
+      async function getGlobFiles(p: string): Promise<string[]> {
+        return new Promise((resolve, reject) => {
+          glob.glob(p, (err, files) => {
+              if (!err) {
+                resolve(files);
+              } else {
+                reject(err);
+              }
+            });
+          });
       }
 
       async function patchFile(f: string) {
@@ -146,17 +162,20 @@ export default class Patch extends SfdxCommand {
         });
         await self.writeXml(f, xml);
       }
-    });
+    }, Promise.resolve());
   }
 
   public async preDeployFixesHook(): Promise<void> {
     const self = this;
     const mdapiMapParsed = JSON.parse(fs.readFileSync(this.flags.mdapimapfile, 'utf-8').toString());
     const mdapiMapFiles = Object.keys(mdapiMapParsed);
-    _.each(_.keys(this.fixes), async filePath => {
+    // nested reduce() to serialize Promises execution. NICE!
+    await _.reduce(_.keys(this.fixes), async (prevFixPromise, filePath) => {
+      await prevFixPromise;
       const wrkSpcPaths: string[] = micromatch(mdapiMapFiles, path.join('**', filePath));
       if (wrkSpcPaths.length) {
-        wrkSpcPaths.forEach(async wrkSpcPath => {
+        return _.reduce(wrkSpcPaths, async (prevWrkSpcPromise, wrkSpcPath) => {
+          await prevWrkSpcPromise;
           const wrkSpcFile: WorkspaceMdapiElement = mdapiMapParsed[wrkSpcPath];
           if (Object.prototype.hasOwnProperty.call(MDATANAME_TO_XMLTAG, wrkSpcFile.metadataName)) {
             const fixes = Object.assign({}, this.fixes[filePath]);
@@ -165,12 +184,12 @@ export default class Patch extends SfdxCommand {
               fixes.where = `${MDATANAME_TO_XMLTAG[wrkSpcFile.metadataName]}[fullName=${fullName}]`;
             }
             Mdata.log(`Patching ${path.join(self.baseDir, wrkSpcFile.mdapiFilePath)} with fixes: ${JSON.stringify(fixes)}`,  LoggerLevel.INFO);
-            await patchFile(path.join(self.baseDir, wrkSpcFile.mdapiFilePath), fixes);
+            return patchFile(path.join(self.baseDir, wrkSpcFile.mdapiFilePath), fixes);
           } else {
             Mdata.log(`Patching ${path.join(self.baseDir, wrkSpcFile.mdapiFilePath)} with fixes: ${JSON.stringify(this.fixes[filePath])}`,  LoggerLevel.INFO);
-            await patchFile(path.join(self.baseDir, wrkSpcFile.mdapiFilePath), this.fixes[filePath]);
+            return patchFile(path.join(self.baseDir, wrkSpcFile.mdapiFilePath), this.fixes[filePath]);
           }
-        });
+        }, Promise.resolve());
       } else {
         Mdata.log(messages.getMessage('metadata.patch.warns.missingFile', [path.join(self.baseDir, filePath)]), LoggerLevel.WARN);
       }
@@ -184,7 +203,7 @@ export default class Patch extends SfdxCommand {
         });
         await self.writeXml(f, xml);
       }
-    });
+    }, Promise.resolve());
   }
 
   public async writeXml(xmlFile: string, obj: unknown): Promise<void> {

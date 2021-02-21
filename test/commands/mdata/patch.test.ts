@@ -555,6 +555,107 @@ describe('mdata:patch', () => {
       });
   });
 
+  describe('multiple patches', () => {
+    let writeFileSyncStub;
+    let writtenFiles = {};
+    const commonStubs = function () {
+      stubMethod($$.SANDBOX, glob, 'glob').callsFake((pattern: string, cb: (err: Error | null, matches: string[]) => void) => {
+        cb(null, ['force-app/main/default/profiles/Admin.profile-meta.xml', 'force-app/main/default/profiles/Custom%3A Sales Profile.profile-meta.xml'])
+      })
+      const readFileSyncStub = stubMethod($$.SANDBOX, fs, 'readFileSync')
+
+      readFileSyncStub.callsFake((path: string) => {
+        if (Object.prototype.hasOwnProperty.call(writtenFiles, path)) {
+          return writtenFiles[path];
+        } else if (path.startsWith('force-app/main/default')) {
+          return readFileSyncStub.wrappedMethod.call(this, path.replace('force-app/main/default', __dirname + '/../../data/force-app'))
+        } else {
+          return ""
+        }
+      })
+
+      writeFileSyncStub = stubMethod($$.SANDBOX, fs, 'writeFileSync');
+      writeFileSyncStub.callsFake((path: string, contents: string | Object) => {
+        if (path.startsWith('force-app/main/default')) {
+          writtenFiles[path] = contents;
+        }
+      })
+    }
+
+    test
+      .do(() => {
+        stubMethod($$.SANDBOXES.PROJECT, SfdxProject.prototype, 'resolveProjectConfig').callsFake(() => {
+          return {
+            "packageDirectories": [
+              {
+                "path": "force-app",
+                "default": true
+              }
+            ],
+            "namespace": "",
+            "sfdcLoginUrl": "https://login.salesforce.com",
+            "sourceApiVersion": "50.0",
+            "plugins": {
+              "mdataPatches": {
+                "default": {
+                  "profiles/*": {
+                    "where": "Profile",
+                    "deletePermissionBlocks": ["ManageSearchPromotionRules", "SelectFilesFromSalesforce"]
+                  }
+                },
+                "devShared": {
+                  "profiles/*": {
+                    "where": "Profile",
+                    "deletePermissionBlocks": ["ManageSearchPromotionRules", "SelectFilesFromSalesforce"]
+                  },
+                  "profiles/Admin.profile-meta.xml": {
+                    "where": "Profile",
+                    "deletePermissionBlocks": ["RunReports"]
+                  }
+                }
+              }
+            }
+          }
+        });
+        const existsSyncStub = stubMethod($$.SANDBOX, fs, 'existsSync')
+        existsSyncStub.callsFake((path: string) => {
+          if (path.includes('.profile-meta.xml')) {
+            return true;
+          }
+          return existsSyncStub.wrappedMethod.call(this, path);
+        })
+        commonStubs();
+      })
+      .stdout()
+      .command(['mdata:patch', '-e', 'devShared'])
+      .it('runs mdata:patch on Admin profile with different fixes for the same file', ctx => {
+        expect(writeFileSyncStub.args[1][0]).to.equal('force-app/main/default/profiles/Custom%3A Sales Profile.profile-meta.xml');
+        expect(writeFileSyncStub.args[1][1]).to.not.contain(`<userPermissions>
+        <enabled>true</enabled>
+        <name>SelectFilesFromSalesforce</name>
+    </userPermissions>`);
+        expect(writeFileSyncStub.args[1][1]).to.contain(`<userPermissions>
+        <enabled>true</enabled>
+        <name>RunReports</name>
+    </userPermissions>`);
+
+        expect(writeFileSyncStub.args[2][0]).to.contain(`force-app/main/default/profiles/Admin.profile-meta.xml`);
+        expect(writeFileSyncStub.args[2][1]).to.not.contain(`<userPermissions>
+        <enabled>true</enabled>
+        <name>ManageSearchPromotionRules</name>
+    </userPermissions>`);
+        expect(writeFileSyncStub.args[2][1]).to.not.contain(`<userPermissions>
+        <enabled>true</enabled>
+        <name>SelectFilesFromSalesforce</name>
+    </userPermissions>`);
+        expect(writeFileSyncStub.args[2][1]).to.not.contain(`<userPermissions>
+        <enabled>true</enabled>
+        <name>RunReports</name>
+    </userPermissions>`);
+      });
+
+  });
+
   describe('patch sites', () => {
 
     let writeFileSyncStub;
@@ -721,12 +822,14 @@ describe('mdata:patch', () => {
 
   describe('patching hook', () => {
     let writeFileSyncStub;
-    //let writtenFiles = {}
+    let writtenFiles = {}
     const commonStubs = function () {
       const readFileSyncStub = stubMethod($$.SANDBOX, fs, 'readFileSync')
 
       readFileSyncStub.callsFake((path: string) => {
-        if (path.startsWith('/tmp/sdx_sourceDeploy_pkg_1613771557082')) {
+        if (Object.prototype.hasOwnProperty.call(writtenFiles, path)) {
+          return writtenFiles[path];
+        } else if (path.startsWith('/tmp/sdx_sourceDeploy_pkg_1613771557082')) {
           return readFileSyncStub.wrappedMethod.call(this, path.replace('/tmp/sdx_sourceDeploy_pkg_1613771557082', __dirname + '/../../data/src'))
         } else {
           return "";
@@ -734,7 +837,11 @@ describe('mdata:patch', () => {
       })
 
       writeFileSyncStub = stubMethod($$.SANDBOX, fs, 'writeFileSync')
-      //writeFileSyncStub.callsFake((path: string, contents: ))
+      writeFileSyncStub.callsFake((path: string, contents: string | Object) => {
+        if (path.startsWith('/tmp/sdx_sourceDeploy_pkg_1613771557082')) {
+          writtenFiles[path] = contents;
+        }
+      })
     }
 
     test
@@ -833,19 +940,19 @@ describe('mdata:patch', () => {
         <name>SelectFilesFromSalesforce</name>
     </userPermissions>`);
         expect(writeFileSyncStub.args[1][0]).to.equal('/tmp/sdx_sourceDeploy_pkg_1613771557082/objects/Account.object');
-        expect(writeFileSyncStub.args[1][1]).to.not.contain('<externalSharingModel>Private</externalSharingModel>');
-        expect(writeFileSyncStub.args[1][1]).to.contain('<externalSharingModel>ReadOnly</externalSharingModel>');
+        expect(writeFileSyncStub.args[7][1]).to.not.contain('<externalSharingModel>Private</externalSharingModel>');
+        expect(writeFileSyncStub.args[7][1]).to.contain('<externalSharingModel>ReadOnly</externalSharingModel>');
 
         expect(writeFileSyncStub.args[2][0]).to.equal('/tmp/sdx_sourceDeploy_pkg_1613771557082/objects/Account.object');
-        expect(writeFileSyncStub.args[2][1]).to.not.contain('<enableHistory>false</enableHistory>');
-        expect(writeFileSyncStub.args[2][1]).to.contain('<enableHistory>true</enableHistory>');
+        expect(writeFileSyncStub.args[7][1]).to.not.contain('<enableHistory>false</enableHistory>');
+        expect(writeFileSyncStub.args[7][1]).to.contain('<enableHistory>true</enableHistory>');
 
         expect(writeFileSyncStub.args[3][0]).to.equal('/tmp/sdx_sourceDeploy_pkg_1613771557082/objects/Account.object');
-        expect(writeFileSyncStub.args[3][1]).to.contain(`<fields>
+        expect(writeFileSyncStub.args[7][1]).to.contain(`<fields>
         <fullName>Active__c</fullName>
         <externalId>false</externalId>
         <label>test replace</label>
-        <required>false</required>
+        <required>true</required>
         <trackFeedHistory>false</trackFeedHistory>
         <type>Picklist</type>
         <valueSet>
@@ -865,7 +972,7 @@ describe('mdata:patch', () => {
         </valueSet>
     </fields>`);
         expect(writeFileSyncStub.args[4][0]).to.equal('/tmp/sdx_sourceDeploy_pkg_1613771557082/objects/Account.object');
-        expect(writeFileSyncStub.args[4][1]).to.contain(`<fields>
+        expect(writeFileSyncStub.args[7][1]).to.contain(`<fields>
         <fullName>CustomerPriority__c</fullName>
         <externalId>false</externalId>
         <label>test replace</label>
@@ -894,33 +1001,9 @@ describe('mdata:patch', () => {
         </valueSet>
     </fields>`);
 
-        expect(writeFileSyncStub.args[5][0]).to.equal('/tmp/sdx_sourceDeploy_pkg_1613771557082/objects/Account.object');
-        expect(writeFileSyncStub.args[5][1]).to.contain(`<fields>
-        <fullName>Active__c</fullName>
-        <externalId>false</externalId>
-        <label>Active</label>
-        <required>true</required>
-        <trackFeedHistory>false</trackFeedHistory>
-        <type>Picklist</type>
-        <valueSet>
-            <valueSetDefinition>
-                <sorted>false</sorted>
-                <value>
-                    <fullName>No</fullName>
-                    <default>false</default>
-                    <label>No</label>
-                </value>
-                <value>
-                    <fullName>Yes</fullName>
-                    <default>false</default>
-                    <label>Yes</label>
-                </value>
-            </valueSetDefinition>
-        </valueSet>
-    </fields>`);
 
         expect(writeFileSyncStub.args[6][0]).to.equal('/tmp/sdx_sourceDeploy_pkg_1613771557082/objects/Account.object');
-        expect(writeFileSyncStub.args[6][1]).to.not.contain(`<listViews>
+        expect(writeFileSyncStub.args[7][1]).to.not.contain(`<listViews>
         <fullName>NewLastWeek</fullName>
         <filterScope>Everything</filterScope>
         <filters>
@@ -930,7 +1013,7 @@ describe('mdata:patch', () => {
         </filters>
         <label>New Last Week</label>
     </listViews>`);
-        expect(writeFileSyncStub.args[6][1]).to.contain(`<listViews>
+        expect(writeFileSyncStub.args[7][1]).to.contain(`<listViews>
         <fullName>NewLastWeek</fullName>
         <filterScope>Everything</filterScope>
         <filters>

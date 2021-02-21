@@ -1,4 +1,31 @@
+import { Command, Hook } from '@oclif/config';
 import * as pino from 'pino';
+
+export type HookFunction = (this: Hook.Context, options: HookOptions) => void;
+
+export type HookOptions = {
+  Command: Command.Class;
+  argv: string[];
+  commandId: string;
+  result?: PreDeployResult;
+};
+
+export type PreDeployResult = {
+  [aggregateName: string]: {
+    mdapiFilePath: string;
+    workspaceElements: WorkspaceElement[];
+  };
+};
+
+export type WorkspaceElement = {
+  fullName: string;
+  metadataName: string;
+  sourcePath: string;
+  state: string;
+  deleteSupported: boolean;
+};
+
+export type WorkspaceMdapiElement = WorkspaceElement & { mdapiFilePath: string, mdapiType: string };
 
 export enum LoggerLevel {
   TRACE = 10,

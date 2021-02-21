@@ -27,6 +27,7 @@
       "infos": {
         "executingDelLwc": "Executing task delLwc...",
         "executingPreDeployFixes": "Executing task preDeployFixes...",
+        "executingPreDeployFixesHook": "Executing hooked task preDeployFixes...",
         "executingFixUnfiledPublic": "Executing task fixEmailUnfiledPublicFolder...",
         "copyingToFolder": "Copying to %s",
         "inPlacePatch": "Patching in place"

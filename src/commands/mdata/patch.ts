@@ -99,10 +99,11 @@ export default class Patch extends SfdxCommand {
 
     Mdata.log('Base Dir: ' + this.baseDir, LoggerLevel.INFO);
 
-    Mdata.log(messages.getMessage('metadata.patch.infos.executingPreDeployFixes'), LoggerLevel.INFO);
     if (!this.flags.mdapimapfile || !fs.existsSync(this.flags.mdapimapfile)) {
+      Mdata.log(messages.getMessage('metadata.patch.infos.executingPreDeployFixes'), LoggerLevel.INFO);
       await this.preDeployFixes();
     } else {
+      Mdata.log(messages.getMessage('metadata.patch.infos.executingPreDeployFixesHook'), LoggerLevel.INFO);
       await this.preDeployFixesHook();
     }
     Mdata.log(messages.getMessage('general.infos.done'), LoggerLevel.INFO);
@@ -362,5 +363,5 @@ const MDATANAME_TO_XMLTAG = {
   RecordType: 'CustomObject.recordTypes',
   SharingReason: 'CustomObject.sharingReasons',
   ValidationRule: 'CustomObject.validationRules',
-  WebLink: 'CustomObject.WebLinks'
+  WebLink: 'CustomObject.webLinks'
 };

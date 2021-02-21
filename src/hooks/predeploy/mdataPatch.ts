@@ -45,6 +45,7 @@ export const hook: HookFunction = async options => {
     const aliasOrUsername = getString(configAggregator.getInfo(Config.DEFAULT_USERNAME), 'value');
 
     const mdapimapJsonFile = path.join(tmpPath, `mdapimap_${Date.now()}.json`);
+    console.log(JSON.stringify(wrkSpcElToMdapiFilePath));
     fs.writeFileSync(mdapimapJsonFile, JSON.stringify(wrkSpcElToMdapiFilePath));
 
     const patchCommandArgv = ['-e', aliasOrUsername, '-r', tmpPath, '-s', '', '-m', mdapimapJsonFile];

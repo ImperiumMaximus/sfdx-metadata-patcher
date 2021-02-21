@@ -36,7 +36,7 @@ describe('mdata:patch', () => {
 
       readFileSyncStub.callsFake((path: string) => {
         if (path.startsWith('force-app/main/default')) {
-          return readFileSyncStub.wrappedMethod.call(this, path.replace('force-app/main/default', __dirname + '/../../data'))
+          return readFileSyncStub.wrappedMethod.call(this, path.replace('force-app/main/default', __dirname + '/../../data/force-app'))
         } else {
           return ""
         }
@@ -61,13 +61,13 @@ describe('mdata:patch', () => {
             "plugins": {
               "mdataPatches": {
                 "default": {
-                  "main/default/profiles/NonExistent.profile-meta.xml": {
+                  "profiles/NonExistent.profile-meta.xml": {
                     "where": "Profile",
                     "deletePermissionBlocks": ["ManageSearchPromotionRules", "ViewEventLogFiles"]
                   }
                 },
                 "devShared": {
-                  "main/default/profiles/*": {
+                  "profiles/*": {
                     "where": "Profile",
                     "deletePermissionBlocks": ["ShowCompanyNameAsUserBadge"]
                   }
@@ -81,7 +81,7 @@ describe('mdata:patch', () => {
       .stdout()
       .command(['mdata:patch', '-e', 'default'])
       .it('runs mdata:patch on a non-existent file with the default environment name', ctx => {
-        expect(ctx.stdout).to.contain(messages.getMessage('metadata.patch.warns.missingFile', ['force-app', 'main/default/profiles/NonExistent.profile-meta.xml']));
+        expect(ctx.stdout).to.contain(messages.getMessage('metadata.patch.warns.missingFile', ['force-app/main/default/profiles/NonExistent.profile-meta.xml']));
       });
 
     test
@@ -100,13 +100,13 @@ describe('mdata:patch', () => {
             "plugins": {
               "mdataPatches": {
                 "default": {
-                  "main/default/profiles/*": {
+                  "profiles/*": {
                     "where": "Profile",
                     "deletePermissionBlocks": ["ManageSearchPromotionRules", "ViewEventLogFiles"]
                   }
                 },
                 "devShared": {
-                  "main/default/profiles/*": {
+                  "profiles/*": {
                     "where": "Profile",
                     "deletePermissionBlocks": ["ShowCompanyNameAsUserBadge"]
                   }
@@ -160,7 +160,7 @@ describe('mdata:patch', () => {
             "plugins": {
               "mdataPatches": {
                 "devShared": {
-                  "main/default/profiles/*": {
+                  "profiles/*": {
                     "where": "Profile",
                     "deletePermissionBlocks": ["ManageSearchPromotionRules", "SelectFilesFromSalesforce"]
                   }
@@ -210,11 +210,11 @@ describe('mdata:patch', () => {
             "plugins": {
               "mdataPatches": {
                 "devShared": {
-                  "main/default/profiles/Admin.profile-meta.xml": {
+                  "profiles/Admin.profile-meta.xml": {
                     "where": "Profile",
                     "disablePermissions": ["ManageSearchPromotionRules", "ManageSandboxes"]
                   },
-                  "main/default/profiles/Custom%3A Sales Profile.profile-meta.xml": {
+                  "profiles/Custom%3A Sales Profile.profile-meta.xml": {
                     "where": "Profile",
                     "disablePermissions": ["UseWebLink", "ManageSearchPromotionRules"]
                   }
@@ -271,7 +271,7 @@ describe('mdata:patch', () => {
             "plugins": {
               "mdataPatches": {
                 "devShared": {
-                  "main/default/profiles/*": {
+                  "profiles/*": {
                     "where": "Profile",
                     "deleteFieldPermissions": ["Account.Active__c", "Account.CustomerPriority__c"]
                   },
@@ -336,7 +336,7 @@ describe('mdata:patch', () => {
             "plugins": {
               "mdataPatches": {
                 "default": {
-                  "main/default/profiles/*": {
+                  "profiles/*": {
                     "where": "Profile",
                     "disableTabs": ["standard-Contact", "CustomObject__c"]
                   },
@@ -394,7 +394,7 @@ describe('mdata:patch', () => {
             "plugins": {
               "mdataPatches": {
                 "default": {
-                  "main/default/profiles/*": {
+                  "profiles/*": {
                     "where": "Profile",
                     "disableApplications": ["standard__LightningSales", "standard__ServiceConsole"]
                   },
@@ -449,7 +449,7 @@ describe('mdata:patch', () => {
             "plugins": {
               "mdataPatches": {
                 "default": {
-                  "main/default/profiles/*": {
+                  "profiles/*": {
                     "where": "Profile",
                     "enableTabs": ["standard-Contact", "TestSharing__c"]
                   },
@@ -500,7 +500,7 @@ describe('mdata:patch', () => {
             "plugins": {
               "mdataPatches": {
                 "default": {
-                  "main/default/profiles/*": {
+                  "profiles/*": {
                     "where": "Profile",
                     "disableObjects": ["Product2", "TestSharing__c"]
                   },
@@ -555,6 +555,107 @@ describe('mdata:patch', () => {
       });
   });
 
+  describe('multiple patches', () => {
+    let writeFileSyncStub;
+    let writtenFiles = {};
+    const commonStubs = function () {
+      stubMethod($$.SANDBOX, glob, 'glob').callsFake((pattern: string, cb: (err: Error | null, matches: string[]) => void) => {
+        cb(null, ['force-app/main/default/profiles/Admin.profile-meta.xml', 'force-app/main/default/profiles/Custom%3A Sales Profile.profile-meta.xml'])
+      })
+      const readFileSyncStub = stubMethod($$.SANDBOX, fs, 'readFileSync')
+
+      readFileSyncStub.callsFake((path: string) => {
+        if (Object.prototype.hasOwnProperty.call(writtenFiles, path)) {
+          return writtenFiles[path];
+        } else if (path.startsWith('force-app/main/default')) {
+          return readFileSyncStub.wrappedMethod.call(this, path.replace('force-app/main/default', __dirname + '/../../data/force-app'))
+        } else {
+          return ""
+        }
+      })
+
+      writeFileSyncStub = stubMethod($$.SANDBOX, fs, 'writeFileSync');
+      writeFileSyncStub.callsFake((path: string, contents: string | Object) => {
+        if (path.startsWith('force-app/main/default')) {
+          writtenFiles[path] = contents;
+        }
+      })
+    }
+
+    test
+      .do(() => {
+        stubMethod($$.SANDBOXES.PROJECT, SfdxProject.prototype, 'resolveProjectConfig').callsFake(() => {
+          return {
+            "packageDirectories": [
+              {
+                "path": "force-app",
+                "default": true
+              }
+            ],
+            "namespace": "",
+            "sfdcLoginUrl": "https://login.salesforce.com",
+            "sourceApiVersion": "50.0",
+            "plugins": {
+              "mdataPatches": {
+                "default": {
+                  "profiles/*": {
+                    "where": "Profile",
+                    "deletePermissionBlocks": ["ManageSearchPromotionRules", "SelectFilesFromSalesforce"]
+                  }
+                },
+                "devShared": {
+                  "profiles/*": {
+                    "where": "Profile",
+                    "deletePermissionBlocks": ["ManageSearchPromotionRules", "SelectFilesFromSalesforce"]
+                  },
+                  "profiles/Admin.profile-meta.xml": {
+                    "where": "Profile",
+                    "deletePermissionBlocks": ["RunReports"]
+                  }
+                }
+              }
+            }
+          }
+        });
+        const existsSyncStub = stubMethod($$.SANDBOX, fs, 'existsSync')
+        existsSyncStub.callsFake((path: string) => {
+          if (path.includes('.profile-meta.xml')) {
+            return true;
+          }
+          return existsSyncStub.wrappedMethod.call(this, path);
+        })
+        commonStubs();
+      })
+      .stdout()
+      .command(['mdata:patch', '-e', 'devShared'])
+      .it('runs mdata:patch on Admin profile with different fixes for the same file', ctx => {
+        expect(writeFileSyncStub.args[1][0]).to.equal('force-app/main/default/profiles/Custom%3A Sales Profile.profile-meta.xml');
+        expect(writeFileSyncStub.args[1][1]).to.not.contain(`<userPermissions>
+        <enabled>true</enabled>
+        <name>SelectFilesFromSalesforce</name>
+    </userPermissions>`);
+        expect(writeFileSyncStub.args[1][1]).to.contain(`<userPermissions>
+        <enabled>true</enabled>
+        <name>RunReports</name>
+    </userPermissions>`);
+
+        expect(writeFileSyncStub.args[2][0]).to.contain(`force-app/main/default/profiles/Admin.profile-meta.xml`);
+        expect(writeFileSyncStub.args[2][1]).to.not.contain(`<userPermissions>
+        <enabled>true</enabled>
+        <name>ManageSearchPromotionRules</name>
+    </userPermissions>`);
+        expect(writeFileSyncStub.args[2][1]).to.not.contain(`<userPermissions>
+        <enabled>true</enabled>
+        <name>SelectFilesFromSalesforce</name>
+    </userPermissions>`);
+        expect(writeFileSyncStub.args[2][1]).to.not.contain(`<userPermissions>
+        <enabled>true</enabled>
+        <name>RunReports</name>
+    </userPermissions>`);
+      });
+
+  });
+
   describe('patch sites', () => {
 
     let writeFileSyncStub;
@@ -566,7 +667,7 @@ describe('mdata:patch', () => {
 
       readFileSyncStub.callsFake((path: string) => {
         if (path.startsWith('force-app/main/default')) {
-          return readFileSyncStub.wrappedMethod.call(this, path.replace('force-app/main/default', __dirname + '/../../data'))
+          return readFileSyncStub.wrappedMethod.call(this, path.replace('force-app/main/default', __dirname + '/../../data/force-app'))
         } else {
           return ""
         }
@@ -591,7 +692,7 @@ describe('mdata:patch', () => {
             "plugins": {
               "mdataPatches": {
                 "default": {
-                  "main/default/sites/*": {
+                  "sites/*": {
                     "where": "CustomSite",
                     "replace": {
                       "siteAdmin": "replacedUserName@myCoolDomain.com",
@@ -600,7 +701,7 @@ describe('mdata:patch', () => {
                   }
                 },
                 "devShared": {
-                  "main/default/sites/*": {
+                  "sites/*": {
                     "where": "CustomSite",
                     "replace": {
                       "siteAdmin": "replacedUserName@myCoolDomain.com.devShared",
@@ -640,7 +741,7 @@ describe('mdata:patch', () => {
             "plugins": {
               "mdataPatches": {
                 "default": {
-                  "main/default/sites/*": {
+                  "sites/*": {
                     "where": "CustomSite",
                     "replace": {
                       "siteAdmin": "replacedUserName@myCoolDomain.com",
@@ -649,7 +750,7 @@ describe('mdata:patch', () => {
                   }
                 },
                 "devShared": {
-                  "main/default/sites/*": {
+                  "sites/*": {
                     "where": "CustomSite",
                     "filter": ["siteAdmin", "siteGuestRecordDefaultOwner"]
                   }
@@ -688,7 +789,7 @@ describe('mdata:patch', () => {
             "plugins": {
               "mdataPatches": {
                 "default": {
-                  "main/default/sites/*": {
+                  "sites/*": {
                     "where": "CustomSite",
                     "replace": {
                       "siteAdmin": "replacedUserName@myCoolDomain.com",
@@ -697,7 +798,7 @@ describe('mdata:patch', () => {
                   }
                 },
                 "devShared": {
-                  "main/default/sites/*": {
+                  "sites/*": {
                     "where": "CustomSite",
                     "concat": [{ testConcat: ["sampleString"] }, { testConcatNested: [{ nestedTag: ["coolString"] }] }]
                   }
@@ -717,5 +818,252 @@ describe('mdata:patch', () => {
         <nestedTag>coolString</nestedTag>
     </testConcatNested>`)
       });
+  });
+
+  describe('patching hook', () => {
+    let writeFileSyncStub;
+    let writtenFiles = {}
+    const commonStubs = function () {
+      const readFileSyncStub = stubMethod($$.SANDBOX, fs, 'readFileSync')
+
+      readFileSyncStub.callsFake((path: string) => {
+        if (Object.prototype.hasOwnProperty.call(writtenFiles, path)) {
+          return writtenFiles[path];
+        } else if (path.startsWith('/tmp/sdx_sourceDeploy_pkg_1613771557082')) {
+          return readFileSyncStub.wrappedMethod.call(this, path.replace('/tmp/sdx_sourceDeploy_pkg_1613771557082', __dirname + '/../../data/src'))
+        } else {
+          return "";
+        }
+      })
+
+      writeFileSyncStub = stubMethod($$.SANDBOX, fs, 'writeFileSync')
+      writeFileSyncStub.callsFake((path: string, contents: string | Object) => {
+        if (path.startsWith('/tmp/sdx_sourceDeploy_pkg_1613771557082')) {
+          writtenFiles[path] = contents;
+        }
+      })
+    }
+
+    test
+      .do(() => {
+        const existsSyncStub = stubMethod($$.SANDBOX, fs, 'existsSync')
+        existsSyncStub.callsFake((path: string) => {
+          if (path === '/tmp/sdx_sourceDeploy_pkg_1613771557082/mdapimap.json') {
+            return true;
+          }
+          return existsSyncStub.wrappedMethod.call(this, path);
+        })
+        stubMethod($$.SANDBOXES.PROJECT, SfdxProject.prototype, 'resolveProjectConfig').callsFake(() => {
+          return {
+            "packageDirectories": [
+              {
+                "path": "force-app",
+                "default": true
+              }
+            ],
+            "namespace": "",
+            "sfdcLoginUrl": "https://login.salesforce.com",
+            "sourceApiVersion": "50.0",
+            "plugins": {
+              "mdataPatches": {
+                "default": {
+                  "sites/*": {
+                    "where": "CustomSite",
+                    "replace": {
+                      "siteAdmin": "replacedUserName@myCoolDomain.com",
+                      "siteGuestRecordDefaultOwner": "replacedUserName2@myCoolDomain.com",
+                    }
+                  }
+                },
+                "devShared": {
+                  "profiles/*": {
+                    "where": "Profile",
+                    "deletePermissionBlocks": ["ManageSearchPromotionRules", "SelectFilesFromSalesforce"]
+                  },
+                  "objects/**/*.object-meta.xml": {
+                    "where": "CustomObject",
+                    "replace": {
+                      "externalSharingModel": "ReadOnly"
+                    }
+                  },
+                  "objects/Account/Account.object-meta.xml": {
+                    "where": "CustomObject",
+                    "replace": {
+                      "enableHistory": "true"
+                    }
+                  },
+                  "objects/Account/fields/*": {
+                    "where": "CustomField",
+                    "replace": {
+                      "label": "test replace"
+                    }
+                  },
+                  "objects/Account/fields/Active__c.field-meta.xml": {
+                    "where": "CustomField",
+                    "replace": {
+                      "required": "true"
+                    }
+                  },
+                  "objects/Account/listViews/NewLastWeek.listView-meta.xml": {
+                    "where": "ListView",
+                    "replace": {
+                      "label": "Old Last Week"
+                    }
+                  },
+                  "objects/Account/webLinks/Billing.webLink-meta.xml": {
+                    "where": "WebLink",
+                    "replace": {
+                      "url": "https://www.google.com"
+                    }
+                  },
+                }
+              }
+            }
+          }
+        });
+        commonStubs();
+      })
+      .stdout()
+      .command(['mdata:patch', '-e', 'devShared', '-r', '/tmp/sdx_sourceDeploy_pkg_1613771557082', '-s', '', '-m', '/tmp/sdx_sourceDeploy_pkg_1613771557082/mdapimap.json'])
+      .it('runs mdata:patch as a pre deploy hook', ctx => {
+        expect(writeFileSyncStub.args[0][0]).to.equal('/tmp/sdx_sourceDeploy_pkg_1613771557082/profiles/Admin.profile');
+        expect(writeFileSyncStub.args[0][1]).to.contain(`<userPermissions>
+        <enabled>true</enabled>
+        <name>ManageReportsInPubFolders</name>
+    </userPermissions>`);
+        expect(writeFileSyncStub.args[0][1]).to.not.contain(`<userPermissions>
+        <enabled>true</enabled>
+        <name>ManageSearchPromotionRules</name>
+    </userPermissions>`);
+        expect(writeFileSyncStub.args[0][1]).to.not.contain(`<userPermissions>
+        <enabled>true</enabled>
+        <name>SelectFilesFromSalesforce</name>
+    </userPermissions>`);
+        expect(writeFileSyncStub.args[1][0]).to.equal('/tmp/sdx_sourceDeploy_pkg_1613771557082/objects/Account.object');
+        expect(writeFileSyncStub.args[7][1]).to.not.contain('<externalSharingModel>Private</externalSharingModel>');
+        expect(writeFileSyncStub.args[7][1]).to.contain('<externalSharingModel>ReadOnly</externalSharingModel>');
+
+        expect(writeFileSyncStub.args[2][0]).to.equal('/tmp/sdx_sourceDeploy_pkg_1613771557082/objects/Account.object');
+        expect(writeFileSyncStub.args[7][1]).to.not.contain('<enableHistory>false</enableHistory>');
+        expect(writeFileSyncStub.args[7][1]).to.contain('<enableHistory>true</enableHistory>');
+
+        expect(writeFileSyncStub.args[3][0]).to.equal('/tmp/sdx_sourceDeploy_pkg_1613771557082/objects/Account.object');
+        expect(writeFileSyncStub.args[7][1]).to.contain(`<fields>
+        <fullName>Active__c</fullName>
+        <externalId>false</externalId>
+        <label>test replace</label>
+        <required>true</required>
+        <trackFeedHistory>false</trackFeedHistory>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>No</fullName>
+                    <default>false</default>
+                    <label>No</label>
+                </value>
+                <value>
+                    <fullName>Yes</fullName>
+                    <default>false</default>
+                    <label>Yes</label>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>`);
+        expect(writeFileSyncStub.args[4][0]).to.equal('/tmp/sdx_sourceDeploy_pkg_1613771557082/objects/Account.object');
+        expect(writeFileSyncStub.args[7][1]).to.contain(`<fields>
+        <fullName>CustomerPriority__c</fullName>
+        <externalId>false</externalId>
+        <label>test replace</label>
+        <required>false</required>
+        <trackFeedHistory>false</trackFeedHistory>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>High</fullName>
+                    <default>false</default>
+                    <label>High</label>
+                </value>
+                <value>
+                    <fullName>Low</fullName>
+                    <default>false</default>
+                    <label>Low</label>
+                </value>
+                <value>
+                    <fullName>Medium</fullName>
+                    <default>false</default>
+                    <label>Medium</label>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>`);
+
+
+        expect(writeFileSyncStub.args[6][0]).to.equal('/tmp/sdx_sourceDeploy_pkg_1613771557082/objects/Account.object');
+        expect(writeFileSyncStub.args[7][1]).to.not.contain(`<listViews>
+        <fullName>NewLastWeek</fullName>
+        <filterScope>Everything</filterScope>
+        <filters>
+            <field>ACCOUNT.CREATED_DATE</field>
+            <operation>equals</operation>
+            <value>LAST_WEEK</value>
+        </filters>
+        <label>New Last Week</label>
+    </listViews>`);
+        expect(writeFileSyncStub.args[7][1]).to.contain(`<listViews>
+        <fullName>NewLastWeek</fullName>
+        <filterScope>Everything</filterScope>
+        <filters>
+            <field>ACCOUNT.CREATED_DATE</field>
+            <operation>equals</operation>
+            <value>LAST_WEEK</value>
+        </filters>
+        <label>Old Last Week</label>
+    </listViews>`);
+
+        expect(writeFileSyncStub.args[7][0]).to.equal('/tmp/sdx_sourceDeploy_pkg_1613771557082/objects/Account.object');
+        expect(writeFileSyncStub.args[7][1]).to.not.contain(`<webLinks>
+        <fullName>Billing</fullName>
+        <availability>online</availability>
+        <displayType>link</displayType>
+        <encodingKey>UTF-8</encodingKey>
+        <hasMenubar>true</hasMenubar>
+        <hasScrollbars>true</hasScrollbars>
+        <hasToolbar>true</hasToolbar>
+        <height>600</height>
+        <isResizable>true</isResizable>
+        <linkType>url</linkType>
+        <masterLabel>Billing</masterLabel>
+        <openType>newWindow</openType>
+        <position>none</position>
+        <protected>false</protected>
+        <showsLocation>true</showsLocation>
+        <showsStatus>true</showsStatus>
+        <url>http://www.genwatt.com/genwatt/billing.htm?actname={!Account_Name}</url>
+    </webLinks>`);
+        expect(writeFileSyncStub.args[7][1]).to.contain(`<webLinks>
+        <fullName>Billing</fullName>
+        <availability>online</availability>
+        <displayType>link</displayType>
+        <encodingKey>UTF-8</encodingKey>
+        <hasMenubar>true</hasMenubar>
+        <hasScrollbars>true</hasScrollbars>
+        <hasToolbar>true</hasToolbar>
+        <height>600</height>
+        <isResizable>true</isResizable>
+        <linkType>url</linkType>
+        <masterLabel>Billing</masterLabel>
+        <openType>newWindow</openType>
+        <position>none</position>
+        <protected>false</protected>
+        <showsLocation>true</showsLocation>
+        <showsStatus>true</showsStatus>
+        <url>https://www.google.com</url>
+    </webLinks>`);
+      });
+
   });
 });

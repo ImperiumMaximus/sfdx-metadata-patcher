@@ -1,7 +1,7 @@
 # JSON Path Expression Schema
 
 ```txt
-https://sfdx-metadata-patcher.com/schemas/mdataPatches/patch#/properties/where
+https://sfdx-metadata-patcher.com/schemas/patch#/properties/where
 ```
 
 Metadata XML files are converted to JSON internally, in order to extract the relevant chunk of the XML file to which the patches are applied the JSON path expression is executed against the JSON representation of the XML metadata file itself. Most of the times you just need to specificy the root XML tag name of the metadata XML file itself: e.g., Profile, CustomObject, CustomSite, etc.

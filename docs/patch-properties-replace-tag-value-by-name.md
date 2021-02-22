@@ -1,7 +1,7 @@
 # Replace tag value by name Schema
 
 ```txt
-https://sfdx-metadata-patcher.com/schemas/mdataPatches/patch#/properties/replace
+https://sfdx-metadata-patcher.com/schemas/patch#/properties/replace
 ```
 
 Replace the value of a tag in the XML metadata file with a new one
@@ -16,9 +16,9 @@ Replace the value of a tag in the XML metadata file with a new one
 
 # replace Properties
 
-| Property | Type   | Required | Nullable       | Defined by                                                                                                                                                                                                              |
-| :------- | :----- | :------- | :------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `^.*$`   | Merged | Optional | cannot be null | [File Path or Glob Pattern patches](patch-properties-replace-tag-value-by-name-patternproperties-tag-name.md "https://sfdx-metadata-patcher.com/schemas/mdataPatches/patch#/properties/replace/patternProperties/^.*$") |
+| Property | Type   | Required | Nullable       | Defined by                                                                                                                                                                                                 |
+| :------- | :----- | :------- | :------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `^.*$`   | Merged | Optional | cannot be null | [File Path or Glob Pattern patches](patch-properties-replace-tag-value-by-name-patternproperties-tag-name.md "https://sfdx-metadata-patcher.com/schemas/patch#/properties/replace/patternProperties/^.*$") |
 
 ## Pattern: `^.*$`
 
@@ -32,7 +32,7 @@ The tag name to search
 
 *   cannot be null
 
-*   defined in: [File Path or Glob Pattern patches](patch-properties-replace-tag-value-by-name-patternproperties-tag-name.md "https://sfdx-metadata-patcher.com/schemas/mdataPatches/patch#/properties/replace/patternProperties/^.\*$")
+*   defined in: [File Path or Glob Pattern patches](patch-properties-replace-tag-value-by-name-patternproperties-tag-name.md "https://sfdx-metadata-patcher.com/schemas/patch#/properties/replace/patternProperties/^.\*$")
 
 ### ^.\*$ Type
 

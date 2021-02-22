@@ -1,7 +1,7 @@
 # Untitled undefined type in File Path or Glob Pattern patches Schema
 
 ```txt
-https://sfdx-metadata-patcher.com/schemas/mdataPatches/patch#/properties/replace/patternProperties
+https://sfdx-metadata-patcher.com/schemas/patch#/properties/replace/patternProperties
 ```
 
 

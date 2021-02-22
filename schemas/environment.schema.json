@@ -19,7 +19,7 @@
     "THE SOFTWARE."
   ],
   "$schema": "http://json-schema.org/draft-06/schema#",
-  "$id": "https://sfdx-metadata-patcher.com/schemas/mdataPatches/environment",
+  "$id": "https://sfdx-metadata-patcher.com/schemas/environment",
   "title": "Environment",
   "type": "object",
   "description": "Environment name, the list of patches to apply is matched against what it supplied to the command via the \"-e\" switch. If none then \"default\" environment name is assumed.",
@@ -39,7 +39,7 @@
           "description": "Exact file path of a file or a glob pattern in the source folder to which the patches will be applied. If the pattern matches multiple files, the patches will applied to all files that match.",
           "allOf": [
             {
-              "$ref": "https://sfdx-metadata-patcher.com/schemas/mdataPatches/patch"
+              "$ref": "https://sfdx-metadata-patcher.com/schemas/patch"
             }
           ]
         }

@@ -19,7 +19,7 @@
     "THE SOFTWARE."
   ],
   "$schema": "http://json-schema.org/draft-06/schema#",
-  "$id": "https://sfdx-metadata-patcher.com/schemas/mdataPatches/patch",
+  "$id": "https://sfdx-metadata-patcher.com/schemas/patch",
   "type": "object",
   "title": "File Path or Glob Pattern patches",
   "properties": {

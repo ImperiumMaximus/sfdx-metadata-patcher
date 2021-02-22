@@ -1,7 +1,7 @@
 # New Tag Value Schema
 
 ```txt
-https://sfdx-metadata-patcher.com/schemas/mdataPatches/patch#/properties/replace/patternProperties/^.*$/allOf/0
+https://sfdx-metadata-patcher.com/schemas/patch#/properties/replace/patternProperties/^.*$/allOf/0
 ```
 
 

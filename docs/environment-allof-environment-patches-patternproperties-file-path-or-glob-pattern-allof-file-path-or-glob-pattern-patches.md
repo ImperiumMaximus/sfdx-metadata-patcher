@@ -1,20 +1,20 @@
 # File Path or Glob Pattern patches Schema
 
 ```txt
-https://sfdx-metadata-patcher.com/schemas/patch
+https://sfdx-metadata-patcher.com/schemas/patch#/allOf/0/patternProperties/^.*$/allOf/0
 ```
 
 
 
-| Abstract            | Extensible | Status         | Identifiable | Custom Properties | Additional Properties | Access Restrictions | Defined In                                                           |
-| :------------------ | :--------- | :------------- | :----------- | :---------------- | :-------------------- | :------------------ | :------------------------------------------------------------------- |
-| Can be instantiated | No         | Unknown status | No           | Forbidden         | Allowed               | none                | [patch.schema.json](../out/patch.schema.json "open original schema") |
+| Abstract            | Extensible | Status         | Identifiable | Custom Properties | Additional Properties | Access Restrictions | Defined In                                                                        |
+| :------------------ | :--------- | :------------- | :----------- | :---------------- | :-------------------- | :------------------ | :-------------------------------------------------------------------------------- |
+| Can be instantiated | No         | Unknown status | No           | Forbidden         | Allowed               | none                | [environment.schema.json*](../out/environment.schema.json "open original schema") |
 
-## File Path or Glob Pattern patches Type
+## 0 Type
 
-`object` ([File Path or Glob Pattern patches](patch.md))
+`object` ([File Path or Glob Pattern patches](environment-allof-environment-patches-patternproperties-file-path-or-glob-pattern-allof-file-path-or-glob-pattern-patches.md))
 
-# File Path or Glob Pattern patches Properties
+# 0 Properties
 
 | Property            | Type     | Required | Nullable       | Defined by                                                                                                                                               |
 | :------------------ | :------- | :------- | :------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------- |

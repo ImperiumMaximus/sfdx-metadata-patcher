@@ -9,8 +9,7 @@ import { HookFunction } from '../../mdata';
 const substrings = require('common-substrings');
 
 export const hook: HookFunction = async options => {
-  // Run only on the deploy command, not the push command
-  if ((options.commandId === 'force:source:deploy' || options.commandId === 'force:source:push')  && options.result &&
+  if ((options.commandId === 'force:source:deploy' || options.commandId === 'force:source:push') && options.result &&
       Object.keys(options.result).length && options.result[Object.keys(options.result)[0]].workspaceElements.length) {
 
     const project = await SfdxProject.resolve();
@@ -21,7 +20,10 @@ export const hook: HookFunction = async options => {
     }
 
     const mdapiName = options.result[Object.keys(options.result)[0]];
-    const tmpPath = mdapiName.mdapiFilePath.replace(substrings([mdapiName.mdapiFilePath, mdapiName.workspaceElements[0].sourcePath])[0].name, '');
+    const subStrs = substrings([mdapiName.mdapiFilePath, mdapiName.workspaceElements[0].sourcePath]).sort((a, b) => {
+      return b.weight - a.weight;
+    });
+    const tmpPath = mdapiName.mdapiFilePath.substring(0, mdapiName.mdapiFilePath.indexOf(subStrs[0].name));
 
     const procCwd = process.cwd();
 

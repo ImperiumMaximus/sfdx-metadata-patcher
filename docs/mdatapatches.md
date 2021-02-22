@@ -4,7 +4,7 @@
 https://sfdx-metadata-patcher.com/schemas/mdataPatches
 ```
 
-
+List of patches to apply to metadata. The list can be different for each environment. Use "default" for the list of patches when no specific environment name is supplied to command.
 
 | Abstract            | Extensible | Status         | Identifiable | Custom Properties | Additional Properties | Access Restrictions | Defined In                                                                         |
 | :------------------ | :--------- | :------------- | :----------- | :---------------- | :-------------------- | :------------------ | :--------------------------------------------------------------------------------- |
@@ -16,9 +16,9 @@ https://sfdx-metadata-patcher.com/schemas/mdataPatches
 
 # Metadata Patcher Properties
 
-| Property                      | Type          | Required | Nullable       | Defined by                                                                                                                                    |
-| :---------------------------- | :------------ | :------- | :------------- | :-------------------------------------------------------------------------------------------------------------------------------------------- |
-| [mdataPatches](#mdatapatches) | Not specified | Optional | cannot be null | [Metadata Patcher](mdatapatches-properties-mdatapatches.md "https://sfdx-metadata-patcher.com/schemas/mdataPatches#/properties/mdataPatches") |
+| Property                      | Type     | Required | Nullable       | Defined by                                                                                                                               |
+| :---------------------------- | :------- | :------- | :------------- | :--------------------------------------------------------------------------------------------------------------------------------------- |
+| [mdataPatches](#mdatapatches) | `object` | Optional | cannot be null | [Metadata Patcher](mdatapatches-properties-patches.md "https://sfdx-metadata-patcher.com/schemas/mdataPatches#/properties/mdataPatches") |
 
 ## mdataPatches
 
@@ -28,12 +28,12 @@ https://sfdx-metadata-patcher.com/schemas/mdataPatches
 
 *   is optional
 
-*   Type: unknown
+*   Type: `object` ([Patches](mdatapatches-properties-patches.md))
 
 *   cannot be null
 
-*   defined in: [Metadata Patcher](mdatapatches-properties-mdatapatches.md "https://sfdx-metadata-patcher.com/schemas/mdataPatches#/properties/mdataPatches")
+*   defined in: [Metadata Patcher](mdatapatches-properties-patches.md "https://sfdx-metadata-patcher.com/schemas/mdataPatches#/properties/mdataPatches")
 
 ### mdataPatches Type
 
-unknown
+`object` ([Patches](mdatapatches-properties-patches.md))

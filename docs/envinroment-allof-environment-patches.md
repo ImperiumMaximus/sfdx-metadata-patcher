@@ -1,0 +1,57 @@
+# Environment patches Schema
+
+```txt
+https://sfdx-metadata-patcher.com/schemas/mdataPatches/environment#/allOf/0
+```
+
+
+
+| Abstract            | Extensible | Status         | Identifiable            | Custom Properties | Additional Properties | Access Restrictions | Defined In                                                                        |
+| :------------------ | :--------- | :------------- | :---------------------- | :---------------- | :-------------------- | :------------------ | :-------------------------------------------------------------------------------- |
+| Can be instantiated | No         | Unknown status | Unknown identifiability | Forbidden         | Allowed               | none                | [envinroment.schema.json*](../out/envinroment.schema.json "open original schema") |
+
+## 0 Type
+
+`object` ([Environment patches](envinroment-allof-environment-patches.md))
+
+# 0 Properties
+
+| Property | Type   | Required | Nullable       | Defined by                                                                                                                                                                                               |
+| :------- | :----- | :------- | :------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `^.*$`   | Merged | Optional | cannot be null | [Environment](envinroment-allof-environment-patches-patternproperties-file-path-or-glob-pattern.md "https://sfdx-metadata-patcher.com/schemas/mdataPatches/environment#/allOf/0/patternProperties/^.*$") |
+
+## Pattern: `^.*$`
+
+Exact file path of a file or a glob pattern in the source folder to which the patches will be applied. If the pattern matches multiple files, the patches will applied to all files that match.
+
+`^.*$`
+
+*   is optional
+
+*   Type: `object` ([File Path or Glob Pattern](envinroment-allof-environment-patches-patternproperties-file-path-or-glob-pattern.md))
+
+*   cannot be null
+
+*   defined in: [Environment](envinroment-allof-environment-patches-patternproperties-file-path-or-glob-pattern.md "https://sfdx-metadata-patcher.com/schemas/mdataPatches/environment#/allOf/0/patternProperties/^.\*$")
+
+### ^.\*$ Type
+
+`object` ([File Path or Glob Pattern](envinroment-allof-environment-patches-patternproperties-file-path-or-glob-pattern.md))
+
+all of
+
+*   [File Path or Glob Pattern patches](envinroment-allof-environment-patches-patternproperties-file-path-or-glob-pattern-allof-file-path-or-glob-pattern-patches.md "check type definition")
+
+### ^.\*$ Examples
+
+```json
+"profiles/*"
+```
+
+```json
+"profiles/Admin.profile-meta.xml"
+```
+
+```json
+"sites/*.site-meta.xml"
+```

@@ -123,3 +123,8 @@ _See code: [lib/commands/mdata/patch.js](https://github.com/ImperiumMaximus/sfdx
 ```
 _See schema definition: [docs/README.md](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.5/docs/README.md)_
 <!-- examplesstop -->
+
+## Pre Deploy Hook
+By setting ```plugins.mdataPatches.hook = true``` in ```sfdx-project.json```, a pre deploy hook for the commands ```sfdx force:source:deploy``` and ```sfdx force:source:push``` will be installed. This means that the fixes will be applied transparently everytime you perform a deployment from your IDE without even bothering to manually patch your metadata! The environment name (```-e``` switch) will be inferred based on the alias of your current default org set in the Salesforce CLI. 
+
+_See official Salesforce CLI documentation: [Create a Salesforce Hook](https://developer.salesforce.com/docs/atlas.en-us.sfdx_cli_plugins.meta/sfdx_cli_plugins/cli_plugins_customize_hooks_steps.htm)_

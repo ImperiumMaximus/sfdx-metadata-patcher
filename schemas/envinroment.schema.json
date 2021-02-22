@@ -19,27 +19,31 @@
     "THE SOFTWARE."
   ],
   "$schema": "http://json-schema.org/draft-06/schema#",
-  "$id": "https://sfdx-metadata-patcher.com/schemas/mdataPatches",
-  "title": "Metadata Patcher",
-  "description": "List of patches to apply to metadata. The list can be different for each environment. Use \"default\" for the list of patches when no specific environment name is supplied to command.",
+  "$id": "https://sfdx-metadata-patcher.com/schemas/mdataPatches/environment",
+  "title": "Environment",
   "type": "object",
-  "properties": {
-    "mdataPatches": {
-      "title": "Patches",
+  "description": "Environment name, the list of patches to apply is matched against what it supplied to the command via the \"-e\" switch. If none then \"default\" environment name is assumed.",
+  "allOf": [
+    {
       "type": "object",
-      "properties": {
-        "hook": {
-          "title": "Enable Pre Deploy SF CLI Hook",
-          "description": "Set to true in order to enable Pre Deploy Hook in SF CLI force:source:deploy and force:source:push commands",
-          "type": "boolean"
-        }
-      },
+      "title": "Environment patches",
       "patternProperties": {
-        "^(?!hook)([a-zA-Z]+)$": {
-          "$ref": "https://sfdx-metadata-patcher.com/schemas/mdataPatches/environment"
+        "^.*$": {
+          "title": "File Path or Glob Pattern",
+          "type": "object",
+          "examples": [
+            "profiles/*",
+            "profiles/Admin.profile-meta.xml",
+            "sites/*.site-meta.xml"
+          ],
+          "description": "Exact file path of a file or a glob pattern in the source folder to which the patches will be applied. If the pattern matches multiple files, the patches will applied to all files that match.",
+          "allOf": [
+            {
+              "$ref": "https://sfdx-metadata-patcher.com/schemas/mdataPatches/patch"
+            }
+          ]
         }
-      },
-      "additionalProperties": false
+      }
     }
-  }
+  ]
 }

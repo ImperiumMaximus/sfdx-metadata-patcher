@@ -1,5 +1,6 @@
 import { expect, test } from '@salesforce/command/lib/test';
-import { LoggerLevel, Mdata } from '../src/mdata';
+import { LoggerLevel } from '../src/typeDefs';
+import { Mdata } from '../src/mdata';
 
 
 describe('mdata logger', () => {

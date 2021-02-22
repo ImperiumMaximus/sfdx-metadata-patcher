@@ -5,7 +5,7 @@ import { getString, JsonMap } from '@salesforce/ts-types';
 import * as fs from 'fs';
 import * as path from 'path';
 import Patch from '../../commands/mdata/patch';
-import { HookFunction } from '../../mdata';
+import { HookFunction } from '../../typeDefs';
 const substrings = require('common-substrings');
 
 export const hook: HookFunction = async options => {

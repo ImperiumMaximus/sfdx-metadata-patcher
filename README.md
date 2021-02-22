@@ -26,7 +26,50 @@ $ sfdx mdata:patch --help
 ```
 ## Commands
 <!-- commands -->
+* [`sfdx mdata:communities:publish [-n <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-mdatacommunitiespublish--n-string--u-string---apiversion-string---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
 * [`sfdx mdata:patch [-e <string>] [-r <string>] [-m <string>] [-s <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-mdatapatch--e-string--r-string--m-string--s-string---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
+
+## `sfdx mdata:communities:publish [-n <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
+
+publishes one or more Experience Cloud communities
+
+```
+publishes one or more Experience Cloud communities
+
+USAGE
+  $ sfdx mdata:communities:publish [-n <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel 
+  trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
+
+OPTIONS
+  -n, --name=name                                                                   comma-separated list of community
+                                                                                    names
+
+  -u, --targetusername=targetusername                                               username or alias for the target
+                                                                                    org; overrides default target org
+
+  --apiversion=apiversion                                                           override the api version used for
+                                                                                    api requests made by this command
+
+  --json                                                                            format output as json
+
+  --loglevel=(trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL)  [default: info] logging level for
+                                                                                    this command invocation
+
+EXAMPLES
+  To publish all the communities in the org:
+       $ sfdx mdata:communities:publish
+  To find a community named Customer and publish it:
+       $ sfdx mdata:communities:publish -n Customer
+  To find communities named Customer, Partner and publish them:
+       $ sfdx mdata:communities:publish -n Customer,Partner
+
+  To find a community named Customer in Org with alias uat and publish it:
+       $ sfdx mdata:communities:publish -n Customer -u uat
+  To find a community named Customer in Org with username admin.user@uat.myorg.com and publish it:
+       $ sfdx mdata:communities:publish -n Customer -u admin.user@uat.myorg.com
+```
+
+_See code: [lib/commands/mdata/communities/publish.js](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.7/lib/commands/mdata/communities/publish.js)_
 
 ## `sfdx mdata:patch [-e <string>] [-r <string>] [-m <string>] [-s <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
@@ -65,5 +108,5 @@ OPTIONS
                                                                                     this command invocation
 ```
 
-_See code: [lib/commands/mdata/patch.js](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.6/lib/commands/mdata/patch.js)_
+_See code: [lib/commands/mdata/patch.js](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.7/lib/commands/mdata/patch.js)_
 <!-- commandsstop -->

@@ -17,7 +17,8 @@ import * as _ from 'lodash';
 import * as micromatch from 'micromatch';
 import path = require('path');
 import * as xml2js from 'xml2js';
-import { LoggerLevel, Mdata, WorkspaceMdapiElement } from '../../mdata';
+import { Mdata } from '../../mdata';
+import { LoggerLevel, WorkspaceMdapiElement } from '../../typeDefs';
 
 // Initialize Messages with the current plugin directory
 Messages.importMessagesDirectory(__dirname);

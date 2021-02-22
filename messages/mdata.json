@@ -10,6 +10,20 @@
       "done": "done"
     }
   },
+  "communities": {
+    "publish": {
+      "description": "publishes one or more Experience Cloud communities",
+      "flags": {
+        "name": "comma-separated list of community names"
+      },
+      "infos": {
+        "progressBarFormat": "Publishing [{bar}] {percentage}% | {value}/{total} | Community: {communityName}"
+      },
+      "errors": {
+        "noCommunitiesFound": "No communities found"
+      }
+    }
+  },
   "metadata": {
     "patch": {
       "description": "patches source metadata files in order to solve common Salesforce deployment bugs or to modifly on the fly API endpoints",

@@ -65,5 +65,5 @@ OPTIONS
                                                                                     this command invocation
 ```
 
-_See code: [lib/commands/mdata/patch.js](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.5/lib/commands/mdata/patch.js)_
+_See code: [lib/commands/mdata/patch.js](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.6/lib/commands/mdata/patch.js)_
 <!-- commandsstop -->

@@ -69,3 +69,15 @@ export type CommunitiesPublishCAPIResponse = {
   name: string,
   url: string
 };
+
+export type TranslationDataTable = {
+  name: string,
+  columns: string[],
+  rows: object[]
+};
+
+export enum StfType {
+  Bilingual = 'Bilingual',
+  Untranslated = 'Untranslated',
+  Source = 'Source'
+}

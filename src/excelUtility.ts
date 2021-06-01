@@ -61,6 +61,52 @@ export class ExcelUtility {
         await workbook.xlsx.writeFile(saveTofilePath);
     }
 
+    public static async importFromExcel(aPath: string, sheetNames: string[], aRowHeader: number): Promise<TranslationDataTable[]> {
+        if (!fs.existsSync(aPath)) {
+            throw new Error(messages.getMessage('translations.convert.errors.invalidFileName'));
+        }
+
+        let workbook: ExcelJS.Workbook = new ExcelJS.Workbook();
+        workbook = await workbook.xlsx.readFile(aPath);
+
+        let worksheets: ExcelJS.Worksheet[] = workbook.worksheets;
+        const dataTableList: TranslationDataTable[] = [];
+
+        if (sheetNames && sheetNames.length) {
+            const worksheetSubList = workbook.worksheets.filter(ws => sheetNames.includes(ws.name));
+            if (worksheetSubList.length !== sheetNames.length) {
+                throw new Error(messages.getMessage('translations.convert.errors.oneOrMoreSheetsNotFound'));
+            }
+            worksheets = [...worksheetSubList];
+        }
+
+        worksheets.forEach(ws => {
+            const numRows = ws.actualRowCount;
+            const numCols = ws.actualColumnCount;
+            const numHeaderGroups = this.getNumberOfHeaderGroupsInWorksheet(aRowHeader, ws);
+            const extractedLines: TranslationDataTable = { name: ws.name, columns: [], rows: [] };
+            this.getExcelSheetInfo(ws, extractedLines, aRowHeader, numHeaderGroups, numCols);
+
+            for (let i = aRowHeader + numHeaderGroups; i <= numRows; i++) {
+                const extractedRow = {};
+                let skipAddToDataTable = true;
+                for (let j = 1; j <= numCols; j++) {
+                    const cell = ws.getRow(i).getCell(j);
+                    if (cell.value && cell.value.toString() !== '') {
+                        skipAddToDataTable = false;
+                        extractedRow[extractedLines.columns[j - 1]] = cell.value;
+                    }
+                }
+                if (!skipAddToDataTable) {
+                    extractedLines.rows.push(extractedRow);
+                }
+            }
+            dataTableList.push(extractedLines);
+        });
+
+        return dataTableList;
+    }
+
     private static groupHeaderSeparator = '\n';
 
     private static generateSheetName(originalName: string, usedSheets: string[]): string {
@@ -88,6 +134,24 @@ export class ExcelUtility {
         return col.split(this.groupHeaderSeparator).length;
     }
 
+    private static getNumberOfHeaderGroupsInWorksheet(headerRow: number, workSheet: ExcelJS.Worksheet): number {
+        let groupSize = headerRow;
+        let cell = workSheet.getRow(groupSize).getCell(1);
+        while (cell.isMerged) {
+            groupSize++;
+            cell = workSheet.getRow(groupSize).getCell(1);
+        }
+        if (groupSize === headerRow) {
+            return 1;
+        }
+        cell = workSheet.getRow(groupSize - 1).getCell(1);
+        if (cell.master === workSheet.getRow(groupSize - 1).getCell(2).master) {
+            return groupSize - headerRow + 1;
+        }
+        return groupSize - headerRow;
+
+    }
+
     private static getSubColumnName(col: string, subGroupNumber: number): string {
         const subHeaders = col.split(this.groupHeaderSeparator);
         if (subHeaders.length >= subGroupNumber) {
@@ -108,6 +172,31 @@ export class ExcelUtility {
         }
 
         return rawValue;
+    }
+
+    private static getExcelSheetInfo(worksheet: ExcelJS.Worksheet, extractedDataTable: TranslationDataTable, aRowHeader: number, numHeaderGroups: number, numCols: number) {
+        for (let i = 1; i <= numCols; i++) {
+            const columnName = this.getColumnName(aRowHeader, i, numHeaderGroups, worksheet);
+            if (columnName && columnName !== '') {
+                extractedDataTable.columns.push(columnName);
+            }
+        }
+    }
+
+    private static getColumnName(headerRow: number, colNumber: number, headerColumnNumber: number, worksheet: ExcelJS.Worksheet): string {
+        let columnName = '';
+
+        for (let i = headerRow; i < headerRow + headerColumnNumber; i++) {
+            let cell = worksheet.getRow(i).getCell(colNumber);
+            if (!cell.isMerged) {
+                columnName += cell.value + this.groupHeaderSeparator;
+                continue;
+            }
+            cell = cell.master;
+            columnName += cell.value + this.groupHeaderSeparator;
+        }
+
+        return columnName.substr(0, columnName.length - this.groupHeaderSeparator.length);
     }
 
     private static isNumeric(str) {

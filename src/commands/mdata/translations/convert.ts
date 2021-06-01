@@ -71,6 +71,15 @@ export default class Publish extends SfdxCommand {
             char: 'm',
             description: messages.getMessage('translations.convert.flags.metadata')
         }),
+        sheets: flags.string({
+            char: 's',
+            description: messages.getMessage('translations.convert.flags.sheets')
+        }),
+        rowheadernum: flags.number({
+            char: 'r',
+            description: messages.getMessage('translations.convert.flags.rowheadernum'),
+            default: 1
+        }),
         loglevel: flags.enum({
             description: messages.getMessage('general.flags.loglevel'),
             default: 'info',
@@ -112,12 +121,16 @@ export default class Publish extends SfdxCommand {
         let dataTableList: TranslationDataTable[] = [];
         if (this.flags.from === 'stf' && this.flags.to === 'xlsx') {
             if (path.extname(this.flags.infile) === '.zip') {
-                dataTableList = await TranslationUtility.importSTFZipFile(this.flags.infile, 'utf-8', this.flags.metadata ? this.flags.metadata.split(',') : []);
+                dataTableList = await TranslationUtility.importSTFZipFile(this.flags.infile, 'utf8', this.flags.metadata ? this.flags.metadata.split(',') : []);
             } else {
-                dataTableList.push(await TranslationUtility.importSTFFile(this.flags.infile, 'utf-8'));
+                dataTableList.push(await TranslationUtility.importSTFFile(this.flags.infile, 'utf8'));
             }
 
             await ExcelUtility.toExcel(dataTableList, this.flags.outfile);
+        } else if (this.flags.from === 'xlsx' && this.flags.to === 'stf') {
+            dataTableList = await ExcelUtility.importFromExcel(this.flags.infile, this.flags.sheets ? this.flags.sheets.split(',') : [], this.flags.rowheadernum);
+
+            await TranslationUtility.exportToSTF(dataTableList, this.flags.outfile, 'utf8');
         }
 
         return null;

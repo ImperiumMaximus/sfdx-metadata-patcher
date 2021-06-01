@@ -32,7 +32,9 @@
         "to": "Format of the destination file",
         "infile": "Path of the input file",
         "outfile": "Path of the output file",
-        "metadata": "Comma-separated list of metadata component names"
+        "metadata": "Comma-separated list of metadata component names",
+        "sheets": "Comma-separated list of XLSX sheet names",
+        "rowheadernum": "Index (starts from 1) of the row that contains the header"
       },
       "errors": {
         "noInputFileFound": "Input file not found or you don't have read access to it",
@@ -43,7 +45,8 @@
         "invalidStfNoHeader": "Invalid stf file, no translation information defined",
         "invalidStfType": "Invalid stf file, stf file type is invalid",
         "invalidStfFormat": "Invalid stf file, stf file format is invalid",
-        "invalidStfKeyNotFound": "Invalid stf file, %s not found"
+        "invalidStfKeyNotFound": "Invalid stf file, %s not found",
+        "oneOrMoreSheetsNotFound": "One or more Excel Sheet do not exist"
       }
     }
   },

@@ -3,7 +3,9 @@ import * as csvParse from 'csv-parse';
 import * as fs from 'fs';
 import * as JSZip from 'jszip';
 import * as lineReader from 'line-reader';
+import * as path from 'path';
 import { StfType, TranslationDataTable } from './typeDefs';
+import { WritableMemoryStream } from './writableStream';
 
 Messages.importMessagesDirectory(__dirname);
 
@@ -30,6 +32,33 @@ export class TranslationUtility {
         }
         const reader = await this.getReader(stfPath, encoding);
         return this.importSTFFileWithReader(reader, filters);
+    }
+
+    public static async exportToSTF(dataTableList: TranslationDataTable[], stfFolderPath: string, encoding: BufferEncoding) {
+        if (!fs.existsSync(stfFolderPath)) {
+            throw new Error(messages.getMessage('translations.convert.errors.invalidFileName'));
+        }
+
+        let fileName = '';
+        if (dataTableList.length === 1) {
+            fileName = path.join(stfFolderPath, this.generateFileName('.stf', dataTableList[0].name));
+            const fsWritable = this.getFsWritableStream(fileName, encoding);
+            this.generateSTFStream(dataTableList[0], fsWritable);
+            fsWritable.close();
+        } else {
+            fileName = path.join(stfFolderPath, this.generateFileName('.zip', ''));
+            const zipFile = new JSZip();
+            dataTableList.forEach(dataTable => {
+                const entryName = this.generateFileName('.stf', dataTable.name);
+                const memWritable = this.getMemWritableStream(encoding);
+                this.generateSTFStream(dataTable, memWritable);
+                zipFile.file(entryName, memWritable.toBuffer());
+            });
+
+            zipFile
+                .generateNodeStream({type: 'nodebuffer', streamFiles: true})
+                .pipe(this.getFsWritableStream(fileName, 'utf8'));
+        }
     }
 
     private static async importSTFFileWithReader(reader: Reader, filters?: string[]): Promise<TranslationDataTable> {
@@ -226,5 +255,80 @@ export class TranslationUtility {
             }
             resultTable.rows.push(resultRow);
         });
+    }
+
+    private static generateFileName(extension: string, languageCode: string) {
+        if (languageCode) {
+            return 'Bilingual_' + languageCode + '_' + new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '').replace(/:/g, '-').replace(/ /g, '_') + extension;
+        }
+        return 'Bilingual_' + new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '').replace(/:/g, '-').replace(/ /g, '_') + extension;
+    }
+
+    private static writeLine(writableStream: NodeJS.WritableStream, line: string) {
+        writableStream.write(line + '\n');
+    }
+
+    private static getFsWritableStream(filename: string, encoding: BufferEncoding): fs.WriteStream {
+        return fs.createWriteStream(filename, { encoding });
+    }
+
+    private static getMemWritableStream(encoding: BufferEncoding): WritableMemoryStream {
+        return new WritableMemoryStream(encoding);
+    }
+
+    private static generateSTFStream(dataTable: TranslationDataTable, writableStream: NodeJS.WritableStream) {
+        this.generateSTFHeader(dataTable.name, writableStream);
+
+        try {
+            dataTable.rows.forEach(r => {
+                this.generateSTFRow(r, writableStream);
+            });
+        } catch (e) {
+            throw e;
+        }
+    }
+
+    private static generateSTFHeader(languageCode: string, writableStream: NodeJS.WritableStream) {
+        this.writeLine(writableStream, '# Use the Bilingual file to review translations, edit labels that have already been translated, and add translations for labels that haven\'t been translated.');
+        this.writeLine(writableStream, '# - The TRANSLATED section of the file contains the text that has been translated and needs to be reviewed.');
+        this.writeLine(writableStream, '# - The UNTRANSLATED section of the file contains text that hasn\'t been translated. You can replace untranslated labels in the LABEL column with translated values.');
+        this.writeLine(writableStream, '');
+        this.writeLine(writableStream, '# The Out of Date indicators are:');
+        this.writeLine(writableStream, '# - An asterisk (*): The label is out of date. A change was made to the default language label and the translation hasn\'t been updated.');
+        this.writeLine(writableStream, '# - A dash (-): The translation is current.');
+        this.writeLine(writableStream, '');
+        this.writeLine(writableStream, '# Notes:');
+        this.writeLine(writableStream, '# Don\'t add columns to or remove columns from this file.');
+        this.writeLine(writableStream, '# Tabs (\\t), new lines (\\n) and carriage returns (\\r) are represented by special characters in this file. These characters should be preserved in the import file to maintain formatting.');
+        this.writeLine(writableStream, '# Lines that begin with the # symbol are igenored during import.');
+        this.writeLine(writableStream, '# Salesforce translation files are exported in the UTF-8 encoding to support extended and double-byte characters. This encoding cannot be changed.');
+        this.writeLine(writableStream, '');
+        this.writeLine(writableStream, `# Language: ${languageCode}`);
+        this.writeLine(writableStream, `Language code: ${languageCode}`);
+        this.writeLine(writableStream, 'Type: Bilingual');
+        this.writeLine(writableStream, '');
+        this.writeLine(writableStream, '------------------TRANSLATED-------------------');
+        this.writeLine(writableStream, '');
+        this.writeLine(writableStream, '# KEY   LABEL   TRANSLATION OUT OF DATE');
+        this.writeLine(writableStream, '');
+    }
+
+    private static generateSTFRow(row: object, writableStream: NodeJS.WritableStream) {
+        let translation: string = row['Translation'];
+        if (!translation || translation === '{!--Unknown--}') {
+            return;
+        }
+
+        let key: string = `${row['Metadata Component']}.${row['Object/Type']}`;
+        if (row['Sub Type 1']) {
+            key += `.${row['Sub Type 1']}`;
+            if (row['Sub Type 2']) {
+                key += `.${row['Sub Type 2']}`;
+            }
+        }
+
+        const label = row['Label'].replace(/\t/g, '\\t').replace(/\n/g, '\\n').replace(/\r/g, '\\r');
+        translation = translation.replace(/\t/g, '\\t').replace(/\n/g, '\\n').replace(/\r/g, '\\r');
+        this.writeLine(writableStream, `${key}\t${label}\t${translation}\t-`);
     }
 }

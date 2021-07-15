@@ -26,9 +26,53 @@ $ sfdx mdata:patch --help
 ```
 ## Commands
 <!-- commands -->
+* [`sfdx mdata:apex:testdependencies -m <string> [-n <string>] [-d <number>] [-j <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-mdataapextestdependencies--m-string--n-string--d-number--j-string---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
 * [`sfdx mdata:communities:publish [-n <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-mdatacommunitiespublish--n-string--u-string---apiversion-string---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
 * [`sfdx mdata:patch [-e <string>] [-r <string>] [-m <string>] [-s <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-mdatapatch--e-string--r-string--m-string--s-string---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
 * [`sfdx mdata:translations:convert -f <string> -t <string> -i <string> -o <string> [-m <string>] [-s <string>] [-r <number>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-mdatatranslationsconvert--f-string--t-string--i-string--o-string--m-string--s-string--r-number---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
+
+## `sfdx mdata:apex:testdependencies -m <string> [-n <string>] [-d <number>] [-j <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
+
+computes the list of (statically) dependant Apex Test Classes to a list of Apex Classes supplied in input up to a certain depth
+
+```
+computes the list of (statically) dependant Apex Test Classes to a list of Apex Classes supplied in input up to a certain depth
+
+USAGE
+  $ sfdx mdata:apex:testdependencies -m <string> [-n <string>] [-d <number>] [-j <string>] [--json] [--loglevel 
+  trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
+
+OPTIONS
+  -d, --depth=depth                                                                 how many iterations to perform while
+                                                                                    navigating the tree of dependencies
+
+  -j, --javabinary=javabinary                                                       path of java executable
+
+  -m, --metadata=metadata                                                           (required) comma-separated list of
+                                                                                    Apex Class names
+
+  -n, --nameconv=nameconv                                                           [default: Test] naming convention to
+                                                                                    apply to generate Apex Class Test
+                                                                                    names
+
+  --json                                                                            format output as json
+
+  --loglevel=(trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL)  [default: info] logging level for
+                                                                                    this command invocation
+
+EXAMPLES
+  To find all test dependecies for a class in a SFDX project:
+       $ sfdx mdata:apex:testdependencies -m foo.cls
+  To find all test dependecies for multiple classes in a SFDX project:
+       $ sfdx mdata:apex:testdependencies -m foo.cls,bar.cls
+  To find all test dependecies up to a certain depth for multiple classes in a SFDX project:
+       $ sfdx mdata:apex:testdependencies -m foo.cls,bar.cls -d 1
+  To find all test dependecies up to a certain depth for multiple classes in a SFDX project using a specific java 
+  version:
+       $ sfdx mdata:apex:testdependencies -m foo.cls,bar.cls -d 1 -j /opt/my_cool_java_version/bin/java
+```
+
+_See code: [lib/commands/mdata/apex/testdependencies.js](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.9/lib/commands/mdata/apex/testdependencies.js)_
 
 ## `sfdx mdata:communities:publish [-n <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
@@ -70,7 +114,7 @@ EXAMPLES
        $ sfdx mdata:communities:publish -n Customer -u admin.user@uat.myorg.com
 ```
 
-_See code: [lib/commands/mdata/communities/publish.js](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.8/lib/commands/mdata/communities/publish.js)_
+_See code: [lib/commands/mdata/communities/publish.js](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.9/lib/commands/mdata/communities/publish.js)_
 
 ## `sfdx mdata:patch [-e <string>] [-r <string>] [-m <string>] [-s <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
@@ -109,7 +153,7 @@ OPTIONS
                                                                                     this command invocation
 ```
 
-_See code: [lib/commands/mdata/patch.js](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.8/lib/commands/mdata/patch.js)_
+_See code: [lib/commands/mdata/patch.js](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.9/lib/commands/mdata/patch.js)_
 
 ## `sfdx mdata:translations:convert -f <string> -t <string> -i <string> -o <string> [-m <string>] [-s <string>] [-r <number>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
@@ -146,5 +190,5 @@ OPTIONS
                                                                                     this command invocation
 ```
 
-_See code: [lib/commands/mdata/translations/convert.js](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.8/lib/commands/mdata/translations/convert.js)_
+_See code: [lib/commands/mdata/translations/convert.js](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.9/lib/commands/mdata/translations/convert.js)_
 <!-- commandsstop -->

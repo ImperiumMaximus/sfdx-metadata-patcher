@@ -140,7 +140,7 @@ describe('apex:testdependencies', () => {
             commonStubs();
         })
         .stdout()
-        .command(['mdata:apex:testdependencies', '-m', 'fflib_SObjectDomain.cls'])
+        .command(['mdata:apex:testdependencies', '-m', 'fflib_SObjectDomain.cls', '-j', '/usr/bin/java'])
         .it('runs mdata:apex:testdependencies with non-json output', ctx => {
             expect(ctx.stdout).to.contain('-l RunSpecifiedTests -r fflib_SObjectDomainTest,fflib_ApplicationTest');
         });
@@ -150,7 +150,7 @@ describe('apex:testdependencies', () => {
             commonStubs();
         })
         .stdout()
-        .command(['mdata:apex:testdependencies', '-m', 'fflib_SObjectDomain.cls', '--json'])
+        .command(['mdata:apex:testdependencies', '-m', 'fflib_SObjectDomain.cls', '--json', '-j', '/usr/bin/java'])
         .it('runs mdata:apex:testdependencies with json output', ctx => {
             expect(JSON.parse(ctx.stdout).result).to.deep.equal(['fflib_SObjectDomainTest','fflib_ApplicationTest']);
         });

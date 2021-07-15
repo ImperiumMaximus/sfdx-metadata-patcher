@@ -22,6 +22,7 @@
     "micromatch": "^4.0.2",
     "pino": "^6.11.1",
     "pino-pretty": "^4.5.0",
+    "ts-lsp-client": "^0.0.8",
     "tslib": "^1"
   },
   "devDependencies": {

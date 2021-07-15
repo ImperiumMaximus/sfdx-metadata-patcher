@@ -77,5 +77,15 @@
         "missingConfiguration": "Missing configuration in sfdx-project.json"
       }
     }
+  },
+  "apex": {
+    "testdependencies": {
+      "description": "computes the list of (statically) dependant Apex Test Classes to a list of Apex Classes supplied in input up to a certain depth",
+      "flags": {
+        "metadata": "comma-separated list of Apex Class names",
+        "nameconv": "naming convention to apply to generate Apex Class Test names",
+        "depth": "how many iterations to perform while navigating the tree of dependencies"
+      }
+    }
   }
 }

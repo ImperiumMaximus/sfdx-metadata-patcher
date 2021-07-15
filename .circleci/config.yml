@@ -1,9 +1,9 @@
 ---
 version: 2
 jobs:
-  node-latest: &test
+  node-14: &test
     docker:
-      - image: node:latest
+      - image: node:14
     working_directory: ~/cli
     steps:
       - checkout
@@ -29,31 +29,31 @@ jobs:
   #  <<: *test
   #  docker:
   #    - image: node:8
-  node-10:
-    <<: *test
-    docker:
-      - image: node:10
-  cache:
-    <<: *test
-    steps:
-      - checkout
-      - run:
-          name: Install dependencies
-          command: yarn
-      - save_cache:
-          key: v1-npm-{{checksum ".circleci/config.yml"}}-{{checksum "yarn.lock"}}
-          paths:
-            - ~/cli/node_modules
-            - /usr/local/share/.cache/yarn
-            - /usr/local/share/.config/yarn
+  #node-10:
+  #  <<: *test
+  #  docker:
+  #    - image: node:10
+  #cache:
+  #  <<: *test
+  #  steps:
+  #    - checkout
+  #    - run:
+  #      name: Install dependencies
+  #        command: yarn
+  #    - save_cache:
+  #        key: v1-npm-{{checksum ".circleci/config.yml"}}-{{checksum "yarn.lock"}}
+  #        paths:
+  #          - ~/cli/node_modules
+  #          - /usr/local/share/.cache/yarn
+  #          - /usr/local/share/.config/yarn
 
 workflows:
   version: 2
   "sfdx-metadata-patcher":
     jobs:
-      - node-latest
+      - node-14
      #- node-8
-      - node-10
+     #- node-10
       - cache:
           filters:
             tags:

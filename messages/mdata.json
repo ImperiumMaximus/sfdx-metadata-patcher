@@ -84,7 +84,8 @@
       "flags": {
         "metadata": "comma-separated list of Apex Class names",
         "nameconv": "naming convention to apply to generate Apex Class Test names",
-        "depth": "how many iterations to perform while navigating the tree of dependencies"
+        "depth": "how many iterations to perform while navigating the tree of dependencies",
+        "javabinary": "path of java executable"
       }
     }
   }

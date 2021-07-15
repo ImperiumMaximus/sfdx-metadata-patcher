@@ -2,6 +2,7 @@ import { flags, SfdxCommand } from '@salesforce/command';
 import { Messages, SfdxProject } from '@salesforce/core';
 import { AnyJson } from '@salesforce/ts-types';
 import { spawn } from 'child_process';
+import * as findJavaHome from 'find-java-home';
 import * as fs from 'fs';
 import * as path from 'path';
 import { ClientCapabilities, JSONRPCEndpoint, Location, LspClient, SymbolInformation, SymbolKind } from 'ts-lsp-client';
@@ -18,21 +19,17 @@ export default class TestDependencies extends SfdxCommand {
     public static description = messages.getMessage('apex.testdependencies.description');
 
     public static examples = [
-        `To publish all the communities in the org:
-    $ sfdx mdata:communities:publish`,
+        `To find all test dependecies for a class in a SFDX project:
+    $ sfdx mdata:apex:testdependencies -m foo.cls`,
 
-        `To find a community named Customer and publish it:
-    $ sfdx mdata:communities:publish -n Customer`,
+        `To find all test dependecies for multiple classes in a SFDX project:
+    $ sfdx mdata:apex:testdependencies -m foo.cls,bar.cls`,
 
-        `To find communities named Customer, Partner and publish them:
-    $ sfdx mdata:communities:publish -n Customer,Partner
-`,
+        `To find all test dependecies up to a certain depth for multiple classes in a SFDX project:
+    $ sfdx mdata:apex:testdependencies -m foo.cls,bar.cls -d 1`,
 
-        `To find a community named Customer in Org with alias uat and publish it:
-    $ sfdx mdata:communities:publish -n Customer -u uat`,
-
-        `To find a community named Customer in Org with username admin.user@uat.myorg.com and publish it:
-    $ sfdx mdata:communities:publish -n Customer -u admin.user@uat.myorg.com`
+        `To find all test dependecies up to a certain depth for multiple classes in a SFDX project using a specific java version:
+    $ sfdx mdata:apex:testdependencies -m foo.cls,bar.cls -d 1 -j /opt/my_cool_java_version/bin/java`
     ];
 
     protected static flagsConfig = {
@@ -49,6 +46,10 @@ export default class TestDependencies extends SfdxCommand {
         depth: flags.number({
             char: 'd',
             description: messages.getMessage('apex.testdependencies.flags.depth')
+        }),
+        javabinary: flags.string({
+            char: 'j',
+            description: messages.getMessage('apex.testdependencies.flags.javabinary')
         }),
         loglevel: flags.enum({
             description: messages.getMessage('general.flags.loglevel'),
@@ -87,7 +88,15 @@ export default class TestDependencies extends SfdxCommand {
 
         const uberJar = path.join(__dirname, '..', '..', '..', '..', 'libs', 'apex-jorje-lsp.jar');
         Mdata.log(`Using JAR ${uberJar}`, LoggerLevel.INFO);
-        const child = spawn('/usr/bin/java', ['-cp', uberJar,
+
+        const javaBinary = this.flags.javabinary ? this.flags.javabinary : await (
+            new Promise((res, rej) => {
+                findJavaHome({ allowJre: true }, (err, home) => {
+                    if (err) rej(err);
+                    res(path.join(home, 'bin', 'java'));
+                });
+            }));
+        const child = spawn(javaBinary, ['-cp', uberJar,
             '-Ddebug.internal.errors=true', '-Ddebug.semantic.errors=true',
             '-Ddebug.completion.statistics=true', '-Dlwc.typegeneration.disabled=true',
             '-Dtrace.protocol=false', 'apex.jorje.lsp.ApexLanguageServerLauncher'], {

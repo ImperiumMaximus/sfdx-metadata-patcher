@@ -26,7 +26,51 @@ $ sfdx mdata:patch --help
 ```
 ## Commands
 <!-- commands -->
+* [`sfdx mdata:communities:publish [-n <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-mdatacommunitiespublish--n-string--u-string---apiversion-string---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
 * [`sfdx mdata:patch [-e <string>] [-r <string>] [-m <string>] [-s <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-mdatapatch--e-string--r-string--m-string--s-string---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
+* [`sfdx mdata:translations:convert -f <string> -t <string> -i <string> -o <string> [-m <string>] [-s <string>] [-r <number>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-mdatatranslationsconvert--f-string--t-string--i-string--o-string--m-string--s-string--r-number---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
+
+## `sfdx mdata:communities:publish [-n <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
+
+publishes one or more Experience Cloud communities
+
+```
+publishes one or more Experience Cloud communities
+
+USAGE
+  $ sfdx mdata:communities:publish [-n <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel 
+  trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
+
+OPTIONS
+  -n, --name=name                                                                   comma-separated list of community
+                                                                                    names
+
+  -u, --targetusername=targetusername                                               username or alias for the target
+                                                                                    org; overrides default target org
+
+  --apiversion=apiversion                                                           override the api version used for
+                                                                                    api requests made by this command
+
+  --json                                                                            format output as json
+
+  --loglevel=(trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL)  [default: info] logging level for
+                                                                                    this command invocation
+
+EXAMPLES
+  To publish all the communities in the org:
+       $ sfdx mdata:communities:publish
+  To find a community named Customer and publish it:
+       $ sfdx mdata:communities:publish -n Customer
+  To find communities named Customer, Partner and publish them:
+       $ sfdx mdata:communities:publish -n Customer,Partner
+
+  To find a community named Customer in Org with alias uat and publish it:
+       $ sfdx mdata:communities:publish -n Customer -u uat
+  To find a community named Customer in Org with username admin.user@uat.myorg.com and publish it:
+       $ sfdx mdata:communities:publish -n Customer -u admin.user@uat.myorg.com
+```
+
+_See code: [lib/commands/mdata/communities/publish.js](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.8/lib/commands/mdata/communities/publish.js)_
 
 ## `sfdx mdata:patch [-e <string>] [-r <string>] [-m <string>] [-s <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
@@ -65,5 +109,42 @@ OPTIONS
                                                                                     this command invocation
 ```
 
-_See code: [lib/commands/mdata/patch.js](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.5/lib/commands/mdata/patch.js)_
+_See code: [lib/commands/mdata/patch.js](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.8/lib/commands/mdata/patch.js)_
+
+## `sfdx mdata:translations:convert -f <string> -t <string> -i <string> -o <string> [-m <string>] [-s <string>] [-r <number>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
+
+converts a translation file from one format to another (e.g. from Salesforce Translation Format (STF) to Excel or viceversa)
+
+```
+converts a translation file from one format to another (e.g. from Salesforce Translation Format (STF) to Excel or viceversa)
+
+USAGE
+  $ sfdx mdata:translations:convert -f <string> -t <string> -i <string> -o <string> [-m <string>] [-s <string>] [-r 
+  <number>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
+
+OPTIONS
+  -f, --from=stf|xlsx                                                               (required) Format of the source file
+  -i, --infile=infile                                                               (required) Path of the input file
+
+  -m, --metadata=metadata                                                           Comma-separated list of metadata
+                                                                                    component names
+
+  -o, --outfile=outfile                                                             (required) Path of the output file
+
+  -r, --rowheadernum=rowheadernum                                                   [default: 1] Index (starts from 1)
+                                                                                    of the row that contains the header
+
+  -s, --sheets=sheets                                                               Comma-separated list of XLSX sheet
+                                                                                    names
+
+  -t, --to=stf|xlsx                                                                 (required) Format of the destination
+                                                                                    file
+
+  --json                                                                            format output as json
+
+  --loglevel=(trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL)  [default: info] logging level for
+                                                                                    this command invocation
+```
+
+_See code: [lib/commands/mdata/translations/convert.js](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.8/lib/commands/mdata/translations/convert.js)_
 <!-- commandsstop -->

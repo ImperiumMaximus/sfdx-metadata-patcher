@@ -1,9 +1,9 @@
 ---
 version: 2
 jobs:
-  node-14-alpine: &test
+  node-14: &test
     docker:
-      - image: node:14-alpine
+      - image: node:14
     working_directory: ~/cli
     steps:
       - checkout
@@ -51,7 +51,7 @@ workflows:
   version: 2
   "sfdx-metadata-patcher":
     jobs:
-      - node-14-alpine
+      - node-14
      #- node-8
      #- node-10
       - cache:

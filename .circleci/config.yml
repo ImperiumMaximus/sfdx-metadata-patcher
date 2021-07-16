@@ -33,19 +33,19 @@ jobs:
   #  <<: *test
   #  docker:
   #    - image: node:10
-  #cache:
-  #  <<: *test
-  #  steps:
-  #    - checkout
-  #    - run:
-  #      name: Install dependencies
-  #        command: yarn
-  #    - save_cache:
-  #        key: v1-npm-{{checksum ".circleci/config.yml"}}-{{checksum "yarn.lock"}}
-  #        paths:
-  #          - ~/cli/node_modules
-  #          - /usr/local/share/.cache/yarn
-  #          - /usr/local/share/.config/yarn
+  cache:
+    <<: *test
+    steps:
+      - checkout
+      - run:
+        name: Install dependencies
+          command: yarn
+      - save_cache:
+          key: v1-npm-{{checksum ".circleci/config.yml"}}-{{checksum "yarn.lock"}}
+          paths:
+            - ~/cli/node_modules
+            - /usr/local/share/.cache/yarn
+            - /usr/local/share/.config/yarn
 
 workflows:
   version: 2

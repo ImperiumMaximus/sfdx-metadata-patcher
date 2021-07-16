@@ -19,7 +19,7 @@ export default class ManifestSort extends SfdxCommand {
 
     public static examples = [
         `To sort the components of a manifest file
-    $ sfdx mdata:manifest:sort -x manifest/package.xml`,
+    $ sfdx mdata:manifest:sort -x manifest/package.xml`
 
     ];
 

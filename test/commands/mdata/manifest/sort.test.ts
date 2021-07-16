@@ -46,8 +46,8 @@ describe('manifest:sort', () => {
     })
     .command(['mdata:manifest:sort', '-x', 'manifest/package.xml'])
     .it('sorts alphabetically the components of a manifest file', async () => {
-        expect(writeFileSyncStub.args[0][0]).to.equal('manifest/package.xml');
-        expect(writeFileSyncStub.args[0][1]).to.equal(new xml2js.Builder({
+        expect(writeFileSyncStub.args[writeFileSyncStub.args.length - 1][0]).to.equal('manifest/package.xml');
+        expect(writeFileSyncStub.args[writeFileSyncStub.args.length - 1][1]).to.equal(new xml2js.Builder({
             renderOpts: {
                 pretty: true,
                 indent: '    ',
@@ -87,8 +87,8 @@ describe('manifest:sort', () => {
     .command(['mdata:manifest:sort', '-x', 'manifest/package.xml', '--json'])
     .it('sorts alphabetically the components of a manifest file and outputs the result as a JSON', async (ctx) => {
         const expectedJson = await parseXml(__dirname + '/../../../data/manifest/package_sorted.xml');
-        expect(writeFileSyncStub.args[0][0]).to.equal('manifest/package.xml');
-        expect(writeFileSyncStub.args[0][1]).to.equal(new xml2js.Builder({
+        expect(writeFileSyncStub.args[writeFileSyncStub.args.length - 1][0]).to.equal('manifest/package.xml');
+        expect(writeFileSyncStub.args[writeFileSyncStub.args.length - 1][1]).to.equal(new xml2js.Builder({
             renderOpts: {
                 pretty: true,
                 indent: '    ',

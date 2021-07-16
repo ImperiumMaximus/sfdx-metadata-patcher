@@ -16,9 +16,9 @@ import * as jsonQuery from 'json-query';
 import * as _ from 'lodash';
 import * as micromatch from 'micromatch';
 import path = require('path');
-import * as xml2js from 'xml2js';
 import { Mdata } from '../../mdata';
 import { LoggerLevel, WorkspaceMdapiElement } from '../../typeDefs';
+import { parseXml, writeXml } from '../../xmlUtility';
 
 // Initialize Messages with the current plugin directory
 Messages.importMessagesDirectory(__dirname);
@@ -112,19 +112,6 @@ export default class Patch extends SfdxCommand {
     return '';
   }
 
-  public async parseXml(xmlFile: string): Promise<AnyJson> {
-    return new Promise((resolve, reject) => {
-      const parser = new xml2js.Parser({ explicitArray: true });
-      const data = fs.readFileSync(xmlFile);
-      parser.parseString(data, (err, result) => {
-        if (err) {
-          reject(err);
-        }
-        resolve(result);
-      });
-    });
-  }
-
   public async preDeployFixes(): Promise<void> {
     const self = this;
     await _.reduce(_.keys(this.fixes), async (prevFixPromise, filePath) => {
@@ -155,13 +142,13 @@ export default class Patch extends SfdxCommand {
       }
 
       async function patchFile(f: string) {
-        const xml = await self.parseXml(f);
+        const xml = await parseXml(f);
         let confs = self.fixes[filePath];
         if (!_.isArray(confs)) confs = [confs];
         _.each(confs, async conf => {
           await self.processConf(xml, conf);
         });
-        await self.writeXml(f, xml);
+        await writeXml(f, xml);
       }
     }, Promise.resolve());
   }
@@ -196,29 +183,15 @@ export default class Patch extends SfdxCommand {
       }
 
       async function patchFile(f: string, fixes: AnyJson) {
-        const xml = await self.parseXml(f);
+        const xml = await parseXml(f);
         let confs = fixes;
         if (!_.isArray(confs)) confs = [confs];
         _.each(confs, async conf => {
           await self.processConf(xml, conf);
         });
-        await self.writeXml(f, xml);
+        await writeXml(f, xml);
       }
     }, Promise.resolve());
-  }
-
-  public async writeXml(xmlFile: string, obj: unknown): Promise<void> {
-    const builder = new xml2js.Builder({
-      renderOpts: {
-        pretty: true,
-        indent: '    ',
-        newline: '\n'
-      },
-      xmldec: {
-        encoding: 'UTF-8'
-      }
-    });
-    fs.writeFileSync(xmlFile, builder.buildObject(obj));
   }
 
   public maybeCreateTag(xml, tag, value) {

@@ -81,3 +81,18 @@ export enum StfType {
   Untranslated = 'Untranslated',
   Source = 'Source'
 }
+
+export type PackageXml = {
+  'Package': {
+    '$': {
+      xmlns: string
+    }
+    types: PackageType[]
+    version: string[]
+  }
+};
+
+export type PackageType = {
+  members: string[],
+  name: string[]
+};

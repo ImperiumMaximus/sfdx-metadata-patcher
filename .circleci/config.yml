@@ -38,8 +38,8 @@ jobs:
     steps:
       - checkout
       - run:
-        name: Install dependencies
-        command: yarn
+          name: Install dependencies
+          command: yarn
       - save_cache:
           key: v1-npm-{{checksum ".circleci/config.yml"}}-{{checksum "yarn.lock"}}
           paths:

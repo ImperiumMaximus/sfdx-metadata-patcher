@@ -17,6 +17,12 @@ export default class ManifestSort extends SfdxCommand {
 
     public static description = messages.getMessage('manifest.sort.description');
 
+    public static examples = [
+        `To sort the components of a manifest file
+    $ sfdx mdata:manifest:sort -x manifest/package.xml`,
+
+    ];
+
     protected static flagsConfig = {
         manifest: flags.string({
             char: 'x',

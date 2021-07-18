@@ -18,8 +18,17 @@ export default class ManifestSort extends SfdxCommand {
     public static description = messages.getMessage('manifest.align.description');
 
     public static examples = [
-        `To sort the components of a manifest file
-    $ sfdx mdata:manifest:sort -x manifest/package.xml`
+        `To align the manifest from the default package source directory
+    $ sfdx mdata:manifest:align -x manifest/package.xml`,
+
+        `To align the manifest from a list of source directories
+    $ sfdx mdata:manifest:align -p /path/to/source1,/path/to/source2,/path/to/source3 -x manifest/package.xml`,
+
+        `To align the manifest from the default package source directory together with components of another directory
+    $ sfdx mdata:manifest:align -r /path/to/root/dir -x manifest/package.xml`,
+
+        `To align the manifest from the default package source directory with only specific metadata
+    $ sfdx mdata:manifest:align -m ApexClass,ApexTrigger,CustomObject -x manifest/package.xml`,
 
     ];
 

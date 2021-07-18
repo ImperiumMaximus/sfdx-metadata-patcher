@@ -28,7 +28,7 @@ export default class ManifestSort extends SfdxCommand {
     $ sfdx mdata:manifest:align -r /path/to/root/dir -x manifest/package.xml`,
 
         `To align the manifest from the default package source directory with only specific metadata
-    $ sfdx mdata:manifest:align -m ApexClass,ApexTrigger,CustomObject -x manifest/package.xml`,
+    $ sfdx mdata:manifest:align -m ApexClass,ApexTrigger,CustomObject -x manifest/package.xml`
 
     ];
 

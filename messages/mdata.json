@@ -90,6 +90,15 @@
     }
   },
   "manifest": {
+    "align": {
+      "description": "align manifest (package.xml) in a project using the source format according to the components present in the project itself",
+      "flags": {
+        "rootdir": "a source directory from which the manifest (package.xml) is generated",
+        "sourcepath": "comma-separated list of paths to the local source files from which the manifest (package.xml) is generated",
+        "manifest": "output filepath to which the manifest (package.xml) is written",
+        "metadata": "comma-separated list of metadata component names to include in the manifest"
+      }
+    },
     "sort": {
       "description": "sort alphabetically the components in a manifest (package.xml) file",
       "flags": {

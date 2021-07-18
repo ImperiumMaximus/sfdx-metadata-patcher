@@ -54,7 +54,8 @@ describe('manifest:sort', () => {
                 newline: '\n'
             },
             xmldec: {
-                encoding: 'UTF-8'
+                encoding: 'UTF-8',
+                version: '1.0'
             }
         }).buildObject(await parseXml(__dirname + '/../../../data/manifest/package_sorted.xml')));
     });
@@ -95,7 +96,8 @@ describe('manifest:sort', () => {
                 newline: '\n'
             },
             xmldec: {
-                encoding: 'UTF-8'
+                encoding: 'UTF-8',
+                version: '1.0'
             }
         }).buildObject(expectedJson));
         expect(JSON.parse(ctx.stdout).result).to.deep.equal(expectedJson);

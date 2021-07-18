@@ -28,6 +28,7 @@ $ sfdx mdata:patch --help
 <!-- commands -->
 * [`sfdx mdata:apex:testdependencies -m <string> [-n <string>] [-d <number>] [-j <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-mdataapextestdependencies--m-string--n-string--d-number--j-string---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
 * [`sfdx mdata:communities:publish [-n <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-mdatacommunitiespublish--n-string--u-string---apiversion-string---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
+* [`sfdx mdata:manifest:align [-r <string>] [-p <string>] [-x <string>] [-m <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-mdatamanifestalign--r-string--p-string--x-string--m-string---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
 * [`sfdx mdata:manifest:sort -x <string> [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-mdatamanifestsort--x-string---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
 * [`sfdx mdata:patch [-e <string>] [-r <string>] [-m <string>] [-s <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-mdatapatch--e-string--r-string--m-string--s-string---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
 * [`sfdx mdata:translations:convert -f <string> -t <string> -i <string> -o <string> [-m <string>] [-s <string>] [-r <number>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-mdatatranslationsconvert--f-string--t-string--i-string--o-string--m-string--s-string--r-number---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
@@ -73,7 +74,7 @@ EXAMPLES
        $ sfdx mdata:apex:testdependencies -m foo.cls,bar.cls -d 1 -j /opt/my_cool_java_version/bin/java
 ```
 
-_See code: [lib/commands/mdata/apex/testdependencies.js](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.9/lib/commands/mdata/apex/testdependencies.js)_
+_See code: [lib/commands/mdata/apex/testdependencies.js](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.12/lib/commands/mdata/apex/testdependencies.js)_
 
 ## `sfdx mdata:communities:publish [-n <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
@@ -115,7 +116,50 @@ EXAMPLES
        $ sfdx mdata:communities:publish -n Customer -u admin.user@uat.myorg.com
 ```
 
-_See code: [lib/commands/mdata/communities/publish.js](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.9/lib/commands/mdata/communities/publish.js)_
+_See code: [lib/commands/mdata/communities/publish.js](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.12/lib/commands/mdata/communities/publish.js)_
+
+## `sfdx mdata:manifest:align [-r <string>] [-p <string>] [-x <string>] [-m <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
+
+align manifest (package.xml) in a project using the source format according to the components present in the project itself
+
+```
+align manifest (package.xml) in a project using the source format according to the components present in the project itself
+
+USAGE
+  $ sfdx mdata:manifest:align [-r <string>] [-p <string>] [-x <string>] [-m <string>] [--json] [--loglevel 
+  trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
+
+OPTIONS
+  -m, --metadata=metadata                                                           comma-separated list of metadata
+                                                                                    component names to include in the
+                                                                                    manifest
+
+  -p, --sourcepath=sourcepath                                                       comma-separated list of paths to the
+                                                                                    local source files from which the
+                                                                                    manifest (package.xml) is generated
+
+  -r, --rootdir=rootdir                                                             a source directory from which the
+                                                                                    manifest (package.xml) is generated
+
+  -x, --manifest=manifest                                                           [default: manifest/package.xml]
+                                                                                    output filepath to which the
+                                                                                    manifest (package.xml) is written
+
+  --json                                                                            format output as json
+
+  --loglevel=(trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL)  [default: info] logging level for
+                                                                                    this command invocation
+
+EXAMPLES
+  To align the manifest from the default package source directory
+       $ sfdx mdata:manifest:align -x manifest/package.xml
+  To align the manifest from a list of source directories
+       $ sfdx mdata:manifest:align -p /path/to/source1,/path/to/source2,/path/to/source3 -x manifest/package.xml
+  To align the manifest from the default package source directory together with components of another directory
+       $ sfdx mdata:manifest:align -r /path/to/root/dir -x manifest/package.xml
+  To align the manifest from the default package source directory with only specific metadata
+       $ sfdx mdata:manifest:align -m ApexClass,ApexTrigger,CustomObject -x manifest/package.xml
+```
 
 ## `sfdx mdata:manifest:sort -x <string> [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
@@ -141,6 +185,8 @@ EXAMPLE
   To sort the components of a manifest file
        $ sfdx mdata:manifest:sort -x manifest/package.xml
 ```
+
+_See code: [lib/commands/mdata/manifest/sort.js](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.12/lib/commands/mdata/manifest/sort.js)_
 
 ## `sfdx mdata:patch [-e <string>] [-r <string>] [-m <string>] [-s <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
@@ -179,7 +225,7 @@ OPTIONS
                                                                                     this command invocation
 ```
 
-_See code: [lib/commands/mdata/patch.js](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.9/lib/commands/mdata/patch.js)_
+_See code: [lib/commands/mdata/patch.js](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.12/lib/commands/mdata/patch.js)_
 
 ## `sfdx mdata:translations:convert -f <string> -t <string> -i <string> -o <string> [-m <string>] [-s <string>] [-r <number>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
@@ -216,5 +262,5 @@ OPTIONS
                                                                                     this command invocation
 ```
 
-_See code: [lib/commands/mdata/translations/convert.js](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.9/lib/commands/mdata/translations/convert.js)_
+_See code: [lib/commands/mdata/translations/convert.js](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.12/lib/commands/mdata/translations/convert.js)_
 <!-- commandsstop -->

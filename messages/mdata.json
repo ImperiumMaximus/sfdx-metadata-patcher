@@ -7,6 +7,7 @@
       "noOrgFound": "No org configuration found for name %s"
     },
     "infos": {
+      "usingUsername": "Using org with username: %s",
       "done": "done"
     }
   },
@@ -108,6 +109,39 @@
         "noInputFileFound": "Input file not found or you don't have read access to it",
         "badXml": "manifest XML is malformed: %s",
         "writeXml": "error while trying to write resulting manifest: %s"
+      }
+    }
+  },
+  "profile": {
+    "retrieve": {
+      "description": "retrieve one or more profiles in a project considering all the rest of sources",
+      "flags": {
+        "rootdir": "a source directory from which the components together with profiles are retrieved",
+        "sourcepath": "comma-separated list of paths to the local source files from to retrieve together with profiles",
+        "manifest": "manifest (package.xml) to retrieve",
+        "profiles": "comma-separated list of profile names to retrieve (by default they are all retrieved according to what is found in sources/root dir/manifest)",
+        "outdir": "output directory to store the retrieved profiles"
+      }
+    }
+  },
+  "permset": {
+    "retrieve": {
+      "description": "retrieve one or more permission sets in a project considering all the rest of sources",
+      "flags": {
+        "rootdir": "a source directory from which the components together with permission sets are retrieved",
+        "sourcepath": "comma-separated list of paths to the local source files from to retrieve together with permission sets",
+        "manifest": "manifest (package.xml) to retrieve",
+        "profiles": "comma-separated list of permission sets names to retrieve (by default they are all retrieved according to what is found in sources/root dir/manifest)",
+        "outdir": "output directory to store the retrieved permission sets"
+      }
+    }
+  },
+  "utility": {
+    "retrieve": {
+      "info": {
+        "retrieveJobId": "Retrieve Job ID: %s",
+        "retrieveStatus": "Retrieve Status: %s",
+        "writingFile": "Writing file %s..."
       }
     }
   }

@@ -31,6 +31,8 @@ $ sfdx mdata:patch --help
 * [`sfdx mdata:manifest:align [-r <string>] [-p <string>] [-x <string>] [-m <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-mdatamanifestalign--r-string--p-string--x-string--m-string---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
 * [`sfdx mdata:manifest:sort -x <string> [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-mdatamanifestsort--x-string---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
 * [`sfdx mdata:patch [-e <string>] [-r <string>] [-m <string>] [-s <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-mdatapatch--e-string--r-string--m-string--s-string---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
+* [`sfdx mdata:permset:retrieve [-r <string>] [-p <string>] [-x <string>] [-m <string>] [-d <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-mdatapermsetretrieve--r-string--p-string--x-string--m-string--d-string--u-string---apiversion-string---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
+* [`sfdx mdata:profile:retrieve [-r <string>] [-p <string>] [-x <string>] [-m <string>] [-d <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-mdataprofileretrieve--r-string--p-string--x-string--m-string--d-string--u-string---apiversion-string---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
 * [`sfdx mdata:translations:convert -f <string> -t <string> -i <string> -o <string> [-m <string>] [-s <string>] [-r <number>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-mdatatranslationsconvert--f-string--t-string--i-string--o-string--m-string--s-string--r-number---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
 
 ## `sfdx mdata:apex:testdependencies -m <string> [-n <string>] [-d <number>] [-j <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
@@ -74,7 +76,7 @@ EXAMPLES
        $ sfdx mdata:apex:testdependencies -m foo.cls,bar.cls -d 1 -j /opt/my_cool_java_version/bin/java
 ```
 
-_See code: [lib/commands/mdata/apex/testdependencies.js](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.12/lib/commands/mdata/apex/testdependencies.js)_
+_See code: [src/commands/mdata/apex/testdependencies.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.13/src/commands/mdata/apex/testdependencies.ts)_
 
 ## `sfdx mdata:communities:publish [-n <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
@@ -116,7 +118,7 @@ EXAMPLES
        $ sfdx mdata:communities:publish -n Customer -u admin.user@uat.myorg.com
 ```
 
-_See code: [lib/commands/mdata/communities/publish.js](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.12/lib/commands/mdata/communities/publish.js)_
+_See code: [src/commands/mdata/communities/publish.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.13/src/commands/mdata/communities/publish.ts)_
 
 ## `sfdx mdata:manifest:align [-r <string>] [-p <string>] [-x <string>] [-m <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
@@ -161,6 +163,8 @@ EXAMPLES
        $ sfdx mdata:manifest:align -m ApexClass,ApexTrigger,CustomObject -x manifest/package.xml
 ```
 
+_See code: [src/commands/mdata/manifest/align.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.13/src/commands/mdata/manifest/align.ts)_
+
 ## `sfdx mdata:manifest:sort -x <string> [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
 sort alphabetically the components in a manifest (package.xml) file
@@ -186,7 +190,7 @@ EXAMPLE
        $ sfdx mdata:manifest:sort -x manifest/package.xml
 ```
 
-_See code: [lib/commands/mdata/manifest/sort.js](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.12/lib/commands/mdata/manifest/sort.js)_
+_See code: [src/commands/mdata/manifest/sort.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.13/src/commands/mdata/manifest/sort.ts)_
 
 ## `sfdx mdata:patch [-e <string>] [-r <string>] [-m <string>] [-s <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
@@ -225,7 +229,129 @@ OPTIONS
                                                                                     this command invocation
 ```
 
-_See code: [lib/commands/mdata/patch.js](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.12/lib/commands/mdata/patch.js)_
+_See code: [src/commands/mdata/patch.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.13/src/commands/mdata/patch.ts)_
+
+## `sfdx mdata:permset:retrieve [-r <string>] [-p <string>] [-x <string>] [-m <string>] [-d <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
+
+retrieve one or more profiles in a project considering all the rest of sources
+
+```
+retrieve one or more profiles in a project considering all the rest of sources
+
+USAGE
+  $ sfdx mdata:permset:retrieve [-r <string>] [-p <string>] [-x <string>] [-m <string>] [-d <string>] [-u <string>] 
+  [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
+
+OPTIONS
+  -d, --outdir=outdir                                                               output directory to store the
+                                                                                    retrieved permission sets
+
+  -m, --permsets=permsets                                                           comma-separated list of permission
+                                                                                    sets names to retrieve (by default
+                                                                                    they are all retrieved according to
+                                                                                    what is found in sources/root
+                                                                                    dir/manifest)
+
+  -p, --sourcepath=sourcepath                                                       comma-separated list of paths to the
+                                                                                    local source files from to retrieve
+                                                                                    together with permission sets
+
+  -r, --rootdir=rootdir                                                             a source directory from which the
+                                                                                    components together with permission
+                                                                                    sets are retrieved
+
+  -u, --targetusername=targetusername                                               username or alias for the target
+                                                                                    org; overrides default target org
+
+  -x, --manifest=manifest                                                           [default: manifest/package.xml]
+                                                                                    manifest (package.xml) to retrieve
+
+  --apiversion=apiversion                                                           override the api version used for
+                                                                                    api requests made by this command
+
+  --json                                                                            format output as json
+
+  --loglevel=(trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL)  [default: info] logging level for
+                                                                                    this command invocation
+
+EXAMPLES
+  To retrieve the permission sets in the default package source directory
+       $ sfdx mdata:permsets:retrieve
+  To retrieve the permission sets in the default package source directory from a list of source directories
+       $ sfdx mdata:permsets:retrieve -p /path/to/source1,/path/to/source2,/path/to/source3
+  To retrieve the permission sets in the default package source directory from the default source directory together 
+  with components of another directory
+       $ sfdx mdata:permsets:retrieve -r /path/to/root/dir
+  To retrieve the permission sets in the default package source directory from a manifest (package.xml)
+       $ sfdx mdata:permsets:retrieve -x manifest/package.xml
+  To retrieve the permission sets in a specific output folder from the default source directory
+       $ sfdx mdata:permsets:retrieve -d /path/to/out/dir
+  To retrieve a specific list of permission sets in the default package source directory
+       $ sfdx mdata:permsets:retrieve -m "MyCoolPermSet1,MyCoolPermSet2"
+```
+
+_See code: [src/commands/mdata/permset/retrieve.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.13/src/commands/mdata/permset/retrieve.ts)_
+
+## `sfdx mdata:profile:retrieve [-r <string>] [-p <string>] [-x <string>] [-m <string>] [-d <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
+
+retrieve one or more profiles in a project considering all the rest of sources
+
+```
+retrieve one or more profiles in a project considering all the rest of sources
+
+USAGE
+  $ sfdx mdata:profile:retrieve [-r <string>] [-p <string>] [-x <string>] [-m <string>] [-d <string>] [-u <string>] 
+  [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
+
+OPTIONS
+  -d, --outdir=outdir                                                               output directory to store the
+                                                                                    retrieved profiles
+
+  -m, --profiles=profiles                                                           comma-separated list of profile
+                                                                                    names to retrieve (by default they
+                                                                                    are all retrieved according to what
+                                                                                    is found in sources/root
+                                                                                    dir/manifest)
+
+  -p, --sourcepath=sourcepath                                                       comma-separated list of paths to the
+                                                                                    local source files from to retrieve
+                                                                                    together with profiles
+
+  -r, --rootdir=rootdir                                                             a source directory from which the
+                                                                                    components together with profiles
+                                                                                    are retrieved
+
+  -u, --targetusername=targetusername                                               username or alias for the target
+                                                                                    org; overrides default target org
+
+  -x, --manifest=manifest                                                           [default: manifest/package.xml]
+                                                                                    manifest (package.xml) to retrieve
+
+  --apiversion=apiversion                                                           override the api version used for
+                                                                                    api requests made by this command
+
+  --json                                                                            format output as json
+
+  --loglevel=(trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL)  [default: info] logging level for
+                                                                                    this command invocation
+
+EXAMPLES
+  To retrieve the profiles in the default package source directory
+       $ sfdx mdata:permsets:retrieve
+  To retrieve the profiles in the default package source directory from a list of source directories
+       $ sfdx mdata:permsets:retrieve -p /path/to/source1,/path/to/source2,/path/to/source3
+  To retrieve the profiles in the default package source directory from the default source directory together with 
+  components of another directory
+       $ sfdx mdata:permsets:retrieve -r /path/to/root/dir
+  To retrieve the profiles in the default package source directory from a manifest (package.xml)
+       $ sfdx mdata:permsets:retrieve -x manifest/package.xml
+  To retrieve the profiles in a specific output folder from the default source directory
+       $ sfdx mdata:permsets:retrieve -d /path/to/out/dir
+  To retrieve a specific list of profiles in the default package source directory
+       $ sfdx mdata:permsets:retrieve -m "Admin,Read Only,Custom: Sales Profile"
+```
+
+_See code: [src/commands/mdata/profile/retrieve.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.13/src/commands/mdata/profile/retrieve.ts)_
 
 ## `sfdx mdata:translations:convert -f <string> -t <string> -i <string> -o <string> [-m <string>] [-s <string>] [-r <number>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
@@ -262,5 +388,5 @@ OPTIONS
                                                                                     this command invocation
 ```
 
-_See code: [lib/commands/mdata/translations/convert.js](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.12/lib/commands/mdata/translations/convert.js)_
+_See code: [src/commands/mdata/translations/convert.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.13/src/commands/mdata/translations/convert.ts)_
 <!-- commandsstop -->

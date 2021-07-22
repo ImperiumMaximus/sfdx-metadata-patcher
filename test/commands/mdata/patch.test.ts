@@ -830,8 +830,10 @@ describe('mdata:patch', () => {
       readFileSyncStub.callsFake((filePath: string) => {
         if (Object.prototype.hasOwnProperty.call(writtenFiles, filePath)) {
           return writtenFiles[filePath];
-        } else if (filePath.startsWith(path.join('tmp', 'sdx_sourceDeploy_pkg_1613771557082'))) {
-          return readFileSyncStub.wrappedMethod.call(this, filePath.replace(path.join('tmp', 'sdx_sourceDeploy_pkg_1613771557082'), path.join(__dirname, '..', '..', 'data', 'src')))
+        } else if (filePath.startsWith('sdx_sourceDeploy_pkg_1613771557082')) {
+          return readFileSyncStub.wrappedMethod.call(this, filePath.replace('sdx_sourceDeploy_pkg_1613771557082', path.join(__dirname, '..', '..', 'data', 'src')))
+        } else if (filePath === 'mdapimap.json') {
+          return readFileSyncStub.wrappedMethod.call(this, path.join(__dirname, '..', '..', 'data', 'src', filePath));
         } else {
           return "";
         }
@@ -839,7 +841,7 @@ describe('mdata:patch', () => {
 
       writeFileSyncStub = stubMethod($$.SANDBOX, fs, 'writeFileSync')
       writeFileSyncStub.callsFake((filePath: string, contents: string | Object) => {
-        if (filePath.startsWith(path.join('tmp', 'sdx_sourceDeploy_pkg_1613771557082'))) {
+        if (filePath.startsWith('sdx_sourceDeploy_pkg_1613771557082')) {
           writtenFiles[filePath] = contents;
         }
       })
@@ -849,7 +851,7 @@ describe('mdata:patch', () => {
       .do(() => {
         const existsSyncStub = stubMethod($$.SANDBOX, fs, 'existsSync')
         existsSyncStub.callsFake((filePath: string) => {
-          if (filePath === path.join('tmp', 'sdx_sourceDeploy_pkg_1613771557082/mdapimap.json')) {
+          if (filePath === 'mdapimap.json') {
             return true;
           }
           return existsSyncStub.wrappedMethod.call(this, filePath);
@@ -925,9 +927,9 @@ describe('mdata:patch', () => {
         commonStubs();
       })
       .stdout()
-      .command(['mdata:patch', '-e', 'devShared', '-r', 'tmp/sdx_sourceDeploy_pkg_1613771557082', '-s', '', '-m', 'tmp/sdx_sourceDeploy_pkg_1613771557082/mdapimap.json'])
+      .command(['mdata:patch', '-e', 'devShared', '-r', 'sdx_sourceDeploy_pkg_1613771557082', '-s', '', '-m', 'mdapimap.json'])
       .it('runs mdata:patch as a pre deploy hook', ctx => {
-        expect(writeFileSyncStub.args[0][0]).to.equal(path.join('tmp', 'sdx_sourceDeploy_pkg_1613771557082/profiles/Admin.profile'));
+        expect(writeFileSyncStub.args[0][0]).to.equal(path.join('sdx_sourceDeploy_pkg_1613771557082', 'profiles', 'Admin.profile'));
         expect(writeFileSyncStub.args[0][1]).to.contain(`<userPermissions>
         <enabled>true</enabled>
         <name>ManageReportsInPubFolders</name>
@@ -940,15 +942,15 @@ describe('mdata:patch', () => {
         <enabled>true</enabled>
         <name>SelectFilesFromSalesforce</name>
     </userPermissions>`);
-        expect(writeFileSyncStub.args[1][0]).to.equal(path.join('tmp', 'sdx_sourceDeploy_pkg_1613771557082/objects/Account.object'));
+        expect(writeFileSyncStub.args[1][0]).to.equal(path.join('sdx_sourceDeploy_pkg_1613771557082', 'objects', 'Account.object'));
         expect(writeFileSyncStub.args[7][1]).to.not.contain('<externalSharingModel>Private</externalSharingModel>');
         expect(writeFileSyncStub.args[7][1]).to.contain('<externalSharingModel>ReadOnly</externalSharingModel>');
 
-        expect(writeFileSyncStub.args[2][0]).to.equal(path.join('tmp', 'sdx_sourceDeploy_pkg_1613771557082/objects/Account.object'));
+        expect(writeFileSyncStub.args[2][0]).to.equal(path.join('sdx_sourceDeploy_pkg_1613771557082', 'objects', 'Account.object'));
         expect(writeFileSyncStub.args[7][1]).to.not.contain('<enableHistory>false</enableHistory>');
         expect(writeFileSyncStub.args[7][1]).to.contain('<enableHistory>true</enableHistory>');
 
-        expect(writeFileSyncStub.args[3][0]).to.equal(path.join('tmp', 'sdx_sourceDeploy_pkg_1613771557082/objects/Account.object'));
+        expect(writeFileSyncStub.args[3][0]).to.equal(path.join('sdx_sourceDeploy_pkg_1613771557082', 'objects', 'Account.object'));
         expect(writeFileSyncStub.args[7][1]).to.contain(`<fields>
         <fullName>Active__c</fullName>
         <externalId>false</externalId>
@@ -972,7 +974,7 @@ describe('mdata:patch', () => {
             </valueSetDefinition>
         </valueSet>
     </fields>`);
-        expect(writeFileSyncStub.args[4][0]).to.equal(path.join('tmp', 'sdx_sourceDeploy_pkg_1613771557082/objects/Account.object'));
+        expect(writeFileSyncStub.args[4][0]).to.equal(path.join('sdx_sourceDeploy_pkg_1613771557082', 'objects', 'Account.object'));
         expect(writeFileSyncStub.args[7][1]).to.contain(`<fields>
         <fullName>CustomerPriority__c</fullName>
         <externalId>false</externalId>
@@ -1003,7 +1005,7 @@ describe('mdata:patch', () => {
     </fields>`);
 
 
-        expect(writeFileSyncStub.args[6][0]).to.equal(path.join('tmp', 'sdx_sourceDeploy_pkg_1613771557082/objects/Account.object'));
+        expect(writeFileSyncStub.args[6][0]).to.equal(path.join('sdx_sourceDeploy_pkg_1613771557082', 'objects', 'Account.object'));
         expect(writeFileSyncStub.args[7][1]).to.not.contain(`<listViews>
         <fullName>NewLastWeek</fullName>
         <filterScope>Everything</filterScope>
@@ -1025,7 +1027,7 @@ describe('mdata:patch', () => {
         <label>Old Last Week</label>
     </listViews>`);
 
-        expect(writeFileSyncStub.args[7][0]).to.equal(path.join('tmp', 'sdx_sourceDeploy_pkg_1613771557082/objects/Account.object'));
+        expect(writeFileSyncStub.args[7][0]).to.equal(path.join('sdx_sourceDeploy_pkg_1613771557082', 'objects', 'Account.object'));
         expect(writeFileSyncStub.args[7][1]).to.not.contain(`<webLinks>
         <fullName>Billing</fullName>
         <availability>online</availability>

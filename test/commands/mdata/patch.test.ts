@@ -5,6 +5,7 @@ import { SfdxProject } from '@salesforce/core';
 import { stubMethod } from '@salesforce/ts-sinon';
 import { glob } from 'glob';
 import * as fs from 'fs';
+import * as path from 'path';
 
 // Initialize Messages with the current plugin directory
 Messages.importMessagesDirectory(__dirname);
@@ -30,13 +31,13 @@ describe('mdata:patch', () => {
     let writeFileSyncStub;
     const commonStubs = function () {
       stubMethod($$.SANDBOX, glob, 'glob').callsFake((pattern: string, cb: (err: Error | null, matches: string[]) => void) => {
-        cb(null, ['force-app/main/default/profiles/Admin.profile-meta.xml', 'force-app/main/default/profiles/Custom%3A Sales Profile.profile-meta.xml'])
+        cb(null, [path.join('force-app', 'main', 'default', 'profiles', 'Admin.profile-meta.xml'), path.join('force-app', 'main', 'default', 'profiles', 'Custom%3A Sales Profile.profile-meta.xml')])
       })
       const readFileSyncStub = stubMethod($$.SANDBOX, fs, 'readFileSync')
 
-      readFileSyncStub.callsFake((path: string) => {
-        if (path.startsWith('force-app/main/default')) {
-          return readFileSyncStub.wrappedMethod.call(this, path.replace('force-app/main/default', __dirname + '/../../data/force-app'))
+      readFileSyncStub.callsFake((filePath: string) => {
+        if (filePath.startsWith(path.join('force-app', 'main', 'default'))) {
+          return readFileSyncStub.wrappedMethod.call(this, filePath.replace(path.join('force-app', 'main', 'default'), path.join(__dirname, '..', '..', 'data', 'force-app')));
         } else {
           return ""
         }
@@ -81,7 +82,7 @@ describe('mdata:patch', () => {
       .stdout()
       .command(['mdata:patch', '-e', 'default'])
       .it('runs mdata:patch on a non-existent file with the default environment name', ctx => {
-        expect(ctx.stdout).to.contain(messages.getMessage('metadata.patch.warns.missingFile', ['force-app/main/default/profiles/NonExistent.profile-meta.xml']));
+        expect(ctx.stdout).to.contain(messages.getMessage('metadata.patch.warns.missingFile', [path.join('force-app', 'main', 'default', 'profiles', 'NonExistent.profile-meta.xml')]));
       });
 
     test
@@ -120,7 +121,7 @@ describe('mdata:patch', () => {
       .stdout()
       .command(['mdata:patch', '-e', 'default'])
       .it('runs mdata:patch removing userPermissions with the default environment name', ctx => {
-        expect(writeFileSyncStub.args[0][0]).to.equal('force-app/main/default/profiles/Admin.profile-meta.xml');
+        expect(writeFileSyncStub.args[0][0]).to.equal(path.join('force-app', 'main', 'default', 'profiles', 'Admin.profile-meta.xml'));
         expect(writeFileSyncStub.args[0][1]).to.contain(`<userPermissions>
         <enabled>true</enabled>
         <name>ManageReportsInPubFolders</name>
@@ -133,7 +134,7 @@ describe('mdata:patch', () => {
         <enabled>true</enabled>
         <name>ViewEventLogFiles</name>
     </userPermissions>`);
-        expect(writeFileSyncStub.args[1][0]).to.equal('force-app/main/default/profiles/Custom%3A Sales Profile.profile-meta.xml');
+        expect(writeFileSyncStub.args[1][0]).to.equal(path.join('force-app', 'main', 'default', 'profiles', 'Custom%3A Sales Profile.profile-meta.xml'));
         expect(writeFileSyncStub.args[1][1]).to.contain(`<userPermissions>
         <enabled>true</enabled>
         <name>SubmitMacrosAllowed</name>
@@ -174,7 +175,7 @@ describe('mdata:patch', () => {
       .stdout()
       .command(['mdata:patch', '-e', 'devShared'])
       .it('runs mdata:patch removing userPermissions with a specific environment name', ctx => {
-        expect(writeFileSyncStub.args[0][0]).to.equal('force-app/main/default/profiles/Admin.profile-meta.xml');
+        expect(writeFileSyncStub.args[0][0]).to.equal(path.join('force-app', 'main', 'default', 'profiles', 'Admin.profile-meta.xml'));
         expect(writeFileSyncStub.args[0][1]).to.contain(`<userPermissions>
         <enabled>true</enabled>
         <name>ManageReportsInPubFolders</name>
@@ -183,7 +184,7 @@ describe('mdata:patch', () => {
         <enabled>true</enabled>
         <name>ManageSearchPromotionRules</name>
     </userPermissions>`);
-        expect(writeFileSyncStub.args[1][0]).to.equal('force-app/main/default/profiles/Custom%3A Sales Profile.profile-meta.xml');
+        expect(writeFileSyncStub.args[1][0]).to.equal(path.join('force-app', 'main', 'default', 'profiles', 'Custom%3A Sales Profile.profile-meta.xml'));
         expect(writeFileSyncStub.args[1][1]).to.contain(`<userPermissions>
         <enabled>true</enabled>
         <name>SubmitMacrosAllowed</name>
@@ -235,7 +236,7 @@ describe('mdata:patch', () => {
       .stdout()
       .command(['mdata:patch', '-e', 'devShared'])
       .it('runs mdata:patch disabling user permissions with a specific environment name', ctx => {
-        expect(writeFileSyncStub.args[0][0]).to.equal('force-app/main/default/profiles/Admin.profile-meta.xml');
+        expect(writeFileSyncStub.args[0][0]).to.equal(path.join('force-app', 'main', 'default', 'profiles', 'Admin.profile-meta.xml'));
         expect(writeFileSyncStub.args[0][1]).to.not.contain(`<userPermissions>
         <enabled>false</enabled>
         <name>ManageReportsInPubFolders</name>
@@ -244,7 +245,7 @@ describe('mdata:patch', () => {
         <enabled>false</enabled>
         <name>ManageSandboxes</name>
     </userPermissions>`);
-        expect(writeFileSyncStub.args[1][0]).to.equal('force-app/main/default/profiles/Custom%3A Sales Profile.profile-meta.xml');
+        expect(writeFileSyncStub.args[1][0]).to.equal(path.join('force-app', 'main', 'default', 'profiles', 'Custom%3A Sales Profile.profile-meta.xml'));
         expect(writeFileSyncStub.args[1][1]).to.not.contain(`<userPermissions>
         <enabled>false</enabled>
         <name>UseWebLink</name>

@@ -833,7 +833,7 @@ describe('mdata:patch', () => {
         } else if (filePath.startsWith('sdx_sourceDeploy_pkg_1613771557082')) {
           return readFileSyncStub.wrappedMethod.call(this, filePath.replace('sdx_sourceDeploy_pkg_1613771557082', path.join(__dirname, '..', '..', 'data', 'src')))
         } else if (filePath === 'mdapimap.json') {
-          return readFileSyncStub.wrappedMethod.call(this, path.join(__dirname, '..', '..', 'data', 'src', filePath));
+          return readFileSyncStub.wrappedMethod.call(this, path.join(__dirname, '..', '..', 'data', 'src', path.sep == '/' ? filePath : 'mdapimap_win.json'));
         } else {
           return "";
         }

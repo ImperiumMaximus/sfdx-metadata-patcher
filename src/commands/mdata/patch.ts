@@ -118,7 +118,6 @@ export default class Patch extends SfdxCommand {
       await prevFixPromise;
       const pathChunks = filePath.split('/');
       const osAgnosticFilePath = path.join(...pathChunks);
-      console.error(osAgnosticFilePath);
       if (glob.hasMagic(osAgnosticFilePath)) {
         const files = await getGlobFiles(path.join(self.baseDir, osAgnosticFilePath));
         return _.reduce(files, async (prevPatchPromise, f) => {
@@ -165,7 +164,6 @@ export default class Patch extends SfdxCommand {
       await prevFixPromise;
       const pathChunks = filePath.split('/');
       const osAgnosticFilePath = path.join(...pathChunks);
-      console.error(osAgnosticFilePath);
       const wrkSpcPaths: string[] = micromatch(mdapiMapFiles, path.join('**', osAgnosticFilePath));
       if (wrkSpcPaths.length) {
         return _.reduce(wrkSpcPaths, async (prevWrkSpcPromise, wrkSpcPath) => {
@@ -185,7 +183,7 @@ export default class Patch extends SfdxCommand {
           }
         }, Promise.resolve());
       } else {
-        Mdata.log(messages.getMessage('metadata.patch.warns.missingFile', [path.join(self.baseDir, filePath)]), LoggerLevel.WARN);
+        Mdata.log(messages.getMessage('metadata.patch.warns.missingFile', [path.join(self.baseDir, osAgnosticFilePath)]), LoggerLevel.WARN);
       }
 
       async function patchFile(f: string, fixes: AnyJson) {

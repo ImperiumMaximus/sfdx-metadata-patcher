@@ -165,6 +165,7 @@ export default class Patch extends SfdxCommand {
       const pathChunks = filePath.split('/');
       const osAgnosticFilePath = path.join(...pathChunks);
       const wrkSpcPaths: string[] = micromatch(mdapiMapFiles, path.join('**', osAgnosticFilePath));
+      console.error(wrkSpcPaths);
       if (wrkSpcPaths.length) {
         return _.reduce(wrkSpcPaths, async (prevWrkSpcPromise, wrkSpcPath) => {
           await prevWrkSpcPromise;

@@ -4,7 +4,7 @@ sfdx-metadata-patcher
 A Salesforce DX Plugin to hotpatch metadata before deployments
 
 [![Version](https://img.shields.io/npm/v/sfdx-metadata-patcher.svg)](https://npmjs.org/package/sfdx-metadata-patcher)
-[![CircleCI](https://circleci.com/gh/ImperiumMaximus/sfdx-metadata-patcher/tree/master.svg?style=shield)](https://circleci.com/gh/ImperiumMaximus/sfdx-metadata-patcher/tree/master)
+[![Node.js CI](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/actions/workflows/nodejs.yml/badge.svg)](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/actions/workflows/nodejs.yml)
 [![Codecov](https://codecov.io/gh/ImperiumMaximus/sfdx-metadata-patcher/branch/master/graph/badge.svg)](https://codecov.io/gh/ImperiumMaximus/sfdx-metadata-patcher)
 [![Downloads/week](https://img.shields.io/npm/dw/sfdx-metadata-patcher.svg)](https://npmjs.org/package/sfdx-metadata-patcher)
 [![License](https://img.shields.io/npm/l/sfdx-metadata-patcher.svg)](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/master/package.json)
@@ -19,10 +19,6 @@ A Salesforce DX Plugin to hotpatch metadata before deployments
 ### As Plugin
 ```sh-session
 $ sfdx plugins:install sfdx-metadata-patcher
-```
-## Usage
-```sh-session
-$ sfdx mdata:patch --help
 ```
 ## Commands
 <!-- commands -->

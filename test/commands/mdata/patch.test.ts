@@ -5,6 +5,7 @@ import { SfdxProject } from '@salesforce/core';
 import { stubMethod } from '@salesforce/ts-sinon';
 import { glob } from 'glob';
 import * as fs from 'fs';
+import * as path from 'path';
 
 // Initialize Messages with the current plugin directory
 Messages.importMessagesDirectory(__dirname);
@@ -30,13 +31,13 @@ describe('mdata:patch', () => {
     let writeFileSyncStub;
     const commonStubs = function () {
       stubMethod($$.SANDBOX, glob, 'glob').callsFake((pattern: string, cb: (err: Error | null, matches: string[]) => void) => {
-        cb(null, ['force-app/main/default/profiles/Admin.profile-meta.xml', 'force-app/main/default/profiles/Custom%3A Sales Profile.profile-meta.xml'])
+        cb(null, [path.join('force-app', 'main', 'default', 'profiles', 'Admin.profile-meta.xml'), path.join('force-app', 'main', 'default', 'profiles', 'Custom%3A Sales Profile.profile-meta.xml')])
       })
       const readFileSyncStub = stubMethod($$.SANDBOX, fs, 'readFileSync')
 
-      readFileSyncStub.callsFake((path: string) => {
-        if (path.startsWith('force-app/main/default')) {
-          return readFileSyncStub.wrappedMethod.call(this, path.replace('force-app/main/default', __dirname + '/../../data/force-app'))
+      readFileSyncStub.callsFake((filePath: string) => {
+        if (filePath.startsWith(path.join('force-app', 'main', 'default'))) {
+          return readFileSyncStub.wrappedMethod.call(this, filePath.replace(path.join('force-app', 'main', 'default'), path.join(__dirname, '..', '..', 'data', 'force-app')));
         } else {
           return ""
         }
@@ -81,7 +82,7 @@ describe('mdata:patch', () => {
       .stdout()
       .command(['mdata:patch', '-e', 'default'])
       .it('runs mdata:patch on a non-existent file with the default environment name', ctx => {
-        expect(ctx.stdout).to.contain(messages.getMessage('metadata.patch.warns.missingFile', ['force-app/main/default/profiles/NonExistent.profile-meta.xml']));
+        expect(ctx.stdout).to.contain(messages.getMessage('metadata.patch.warns.missingFile', [path.join('force-app', 'main', 'default', 'profiles', 'NonExistent.profile-meta.xml')]));
       });
 
     test
@@ -120,7 +121,7 @@ describe('mdata:patch', () => {
       .stdout()
       .command(['mdata:patch', '-e', 'default'])
       .it('runs mdata:patch removing userPermissions with the default environment name', ctx => {
-        expect(writeFileSyncStub.args[0][0]).to.equal('force-app/main/default/profiles/Admin.profile-meta.xml');
+        expect(writeFileSyncStub.args[0][0]).to.equal(path.join('force-app', 'main', 'default', 'profiles', 'Admin.profile-meta.xml'));
         expect(writeFileSyncStub.args[0][1]).to.contain(`<userPermissions>
         <enabled>true</enabled>
         <name>ManageReportsInPubFolders</name>
@@ -133,7 +134,7 @@ describe('mdata:patch', () => {
         <enabled>true</enabled>
         <name>ViewEventLogFiles</name>
     </userPermissions>`);
-        expect(writeFileSyncStub.args[1][0]).to.equal('force-app/main/default/profiles/Custom%3A Sales Profile.profile-meta.xml');
+        expect(writeFileSyncStub.args[1][0]).to.equal(path.join('force-app', 'main', 'default', 'profiles', 'Custom%3A Sales Profile.profile-meta.xml'));
         expect(writeFileSyncStub.args[1][1]).to.contain(`<userPermissions>
         <enabled>true</enabled>
         <name>SubmitMacrosAllowed</name>
@@ -174,7 +175,7 @@ describe('mdata:patch', () => {
       .stdout()
       .command(['mdata:patch', '-e', 'devShared'])
       .it('runs mdata:patch removing userPermissions with a specific environment name', ctx => {
-        expect(writeFileSyncStub.args[0][0]).to.equal('force-app/main/default/profiles/Admin.profile-meta.xml');
+        expect(writeFileSyncStub.args[0][0]).to.equal(path.join('force-app', 'main', 'default', 'profiles', 'Admin.profile-meta.xml'));
         expect(writeFileSyncStub.args[0][1]).to.contain(`<userPermissions>
         <enabled>true</enabled>
         <name>ManageReportsInPubFolders</name>
@@ -183,7 +184,7 @@ describe('mdata:patch', () => {
         <enabled>true</enabled>
         <name>ManageSearchPromotionRules</name>
     </userPermissions>`);
-        expect(writeFileSyncStub.args[1][0]).to.equal('force-app/main/default/profiles/Custom%3A Sales Profile.profile-meta.xml');
+        expect(writeFileSyncStub.args[1][0]).to.equal(path.join('force-app', 'main', 'default', 'profiles', 'Custom%3A Sales Profile.profile-meta.xml'));
         expect(writeFileSyncStub.args[1][1]).to.contain(`<userPermissions>
         <enabled>true</enabled>
         <name>SubmitMacrosAllowed</name>
@@ -235,7 +236,7 @@ describe('mdata:patch', () => {
       .stdout()
       .command(['mdata:patch', '-e', 'devShared'])
       .it('runs mdata:patch disabling user permissions with a specific environment name', ctx => {
-        expect(writeFileSyncStub.args[0][0]).to.equal('force-app/main/default/profiles/Admin.profile-meta.xml');
+        expect(writeFileSyncStub.args[0][0]).to.equal(path.join('force-app', 'main', 'default', 'profiles', 'Admin.profile-meta.xml'));
         expect(writeFileSyncStub.args[0][1]).to.not.contain(`<userPermissions>
         <enabled>false</enabled>
         <name>ManageReportsInPubFolders</name>
@@ -244,7 +245,7 @@ describe('mdata:patch', () => {
         <enabled>false</enabled>
         <name>ManageSandboxes</name>
     </userPermissions>`);
-        expect(writeFileSyncStub.args[1][0]).to.equal('force-app/main/default/profiles/Custom%3A Sales Profile.profile-meta.xml');
+        expect(writeFileSyncStub.args[1][0]).to.equal(path.join('force-app', 'main', 'default', 'profiles', 'Custom%3A Sales Profile.profile-meta.xml'));
         expect(writeFileSyncStub.args[1][1]).to.not.contain(`<userPermissions>
         <enabled>false</enabled>
         <name>UseWebLink</name>
@@ -285,7 +286,7 @@ describe('mdata:patch', () => {
       .stdout()
       .command(['mdata:patch', '-e', 'devShared'])
       .it('runs mdata:patch removing field permissions with a specific environment name', ctx => {
-        expect(writeFileSyncStub.args[0][0]).to.equal('force-app/main/default/profiles/Admin.profile-meta.xml');
+        expect(writeFileSyncStub.args[0][0]).to.equal(path.join('force-app', 'main', 'default', 'profiles', 'Admin.profile-meta.xml'));
         expect(writeFileSyncStub.args[0][1]).to.not.contain(`<fieldPermissions>
         <editable>true</editable>
         <field>Account.Active__c</field>
@@ -301,7 +302,7 @@ describe('mdata:patch', () => {
         <field>Account.Tradestyle</field>
         <readable>true</readable>
     </fieldPermissions>`);
-        expect(writeFileSyncStub.args[1][0]).to.equal('force-app/main/default/profiles/Custom%3A Sales Profile.profile-meta.xml');
+        expect(writeFileSyncStub.args[1][0]).to.equal(path.join('force-app', 'main', 'default', 'profiles', 'Custom%3A Sales Profile.profile-meta.xml'));
         expect(writeFileSyncStub.args[1][1]).to.not.contain(`<fieldPermissions>
         <editable>true</editable>
         <field>Account.Active__c</field>
@@ -350,7 +351,7 @@ describe('mdata:patch', () => {
       .stdout()
       .command(['mdata:patch'])
       .it('runs mdata:patch disabling tabs with the default environment name', ctx => {
-        expect(writeFileSyncStub.args[0][0]).to.equal('force-app/main/default/profiles/Admin.profile-meta.xml');
+        expect(writeFileSyncStub.args[0][0]).to.equal(path.join('force-app', 'main', 'default', 'profiles', 'Admin.profile-meta.xml'));
         expect(writeFileSyncStub.args[0][1]).to.not.contain(`<tabVisibilities>
         <tab>standard-Account</tab>
         <visibility>Hidden</visibility>
@@ -363,7 +364,7 @@ describe('mdata:patch', () => {
         <tab>CustomObject__c</tab>
         <visibility>Hidden</visibility>
     </tabVisibilities>`);
-        expect(writeFileSyncStub.args[1][0]).to.equal('force-app/main/default/profiles/Custom%3A Sales Profile.profile-meta.xml');
+        expect(writeFileSyncStub.args[1][0]).to.equal(path.join('force-app', 'main', 'default', 'profiles', 'Custom%3A Sales Profile.profile-meta.xml'));
         expect(writeFileSyncStub.args[1][1]).to.not.contain(`<tabVisibilities>
         <tab>standard-Account</tab>
         <visibility>Hidden</visibility>
@@ -408,7 +409,7 @@ describe('mdata:patch', () => {
       .stdout()
       .command(['mdata:patch'])
       .it('runs mdata:patch disabling apps with the default environment name', ctx => {
-        expect(writeFileSyncStub.args[0][0]).to.equal('force-app/main/default/profiles/Admin.profile-meta.xml');
+        expect(writeFileSyncStub.args[0][0]).to.equal(path.join('force-app', 'main', 'default', 'profiles', 'Admin.profile-meta.xml'));
         expect(writeFileSyncStub.args[0][1]).to.not.contain(`<applicationVisibilities>
         <application>standard__LightningSales</application>
         <default>false</default>
@@ -419,7 +420,7 @@ describe('mdata:patch', () => {
         <default>false</default>
         <visible>false</visible>
     </applicationVisibilities>`);
-        expect(writeFileSyncStub.args[1][0]).to.equal('force-app/main/default/profiles/Custom%3A Sales Profile.profile-meta.xml');
+        expect(writeFileSyncStub.args[1][0]).to.equal(path.join('force-app', 'main', 'default', 'profiles', 'Custom%3A Sales Profile.profile-meta.xml'));
         expect(writeFileSyncStub.args[1][1]).to.contain(`<applicationVisibilities>
         <application>standard__LightningSales</application>
         <default>false</default>
@@ -463,7 +464,7 @@ describe('mdata:patch', () => {
       .stdout()
       .command(['mdata:patch'])
       .it('runs mdata:patch enabling tabs with the default environment name', ctx => {
-        expect(writeFileSyncStub.args[0][0]).to.equal('force-app/main/default/profiles/Admin.profile-meta.xml');
+        expect(writeFileSyncStub.args[0][0]).to.equal(path.join('force-app', 'main', 'default', 'profiles', 'Admin.profile-meta.xml'));
         expect(writeFileSyncStub.args[0][1]).to.not.contain(`<tabVisibilities>
         <tab>TestSharing__c</tab>
         <visibility>DefaultOn</visibility>
@@ -472,7 +473,7 @@ describe('mdata:patch', () => {
         <tab>standard-Contact</tab>
         <visibility>DefaultOn</visibility>
     </tabVisibilities>`);
-        expect(writeFileSyncStub.args[1][0]).to.equal('force-app/main/default/profiles/Custom%3A Sales Profile.profile-meta.xml');
+        expect(writeFileSyncStub.args[1][0]).to.equal(path.join('force-app', 'main', 'default', 'profiles', 'Custom%3A Sales Profile.profile-meta.xml'));
         expect(writeFileSyncStub.args[1][1]).to.not.contain(`<tabVisibilities>
         <tab>TestSharing__c</tab>
         <visibility>DefaultOn</visibility>
@@ -514,7 +515,7 @@ describe('mdata:patch', () => {
       .stdout()
       .command(['mdata:patch'])
       .it('runs mdata:patch disabling objects with the default environment name', ctx => {
-        expect(writeFileSyncStub.args[0][0]).to.equal('force-app/main/default/profiles/Admin.profile-meta.xml');
+        expect(writeFileSyncStub.args[0][0]).to.equal(path.join('force-app', 'main', 'default', 'profiles', 'Admin.profile-meta.xml'));
         expect(writeFileSyncStub.args[0][1]).to.not.contain(`<objectPermissions>
         <allowCreate>false</allowCreate>
         <allowDelete>false</allowDelete>
@@ -533,7 +534,7 @@ describe('mdata:patch', () => {
         <object>Product2</object>
         <viewAllRecords>false</viewAllRecords>
     </objectPermissions>`);
-        expect(writeFileSyncStub.args[1][0]).to.equal('force-app/main/default/profiles/Custom%3A Sales Profile.profile-meta.xml');
+        expect(writeFileSyncStub.args[1][0]).to.equal(path.join('force-app', 'main', 'default', 'profiles', 'Custom%3A Sales Profile.profile-meta.xml'));
         expect(writeFileSyncStub.args[1][1]).to.contain(`<objectPermissions>
         <allowCreate>false</allowCreate>
         <allowDelete>false</allowDelete>
@@ -560,24 +561,24 @@ describe('mdata:patch', () => {
     let writtenFiles = {};
     const commonStubs = function () {
       stubMethod($$.SANDBOX, glob, 'glob').callsFake((pattern: string, cb: (err: Error | null, matches: string[]) => void) => {
-        cb(null, ['force-app/main/default/profiles/Admin.profile-meta.xml', 'force-app/main/default/profiles/Custom%3A Sales Profile.profile-meta.xml'])
+        cb(null, [path.join('force-app', 'main', 'default', 'profiles', 'Admin.profile-meta.xml'), path.join('force-app', 'main', 'default', 'profiles', 'Custom%3A Sales Profile.profile-meta.xml')])
       })
       const readFileSyncStub = stubMethod($$.SANDBOX, fs, 'readFileSync')
 
-      readFileSyncStub.callsFake((path: string) => {
-        if (Object.prototype.hasOwnProperty.call(writtenFiles, path)) {
-          return writtenFiles[path];
-        } else if (path.startsWith('force-app/main/default')) {
-          return readFileSyncStub.wrappedMethod.call(this, path.replace('force-app/main/default', __dirname + '/../../data/force-app'))
+      readFileSyncStub.callsFake((filePath: string) => {
+        if (Object.prototype.hasOwnProperty.call(writtenFiles, filePath)) {
+          return writtenFiles[filePath];
+        } else if (filePath.startsWith(path.join('force-app', 'main', 'default'))) {
+          return readFileSyncStub.wrappedMethod.call(this, filePath.replace(path.join('force-app', 'main', 'default'), path.join(__dirname, '..', '..', 'data', 'force-app')))
         } else {
           return ""
         }
       })
 
       writeFileSyncStub = stubMethod($$.SANDBOX, fs, 'writeFileSync');
-      writeFileSyncStub.callsFake((path: string, contents: string | Object) => {
-        if (path.startsWith('force-app/main/default')) {
-          writtenFiles[path] = contents;
+      writeFileSyncStub.callsFake((filePath: string, contents: string | Object) => {
+        if (filePath.startsWith(path.join('force-app', 'main', 'default'))) {
+          writtenFiles[filePath] = contents;
         }
       })
     }
@@ -618,18 +619,18 @@ describe('mdata:patch', () => {
           }
         });
         const existsSyncStub = stubMethod($$.SANDBOX, fs, 'existsSync')
-        existsSyncStub.callsFake((path: string) => {
-          if (path.includes('.profile-meta.xml')) {
+        existsSyncStub.callsFake((filePath: string) => {
+          if (filePath.includes('.profile-meta.xml')) {
             return true;
           }
-          return existsSyncStub.wrappedMethod.call(this, path);
+          return existsSyncStub.wrappedMethod.call(this, filePath);
         })
         commonStubs();
       })
       .stdout()
       .command(['mdata:patch', '-e', 'devShared'])
       .it('runs mdata:patch on Admin profile with different fixes for the same file', ctx => {
-        expect(writeFileSyncStub.args[1][0]).to.equal('force-app/main/default/profiles/Custom%3A Sales Profile.profile-meta.xml');
+        expect(writeFileSyncStub.args[1][0]).to.equal(path.join('force-app', 'main', 'default', 'profiles', 'Custom%3A Sales Profile.profile-meta.xml'));
         expect(writeFileSyncStub.args[1][1]).to.not.contain(`<userPermissions>
         <enabled>true</enabled>
         <name>SelectFilesFromSalesforce</name>
@@ -639,7 +640,7 @@ describe('mdata:patch', () => {
         <name>RunReports</name>
     </userPermissions>`);
 
-        expect(writeFileSyncStub.args[2][0]).to.contain(`force-app/main/default/profiles/Admin.profile-meta.xml`);
+        expect(writeFileSyncStub.args[2][0]).to.contain(path.join('force-app', 'main', 'default', 'profiles', 'Admin.profile-meta.xml'));
         expect(writeFileSyncStub.args[2][1]).to.not.contain(`<userPermissions>
         <enabled>true</enabled>
         <name>ManageSearchPromotionRules</name>
@@ -661,13 +662,13 @@ describe('mdata:patch', () => {
     let writeFileSyncStub;
     const commonStubs = function () {
       stubMethod($$.SANDBOX, glob, 'glob').callsFake((pattern: string, cb: (err: Error | null, matches: string[]) => void) => {
-        cb(null, ['force-app/main/default/sites/SampleCommunity.site-meta.xml'])
+        cb(null, [path.join('force-app', 'main', 'default', 'sites', 'SampleCommunity.site-meta.xml')])
       })
       const readFileSyncStub = stubMethod($$.SANDBOX, fs, 'readFileSync')
 
-      readFileSyncStub.callsFake((path: string) => {
-        if (path.startsWith('force-app/main/default')) {
-          return readFileSyncStub.wrappedMethod.call(this, path.replace('force-app/main/default', __dirname + '/../../data/force-app'))
+      readFileSyncStub.callsFake((filePath: string) => {
+        if (filePath.startsWith(path.join('force-app', 'main', 'default'))) {
+          return readFileSyncStub.wrappedMethod.call(this, filePath.replace(path.join('force-app', 'main', 'default'), path.join(__dirname, '..', '..', 'data', 'force-app')))
         } else {
           return ""
         }
@@ -718,7 +719,7 @@ describe('mdata:patch', () => {
       .stdout()
       .command(['mdata:patch', '-e', 'default'])
       .it('runs mdata:patch on CustomSite by replacing usernames using the default environment name', ctx => {
-        expect(writeFileSyncStub.args[0][0]).to.equal('force-app/main/default/sites/SampleCommunity.site-meta.xml');
+        expect(writeFileSyncStub.args[0][0]).to.equal(path.join('force-app', 'main', 'default', 'sites', 'SampleCommunity.site-meta.xml'));
         expect(writeFileSyncStub.args[0][1]).to.not.contain(`<siteAdmin>fakeSiteAdmin@myCoolDomain.com</siteAdmin>`);
         expect(writeFileSyncStub.args[0][1]).to.not.contain(`<siteGuestRecordDefaultOwner>fakeSiteAdmin@myCoolDomain.com</siteGuestRecordDefaultOwner>`);
         expect(writeFileSyncStub.args[0][1]).to.contain(`<siteAdmin>replacedUserName@myCoolDomain.com</siteAdmin>`);
@@ -764,7 +765,7 @@ describe('mdata:patch', () => {
       .stdout()
       .command(['mdata:patch', '-e', 'devShared'])
       .it('runs mdata:patch on CustomSite by adding tags using the devShared environment name', ctx => {
-        expect(writeFileSyncStub.args[0][0]).to.equal('force-app/main/default/sites/SampleCommunity.site-meta.xml');
+        expect(writeFileSyncStub.args[0][0]).to.equal(path.join('force-app', 'main', 'default', 'sites', 'SampleCommunity.site-meta.xml'));
         expect(writeFileSyncStub.args[0][1]).to.not.contain(`<siteAdmin>`);
         expect(writeFileSyncStub.args[0][1]).to.not.contain(`<siteGuestRecordDefaultOwner>`);
         expect(writeFileSyncStub.args[0][1]).to.not.contain(`</siteAdmin>`);
@@ -812,7 +813,7 @@ describe('mdata:patch', () => {
       .stdout()
       .command(['mdata:patch', '-e', 'devShared'])
       .it('runs mdata:patch on CustomSite by removing usernames using the devShared environment name', ctx => {
-        expect(writeFileSyncStub.args[0][0]).to.equal('force-app/main/default/sites/SampleCommunity.site-meta.xml');
+        expect(writeFileSyncStub.args[0][0]).to.equal(path.join('force-app', 'main', 'default', 'sites', 'SampleCommunity.site-meta.xml'));
         expect(writeFileSyncStub.args[0][1]).to.contain(`<testConcat>sampleString</testConcat>`);
         expect(writeFileSyncStub.args[0][1]).to.contain(`<testConcatNested>
         <nestedTag>coolString</nestedTag>
@@ -826,20 +827,22 @@ describe('mdata:patch', () => {
     const commonStubs = function () {
       const readFileSyncStub = stubMethod($$.SANDBOX, fs, 'readFileSync')
 
-      readFileSyncStub.callsFake((path: string) => {
-        if (Object.prototype.hasOwnProperty.call(writtenFiles, path)) {
-          return writtenFiles[path];
-        } else if (path.startsWith('/tmp/sdx_sourceDeploy_pkg_1613771557082')) {
-          return readFileSyncStub.wrappedMethod.call(this, path.replace('/tmp/sdx_sourceDeploy_pkg_1613771557082', __dirname + '/../../data/src'))
+      readFileSyncStub.callsFake((filePath: string) => {
+        if (Object.prototype.hasOwnProperty.call(writtenFiles, filePath)) {
+          return writtenFiles[filePath];
+        } else if (filePath.startsWith('sdx_sourceDeploy_pkg_1613771557082')) {
+          return readFileSyncStub.wrappedMethod.call(this, filePath.replace('sdx_sourceDeploy_pkg_1613771557082', path.join(__dirname, '..', '..', 'data', 'src')))
+        } else if (filePath === 'mdapimap.json') {
+          return readFileSyncStub.wrappedMethod.call(this, path.join(__dirname, '..', '..', 'data', 'src', path.sep == '/' ? filePath : 'mdapimap_win.json'));
         } else {
           return "";
         }
       })
 
       writeFileSyncStub = stubMethod($$.SANDBOX, fs, 'writeFileSync')
-      writeFileSyncStub.callsFake((path: string, contents: string | Object) => {
-        if (path.startsWith('/tmp/sdx_sourceDeploy_pkg_1613771557082')) {
-          writtenFiles[path] = contents;
+      writeFileSyncStub.callsFake((filePath: string, contents: string | Object) => {
+        if (filePath.startsWith('sdx_sourceDeploy_pkg_1613771557082')) {
+          writtenFiles[filePath] = contents;
         }
       })
     }
@@ -847,11 +850,11 @@ describe('mdata:patch', () => {
     test
       .do(() => {
         const existsSyncStub = stubMethod($$.SANDBOX, fs, 'existsSync')
-        existsSyncStub.callsFake((path: string) => {
-          if (path === '/tmp/sdx_sourceDeploy_pkg_1613771557082/mdapimap.json') {
+        existsSyncStub.callsFake((filePath: string) => {
+          if (filePath === 'mdapimap.json') {
             return true;
           }
-          return existsSyncStub.wrappedMethod.call(this, path);
+          return existsSyncStub.wrappedMethod.call(this, filePath);
         })
         stubMethod($$.SANDBOXES.PROJECT, SfdxProject.prototype, 'resolveProjectConfig').callsFake(() => {
           return {
@@ -924,9 +927,9 @@ describe('mdata:patch', () => {
         commonStubs();
       })
       .stdout()
-      .command(['mdata:patch', '-e', 'devShared', '-r', '/tmp/sdx_sourceDeploy_pkg_1613771557082', '-s', '', '-m', '/tmp/sdx_sourceDeploy_pkg_1613771557082/mdapimap.json'])
+      .command(['mdata:patch', '-e', 'devShared', '-r', 'sdx_sourceDeploy_pkg_1613771557082', '-s', '', '-m', 'mdapimap.json'])
       .it('runs mdata:patch as a pre deploy hook', ctx => {
-        expect(writeFileSyncStub.args[0][0]).to.equal('/tmp/sdx_sourceDeploy_pkg_1613771557082/profiles/Admin.profile');
+        expect(writeFileSyncStub.args[0][0]).to.equal(path.join('sdx_sourceDeploy_pkg_1613771557082', 'profiles', 'Admin.profile'));
         expect(writeFileSyncStub.args[0][1]).to.contain(`<userPermissions>
         <enabled>true</enabled>
         <name>ManageReportsInPubFolders</name>
@@ -939,15 +942,15 @@ describe('mdata:patch', () => {
         <enabled>true</enabled>
         <name>SelectFilesFromSalesforce</name>
     </userPermissions>`);
-        expect(writeFileSyncStub.args[1][0]).to.equal('/tmp/sdx_sourceDeploy_pkg_1613771557082/objects/Account.object');
+        expect(writeFileSyncStub.args[1][0]).to.equal(path.join('sdx_sourceDeploy_pkg_1613771557082', 'objects', 'Account.object'));
         expect(writeFileSyncStub.args[7][1]).to.not.contain('<externalSharingModel>Private</externalSharingModel>');
         expect(writeFileSyncStub.args[7][1]).to.contain('<externalSharingModel>ReadOnly</externalSharingModel>');
 
-        expect(writeFileSyncStub.args[2][0]).to.equal('/tmp/sdx_sourceDeploy_pkg_1613771557082/objects/Account.object');
+        expect(writeFileSyncStub.args[2][0]).to.equal(path.join('sdx_sourceDeploy_pkg_1613771557082', 'objects', 'Account.object'));
         expect(writeFileSyncStub.args[7][1]).to.not.contain('<enableHistory>false</enableHistory>');
         expect(writeFileSyncStub.args[7][1]).to.contain('<enableHistory>true</enableHistory>');
 
-        expect(writeFileSyncStub.args[3][0]).to.equal('/tmp/sdx_sourceDeploy_pkg_1613771557082/objects/Account.object');
+        expect(writeFileSyncStub.args[3][0]).to.equal(path.join('sdx_sourceDeploy_pkg_1613771557082', 'objects', 'Account.object'));
         expect(writeFileSyncStub.args[7][1]).to.contain(`<fields>
         <fullName>Active__c</fullName>
         <externalId>false</externalId>
@@ -971,7 +974,7 @@ describe('mdata:patch', () => {
             </valueSetDefinition>
         </valueSet>
     </fields>`);
-        expect(writeFileSyncStub.args[4][0]).to.equal('/tmp/sdx_sourceDeploy_pkg_1613771557082/objects/Account.object');
+        expect(writeFileSyncStub.args[4][0]).to.equal(path.join('sdx_sourceDeploy_pkg_1613771557082', 'objects', 'Account.object'));
         expect(writeFileSyncStub.args[7][1]).to.contain(`<fields>
         <fullName>CustomerPriority__c</fullName>
         <externalId>false</externalId>
@@ -1002,7 +1005,7 @@ describe('mdata:patch', () => {
     </fields>`);
 
 
-        expect(writeFileSyncStub.args[6][0]).to.equal('/tmp/sdx_sourceDeploy_pkg_1613771557082/objects/Account.object');
+        expect(writeFileSyncStub.args[6][0]).to.equal(path.join('sdx_sourceDeploy_pkg_1613771557082', 'objects', 'Account.object'));
         expect(writeFileSyncStub.args[7][1]).to.not.contain(`<listViews>
         <fullName>NewLastWeek</fullName>
         <filterScope>Everything</filterScope>
@@ -1024,7 +1027,7 @@ describe('mdata:patch', () => {
         <label>Old Last Week</label>
     </listViews>`);
 
-        expect(writeFileSyncStub.args[7][0]).to.equal('/tmp/sdx_sourceDeploy_pkg_1613771557082/objects/Account.object');
+        expect(writeFileSyncStub.args[7][0]).to.equal(path.join('sdx_sourceDeploy_pkg_1613771557082', 'objects', 'Account.object'));
         expect(writeFileSyncStub.args[7][1]).to.not.contain(`<webLinks>
         <fullName>Billing</fullName>
         <availability>online</availability>

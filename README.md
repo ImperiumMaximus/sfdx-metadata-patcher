@@ -4,7 +4,7 @@ sfdx-metadata-patcher
 A Salesforce DX Plugin to hotpatch metadata before deployments
 
 [![Version](https://img.shields.io/npm/v/sfdx-metadata-patcher.svg)](https://npmjs.org/package/sfdx-metadata-patcher)
-[![CircleCI](https://circleci.com/gh/ImperiumMaximus/sfdx-metadata-patcher/tree/master.svg?style=shield)](https://circleci.com/gh/ImperiumMaximus/sfdx-metadata-patcher/tree/master)
+[![Node.js CI](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/actions/workflows/nodejs.yml/badge.svg)](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/actions/workflows/nodejs.yml)
 [![Codecov](https://codecov.io/gh/ImperiumMaximus/sfdx-metadata-patcher/branch/master/graph/badge.svg)](https://codecov.io/gh/ImperiumMaximus/sfdx-metadata-patcher)
 [![Downloads/week](https://img.shields.io/npm/dw/sfdx-metadata-patcher.svg)](https://npmjs.org/package/sfdx-metadata-patcher)
 [![License](https://img.shields.io/npm/l/sfdx-metadata-patcher.svg)](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/master/package.json)
@@ -19,10 +19,6 @@ A Salesforce DX Plugin to hotpatch metadata before deployments
 ### As Plugin
 ```sh-session
 $ sfdx plugins:install sfdx-metadata-patcher
-```
-## Usage
-```sh-session
-$ sfdx mdata:patch --help
 ```
 ## Commands
 <!-- commands -->
@@ -76,7 +72,7 @@ EXAMPLES
        $ sfdx mdata:apex:testdependencies -m foo.cls,bar.cls -d 1 -j /opt/my_cool_java_version/bin/java
 ```
 
-_See code: [src/commands/mdata/apex/testdependencies.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.13/src/commands/mdata/apex/testdependencies.ts)_
+_See code: [src/commands/mdata/apex/testdependencies.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.14/src/commands/mdata/apex/testdependencies.ts)_
 
 ## `sfdx mdata:communities:publish [-n <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
@@ -118,7 +114,7 @@ EXAMPLES
        $ sfdx mdata:communities:publish -n Customer -u admin.user@uat.myorg.com
 ```
 
-_See code: [src/commands/mdata/communities/publish.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.13/src/commands/mdata/communities/publish.ts)_
+_See code: [src/commands/mdata/communities/publish.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.14/src/commands/mdata/communities/publish.ts)_
 
 ## `sfdx mdata:manifest:align [-r <string>] [-p <string>] [-x <string>] [-m <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
@@ -163,7 +159,7 @@ EXAMPLES
        $ sfdx mdata:manifest:align -m ApexClass,ApexTrigger,CustomObject -x manifest/package.xml
 ```
 
-_See code: [src/commands/mdata/manifest/align.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.13/src/commands/mdata/manifest/align.ts)_
+_See code: [src/commands/mdata/manifest/align.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.14/src/commands/mdata/manifest/align.ts)_
 
 ## `sfdx mdata:manifest:sort -x <string> [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
@@ -190,7 +186,7 @@ EXAMPLE
        $ sfdx mdata:manifest:sort -x manifest/package.xml
 ```
 
-_See code: [src/commands/mdata/manifest/sort.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.13/src/commands/mdata/manifest/sort.ts)_
+_See code: [src/commands/mdata/manifest/sort.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.14/src/commands/mdata/manifest/sort.ts)_
 
 ## `sfdx mdata:patch [-e <string>] [-r <string>] [-m <string>] [-s <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
@@ -229,7 +225,7 @@ OPTIONS
                                                                                     this command invocation
 ```
 
-_See code: [src/commands/mdata/patch.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.13/src/commands/mdata/patch.ts)_
+_See code: [src/commands/mdata/patch.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.14/src/commands/mdata/patch.ts)_
 
 ## `sfdx mdata:permset:retrieve [-r <string>] [-p <string>] [-x <string>] [-m <string>] [-d <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
@@ -290,7 +286,7 @@ EXAMPLES
        $ sfdx mdata:permsets:retrieve -m "MyCoolPermSet1,MyCoolPermSet2"
 ```
 
-_See code: [src/commands/mdata/permset/retrieve.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.13/src/commands/mdata/permset/retrieve.ts)_
+_See code: [src/commands/mdata/permset/retrieve.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.14/src/commands/mdata/permset/retrieve.ts)_
 
 ## `sfdx mdata:profile:retrieve [-r <string>] [-p <string>] [-x <string>] [-m <string>] [-d <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
@@ -351,7 +347,7 @@ EXAMPLES
        $ sfdx mdata:permsets:retrieve -m "Admin,Read Only,Custom: Sales Profile"
 ```
 
-_See code: [src/commands/mdata/profile/retrieve.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.13/src/commands/mdata/profile/retrieve.ts)_
+_See code: [src/commands/mdata/profile/retrieve.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.14/src/commands/mdata/profile/retrieve.ts)_
 
 ## `sfdx mdata:translations:convert -f <string> -t <string> -i <string> -o <string> [-m <string>] [-s <string>] [-r <number>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
@@ -388,5 +384,5 @@ OPTIONS
                                                                                     this command invocation
 ```
 
-_See code: [src/commands/mdata/translations/convert.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.13/src/commands/mdata/translations/convert.ts)_
+_See code: [src/commands/mdata/translations/convert.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.14/src/commands/mdata/translations/convert.ts)_
 <!-- commandsstop -->

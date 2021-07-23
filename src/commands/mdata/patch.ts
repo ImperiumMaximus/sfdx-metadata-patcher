@@ -116,16 +116,18 @@ export default class Patch extends SfdxCommand {
     const self = this;
     await _.reduce(_.keys(this.fixes), async (prevFixPromise, filePath) => {
       await prevFixPromise;
-      if (glob.hasMagic(filePath)) {
-        const files = await getGlobFiles(path.join(self.baseDir, filePath));
+      const pathChunks = filePath.split('/');
+      const osAgnosticFilePath = path.join(...pathChunks);
+      if (glob.hasMagic(osAgnosticFilePath)) {
+        const files = await getGlobFiles(path.join(self.baseDir, osAgnosticFilePath));
         return _.reduce(files, async (prevPatchPromise, f) => {
           await prevPatchPromise;
           return patchFile(f);
         }, Promise.resolve());
-      } else if (fs.existsSync(path.join(self.baseDir, filePath))) {
-        return patchFile(path.join(self.baseDir, filePath));
+      } else if (fs.existsSync(path.join(self.baseDir, osAgnosticFilePath))) {
+        return patchFile(path.join(self.baseDir, osAgnosticFilePath));
       } else {
-        Mdata.log(messages.getMessage('metadata.patch.warns.missingFile', [path.join(self.baseDir, filePath)]), LoggerLevel.WARN);
+        Mdata.log(messages.getMessage('metadata.patch.warns.missingFile', [path.join(self.baseDir, osAgnosticFilePath)]), LoggerLevel.WARN);
         return Promise.resolve();
       }
 
@@ -160,7 +162,9 @@ export default class Patch extends SfdxCommand {
     // nested reduce() to serialize Promises execution. NICE!
     await _.reduce(_.keys(this.fixes), async (prevFixPromise, filePath) => {
       await prevFixPromise;
-      const wrkSpcPaths: string[] = micromatch(mdapiMapFiles, path.join('**', filePath));
+      const pathChunks = filePath.split('/');
+      const osAgnosticFilePath = path.join(...pathChunks);
+      const wrkSpcPaths: string[] = micromatch(mdapiMapFiles, path.join('**', osAgnosticFilePath).replace(/\\/g, '\\\\'), { windows: false });
       if (wrkSpcPaths.length) {
         return _.reduce(wrkSpcPaths, async (prevWrkSpcPromise, wrkSpcPath) => {
           await prevWrkSpcPromise;
@@ -179,7 +183,7 @@ export default class Patch extends SfdxCommand {
           }
         }, Promise.resolve());
       } else {
-        Mdata.log(messages.getMessage('metadata.patch.warns.missingFile', [path.join(self.baseDir, filePath)]), LoggerLevel.WARN);
+        Mdata.log(messages.getMessage('metadata.patch.warns.missingFile', [path.join(self.baseDir, osAgnosticFilePath)]), LoggerLevel.WARN);
       }
 
       async function patchFile(f: string, fixes: AnyJson) {

@@ -1,0 +1,65 @@
+{
+  "force-app\\main\\default\\profiles\\Admin.profile-meta.xml": {
+      "mdapiFilePath": "profiles\\Admin.profile",
+      "mdapiType": "Admin",
+      "fullName": "Admin",
+      "metadataName": "Profile",
+      "sourcePath": "C:\\Users\\fakeuser\\mdata-patcher-test\\force-app\\main\\default\\profiles\\Admin.profile-meta.xml",
+      "state": "n",
+      "deleteSupported": true
+  },
+  "force-app\\main\\default\\objects\\Account\\Account.object-meta.xml": {
+      "mdapiFilePath": "objects\\Account.object",
+      "mdapiType": "Account",
+      "fullName": "Account",
+      "metadataName": "CustomObject",
+      "sourcePath": "C:\\Users\\fakeuser\\mdata-patcher-test\\force-app\\main\\default\\objects\\Account\\Account.object-meta.xml",
+      "state": "n",
+      "deleteSupported": false
+  },
+  "force-app\\main\\default\\objects\\Account\\fields\\Active__c.field-meta.xml": {
+      "mdapiFilePath": "objects\\Account.object",
+      "mdapiType": "Account",
+      "fullName": "Account.Active__c",
+      "metadataName": "CustomField",
+      "sourcePath": "C:\\Users\\fakeuser\\mdata-patcher-test\\force-app\\main\\default\\objects\\Account\\fields\\Active__c.field-meta.xml",
+      "state": "n",
+      "deleteSupported": true
+  },
+  "force-app\\main\\default\\objects\\Account\\fields\\CustomerPriority__c.field-meta.xml": {
+      "mdapiFilePath": "objects\\Account.object",
+      "mdapiType": "Account",
+      "fullName": "Account.CustomerPriority__c",
+      "metadataName": "CustomField",
+      "sourcePath": "C:\\Users\\fakeuser\\mdata-patcher-test\\force-app\\main\\default\\objects\\Account\\fields\\CustomerPriority__c.field-meta.xml",
+      "state": "n",
+      "deleteSupported": true
+  },
+  "force-app\\main\\default\\objects\\Account\\listViews\\MyAccounts.listView-meta.xml": {
+      "mdapiFilePath": "objects\\Account.object",
+      "mdapiType": "Account",
+      "fullName": "Account.MyAccounts",
+      "metadataName": "ListView",
+      "sourcePath": "C:\\Users\\fakeuser\\mdata-patcher-test\\force-app\\main\\default\\objects\\Account\\listViews\\MyAccounts.listView-meta.xml",
+      "state": "n",
+      "deleteSupported": true
+  },
+  "force-app\\main\\default\\objects\\Account\\listViews\\NewLastWeek.listView-meta.xml": {
+      "mdapiFilePath": "objects\\Account.object",
+      "mdapiType": "Account",
+      "fullName": "Account.NewLastWeek",
+      "metadataName": "ListView",
+      "sourcePath": "C:\\Users\\fakeuser\\mdata-patcher-test\\force-app\\main\\default\\objects\\Account\\listViews\\NewLastWeek.listView-meta.xml",
+      "state": "n",
+      "deleteSupported": true
+  },
+  "force-app\\main\\default\\objects\\Account\\webLinks\\Billing.webLink-meta.xml": {
+      "mdapiFilePath": "objects\\Account.object",
+      "mdapiType": "Account",
+      "fullName": "Account.Billing",
+      "metadataName": "WebLink",
+      "sourcePath": "C:\\Users\\fakeuser\\mdata-patcher-test\\force-app\\main\\default\\objects\\Account\\webLinks\\Billing.webLink-meta.xml",
+      "state": "n",
+      "deleteSupported": true
+  }
+}

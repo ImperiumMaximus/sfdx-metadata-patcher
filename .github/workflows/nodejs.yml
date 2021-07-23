@@ -18,22 +18,17 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - uses: volta-cli/action@v1
-
+    - name: Get yarn cache directory path
+      id: yarn-cache-dir-path
+      run: echo "::set-output name=dir::$(yarn cache dir)"
     - name: Cache node modules
       uses: actions/cache@v2
-      env:
-        cache-name: cache-node-modules
+      id: yarn-cache # use this to check for `cache-hit` (`steps.yarn-cache.outputs.cache-hit != 'true'`)
       with:
-        # npm cache files are stored in `~/.npm` on Linux/macOS
-        path: |
-          ~/.npm
-          %AppData%/npm-cache
-        key: ${{ matrix.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+        path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+        key: ${{ matrix.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
         restore-keys: |
-          ${{ matrix.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
-          ${{ matrix.os }}-build-${{ env.cache-name }}-
-          ${{ matrix.os }}-build-
-          ${{ matrix.os }}-
+          ${{ matrix.os }}-yarn-
 
     - name: Setup
       run: yarn 

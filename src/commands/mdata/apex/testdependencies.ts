@@ -273,12 +273,16 @@ export default class TestDependencies extends SfdxCommand {
 
         if (!frontier.size) {
             testLevel = 'NoTestRun';
-            this.flags.json ? null : Mdata.log(`-l ${testLevel}`, LoggerLevel.INFO);
+            if (!this.flags.json) {
+                Mdata.log(`-l ${testLevel}`, LoggerLevel.INFO);
+            }
             return this.flags.json ? { testLevel, classList: [] } : null;
         }
 
         if (strategy === 'full') {
-            this.flags.json ? null : Mdata.log(`-l ${testLevel}`, LoggerLevel.INFO);
+            if (!this.flags.json) {
+                Mdata.log(`-l ${testLevel}`, LoggerLevel.INFO);
+            }
             return this.flags.json ? { testLevel, classList: [] } : null;
         }
 
@@ -340,11 +344,15 @@ export default class TestDependencies extends SfdxCommand {
         }
 
         if (apexTestClasses.size === 0 || this._eqSet(allApexTestClasses, apexTestClasses)) {
-            this.flags.json ? null : Mdata.log(`-l ${testLevel}`, LoggerLevel.INFO);
+            if (!this.flags.json) {
+                Mdata.log(`-l ${testLevel}`, LoggerLevel.INFO);
+            }
             return this.flags.json ? { testLevel, classList: [] } : null;
         } else {
             testLevel = 'RunSpecifiedTests';
-            this.flags.json ? null : Mdata.log(`-l ${testLevel} -r ${Array.from(apexTestClasses).join(',')}`, LoggerLevel.INFO);
+            if (!this.flags.json) {
+                Mdata.log(`-l ${testLevel} -r ${Array.from(apexTestClasses).join(',')}`, LoggerLevel.INFO);
+            }
             return this.flags.json ? { testLevel, classList: Array.from(apexTestClasses) } : null;
         }
     }

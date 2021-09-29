@@ -222,10 +222,6 @@ function o(props: any[], additional: any) {
     return { props, additional };
 }
 
-function m(additional: any) {
-    return { props: [], additional };
-}
-
 function r(name: string) {
     return { ref: name };
 }

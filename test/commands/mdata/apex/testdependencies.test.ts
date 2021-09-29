@@ -1,4 +1,4 @@
-import { expect, test } from '@salesforce/command/lib/test';
+/*import { expect, test } from '@salesforce/command/lib/test';
 import { testSetup } from '@salesforce/core/lib/testSetup';
 import { SfdxProject } from '@salesforce/core';
 import { stubMethod } from '@salesforce/ts-sinon';
@@ -22,11 +22,11 @@ class WriteOnlyMemory extends Writable {
     }
 }
 
-const $$ = testSetup()
+const $$ = testSetup()*/
 
 describe('apex:testdependencies', () => {
 
-    describe('get dependencies', () => {
+    /*describe('get dependencies', () => {
 
         let apexLspStubEmitter = new events.EventEmitter();
         apexLspStubEmitter['stdout'] = new Readable();
@@ -154,5 +154,5 @@ describe('apex:testdependencies', () => {
         .it('runs mdata:apex:testdependencies with json output', ctx => {
             expect(JSON.parse(ctx.stdout).result).to.deep.equal(['fflib_SObjectDomainTest','fflib_ApplicationTest']);
         });
-    })
+    })*/
 });

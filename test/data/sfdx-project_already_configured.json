@@ -1,0 +1,21 @@
+{
+    "packageDirectories": [
+        {
+            "path": "force-app",
+            "default": true
+        }
+    ],
+    "name": "apex-tests-proj",
+    "sfdcLoginUrl": "https://login.salesforce.com",
+    "sourceApiVersion": "52.0",
+    "plugins": {
+        "mdataDeltaTests": {
+            "apexClass": "f",
+            "lightningComponentBundle": "s",
+            "customField": {
+                "onDeploy": "d",
+                "onDestroy": "f"
+            }
+        }
+    }
+}

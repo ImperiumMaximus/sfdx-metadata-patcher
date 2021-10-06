@@ -83,10 +83,17 @@
     "testdependencies": {
       "description": "computes the list of (statically) dependant Apex Test Classes to a list of Apex Classes supplied in input up to a certain depth",
       "flags": {
+        "config": "show interactive prompt to configure the plugin (writes result on sfdx-project.json",
         "metadata": "comma-separated list of Apex Class names",
         "nameconv": "naming convention to apply to generate Apex Class Test names",
         "depth": "how many iterations to perform while navigating the tree of dependencies",
-        "javabinary": "path of java executable"
+        "from": "commit sha from where the diff is done [git rev-list --max-parents=0 HEAD]",
+        "to": "[default: HEAD] commit sha to where the diff is done",
+        "manifest": "file path for manifest (package.xml) of components to deploy in delta",
+        "destructivemanifest": "file path for destructive manifest (package.xml) of components to delete in delta",
+        "usecodecoverage": "include target org existing code coverage tables to extract dependencies",
+        "fuzzythreshold": "the minimum score that can be returned in the fuzzy match",
+        "prod": "pass this flag if the command is running while validating / deploying to production"
       }
     }
   },

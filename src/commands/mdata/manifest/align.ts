@@ -112,7 +112,12 @@ export default class ManifestSort extends SfdxCommand {
         fs.writeFileSync(this.flags.manifest, packageXml);
 
         if (this.flags.json) {
-            return await (new xml2js.Parser({ explicitArray: true }).parseStringPromise(packageXml));
+            return await (new Promise((resolve, reject) => (new xml2js.Parser({ explicitArray: true }).parseString(packageXml, ((err, result) => {
+                if (err) {
+                    reject(err);
+                }
+                resolve(result);
+            })))));
         }
 
         return null;

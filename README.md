@@ -22,7 +22,7 @@ $ sfdx plugins:install sfdx-metadata-patcher
 ```
 ## Commands
 <!-- commands -->
-* [`sfdx mdata:apex:testdependencies -m <string> [-n <string>] [-d <number>] [-j <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-mdataapextestdependencies--m-string--n-string--d-number--j-string---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
+* [`sfdx mdata:apex:testdependencies`](#sfdx-mdataapextestdependencies)
 * [`sfdx mdata:communities:publish [-n <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-mdatacommunitiespublish--n-string--u-string---apiversion-string---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
 * [`sfdx mdata:manifest:align [-r <string>] [-p <string>] [-x <string>] [-m <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-mdatamanifestalign--r-string--p-string--x-string--m-string---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
 * [`sfdx mdata:manifest:sort -x <string> [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-mdatamanifestsort--x-string---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
@@ -31,7 +31,7 @@ $ sfdx plugins:install sfdx-metadata-patcher
 * [`sfdx mdata:profile:retrieve [-r <string>] [-p <string>] [-x <string>] [-m <string>] [-d <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-mdataprofileretrieve--r-string--p-string--x-string--m-string--d-string--u-string---apiversion-string---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
 * [`sfdx mdata:translations:convert -f <string> -t <string> -i <string> -o <string> [-m <string>] [-s <string>] [-r <number>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-mdatatranslationsconvert--f-string--t-string--i-string--o-string--m-string--s-string--r-number---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
 
-## `sfdx mdata:apex:testdependencies -m <string> [-n <string>] [-d <number>] [-j <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
+## `sfdx mdata:apex:testdependencies`
 
 computes the list of (statically) dependant Apex Test Classes to a list of Apex Classes supplied in input up to a certain depth
 
@@ -39,40 +39,69 @@ computes the list of (statically) dependant Apex Test Classes to a list of Apex 
 computes the list of (statically) dependant Apex Test Classes to a list of Apex Classes supplied in input up to a certain depth
 
 USAGE
-  $ sfdx mdata:apex:testdependencies -m <string> [-n <string>] [-d <number>] [-j <string>] [--json] [--loglevel 
-  trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
+  $ sfdx mdata:apex:testdependencies
 
 OPTIONS
-  -d, --depth=depth                                                                 how many iterations to perform while
-                                                                                    navigating the tree of dependencies
+  -d, --destructivemanifest=destructivemanifest                                     file path for destructive manifest
+                                                                                    (package.xml) of components to
+                                                                                    delete in delta
 
-  -j, --javabinary=javabinary                                                       path of java executable
-
-  -m, --metadata=metadata                                                           (required) comma-separated list of
-                                                                                    Apex Class names
+  -l, --depth=depth                                                                 [default: -1] how many iterations to
+                                                                                    perform while navigating the tree of
+                                                                                    dependencies
 
   -n, --nameconv=nameconv                                                           [default: Test] naming convention to
                                                                                     apply to generate Apex Class Test
                                                                                     names
+
+  -u, --targetusername=targetusername                                               username or alias for the target
+                                                                                    org; overrides default target org
+
+  -x, --manifest=manifest                                                           file path for manifest (package.xml)
+                                                                                    of components to deploy in delta
+
+  --apiversion=apiversion                                                           override the api version used for
+                                                                                    api requests made by this command
+
+  --config                                                                          show interactive prompt to configure
+                                                                                    the plugin (writes result on
+                                                                                    sfdx-project.json
+
+  --fuzzythreshold=fuzzythreshold                                                   [default: 0.6] the minimum score
+                                                                                    that can be returned in the fuzzy
+                                                                                    match
 
   --json                                                                            format output as json
 
   --loglevel=(trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL)  [default: info] logging level for
                                                                                     this command invocation
 
+  --prod                                                                            pass this flag if the command is
+                                                                                    running while validating / deploying
+                                                                                    to production
+
+  --usecodecoverage                                                                 include target org existing code
+                                                                                    coverage tables to extract
+                                                                                    dependencies
+
 EXAMPLES
-  To find all test dependecies for a class in a SFDX project:
-       $ sfdx mdata:apex:testdependencies -m foo.cls
-  To find all test dependecies for multiple classes in a SFDX project:
-       $ sfdx mdata:apex:testdependencies -m foo.cls,bar.cls
-  To find all test dependecies up to a certain depth for multiple classes in a SFDX project:
-       $ sfdx mdata:apex:testdependencies -m foo.cls,bar.cls -d 1
-  To find all test dependecies up to a certain depth for multiple classes in a SFDX project using a specific java 
-  version:
-       $ sfdx mdata:apex:testdependencies -m foo.cls,bar.cls -d 1 -j /opt/my_cool_java_version/bin/java
+  To configure the plugin:
+       $ sfdx mdata:apex:testdependencies --config
+  To find all test dependecies for classes in a delta package in a SFDX project with a specific naming convention for 
+  test classes:
+       $ sfdx mdata:apex:testdependencies -x package.xml -d destructiveChanges.xml --nameconv _Test
+  To find all test dependecies for classes in a delta package in a SFDX project when deploying into production:
+       $ sfdx mdata:apex:testdependencies -x package.xml -d destructiveChanges.xml --prod
+  To find all test dependecies for classes in a delta package in a SFDX project with a custom fuzzy threshold score:
+       $ sfdx mdata:apex:testdependencies -x package.xml -d destructiveChanges.xml --fuzzythreshold 0.75
+  To find all test dependecies up to a certain depth in a SFDX project:
+       $ sfdx mdata:apex:testdependencies -x package.xml -d destructiveChanges.xml -l 1
+  To find all test dependecies for classes in a delta package including ApexCodeCoverage in target org in a SFDX 
+  project:
+       $ sfdx mdata:apex:testdependencies -x package.xml -d destructiveChanges.xml --usecodecoverage
 ```
 
-_See code: [src/commands/mdata/apex/testdependencies.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.14/src/commands/mdata/apex/testdependencies.ts)_
+_See code: [src/commands/mdata/apex/testdependencies.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.15/src/commands/mdata/apex/testdependencies.ts)_
 
 ## `sfdx mdata:communities:publish [-n <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
@@ -114,7 +143,7 @@ EXAMPLES
        $ sfdx mdata:communities:publish -n Customer -u admin.user@uat.myorg.com
 ```
 
-_See code: [src/commands/mdata/communities/publish.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.14/src/commands/mdata/communities/publish.ts)_
+_See code: [src/commands/mdata/communities/publish.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.15/src/commands/mdata/communities/publish.ts)_
 
 ## `sfdx mdata:manifest:align [-r <string>] [-p <string>] [-x <string>] [-m <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
@@ -159,7 +188,7 @@ EXAMPLES
        $ sfdx mdata:manifest:align -m ApexClass,ApexTrigger,CustomObject -x manifest/package.xml
 ```
 
-_See code: [src/commands/mdata/manifest/align.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.14/src/commands/mdata/manifest/align.ts)_
+_See code: [src/commands/mdata/manifest/align.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.15/src/commands/mdata/manifest/align.ts)_
 
 ## `sfdx mdata:manifest:sort -x <string> [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
@@ -186,7 +215,7 @@ EXAMPLE
        $ sfdx mdata:manifest:sort -x manifest/package.xml
 ```
 
-_See code: [src/commands/mdata/manifest/sort.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.14/src/commands/mdata/manifest/sort.ts)_
+_See code: [src/commands/mdata/manifest/sort.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.15/src/commands/mdata/manifest/sort.ts)_
 
 ## `sfdx mdata:patch [-e <string>] [-r <string>] [-m <string>] [-s <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
@@ -225,7 +254,7 @@ OPTIONS
                                                                                     this command invocation
 ```
 
-_See code: [src/commands/mdata/patch.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.14/src/commands/mdata/patch.ts)_
+_See code: [src/commands/mdata/patch.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.15/src/commands/mdata/patch.ts)_
 
 ## `sfdx mdata:permset:retrieve [-r <string>] [-p <string>] [-x <string>] [-m <string>] [-d <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
@@ -286,7 +315,7 @@ EXAMPLES
        $ sfdx mdata:permsets:retrieve -m "MyCoolPermSet1,MyCoolPermSet2"
 ```
 
-_See code: [src/commands/mdata/permset/retrieve.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.14/src/commands/mdata/permset/retrieve.ts)_
+_See code: [src/commands/mdata/permset/retrieve.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.15/src/commands/mdata/permset/retrieve.ts)_
 
 ## `sfdx mdata:profile:retrieve [-r <string>] [-p <string>] [-x <string>] [-m <string>] [-d <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
@@ -347,7 +376,7 @@ EXAMPLES
        $ sfdx mdata:permsets:retrieve -m "Admin,Read Only,Custom: Sales Profile"
 ```
 
-_See code: [src/commands/mdata/profile/retrieve.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.14/src/commands/mdata/profile/retrieve.ts)_
+_See code: [src/commands/mdata/profile/retrieve.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.15/src/commands/mdata/profile/retrieve.ts)_
 
 ## `sfdx mdata:translations:convert -f <string> -t <string> -i <string> -o <string> [-m <string>] [-s <string>] [-r <number>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
@@ -384,5 +413,5 @@ OPTIONS
                                                                                     this command invocation
 ```
 
-_See code: [src/commands/mdata/translations/convert.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.14/src/commands/mdata/translations/convert.ts)_
+_See code: [src/commands/mdata/translations/convert.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.15/src/commands/mdata/translations/convert.ts)_
 <!-- commandsstop -->

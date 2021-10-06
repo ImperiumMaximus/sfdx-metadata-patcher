@@ -1,7 +1,7 @@
 {
   "name": "sfdx-metadata-patcher",
   "description": "A Salesforce DX Plugin to hotpatch metadata before deployments",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "author": "Raffaele Fioratto",
   "bugs": "https://github.com/ImperiumMaximus/sfdx-metadata-patcher/issues",
   "dependencies": {
@@ -17,6 +17,7 @@
     "common-substrings": "^3.0.1",
     "csv": "^5.5.0",
     "exceljs": "^4.2.1",
+    "fast-fuzzy": "^1.10.10",
     "find-java-home": "1.1.0",
     "json-query": "^2.2.2",
     "jszip": "^3.6.0",
@@ -24,6 +25,9 @@
     "micromatch": "^4.0.2",
     "pino": "^6.11.1",
     "pino-pretty": "^4.5.0",
+    "prompts": "^2.4.1",
+    "salesforce-alm": "^52.3.5",
+    "sqlstring": "^2.3.2",
     "tmp": "^0.2.1",
     "ts-lsp-client": "^0.0.8",
     "tslib": "^1"
@@ -39,6 +43,8 @@
     "@types/mocha": "^5",
     "@types/node": "^10",
     "@types/pino": "^6.3.5",
+    "@types/prompts": "^2.0.14",
+    "@types/sqlstring": "^2.3.0",
     "@types/tmp": "^0.2.1",
     "@types/xml2js": "^0.4.9",
     "chai": "^4",
@@ -85,7 +91,7 @@
     "postpack": "rm -f oclif.manifest.json",
     "posttest": "tslint -p test -t stylish",
     "prepack": "rm -rf lib && tsc -b && oclif-dev manifest",
-    "test": "nyc --extension .ts mocha --forbid-only \"test/**/*.test.ts\"",
+    "test": "nyc --extension .ts mocha --forbid-only \"test/**/*.test.ts\" --timeout 50000",
     "coverage": "nyc report --reporter text-lcov --extension .ts > coverage.lcov",
     "version": "oclif-dev readme && git add README.md"
   }

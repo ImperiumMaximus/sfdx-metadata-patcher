@@ -60,7 +60,6 @@
   },
   "files": [
     "/lib",
-    "/libs",
     "/messages",
     "/npm-shrinkwrap.json",
     "/oclif.manifest.json"

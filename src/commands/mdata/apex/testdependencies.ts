@@ -23,17 +23,23 @@ export default class TestDependencies extends SfdxCommand {
     public static description = messages.getMessage('apex.testdependencies.description');
 
     public static examples = [
-        `To find all test dependecies for a class in a SFDX project:
-    $ sfdx mdata:apex:testdependencies -m foo.cls`,
+        `To configure the plugin:
+    $ sfdx mdata:apex:testdependencies --config`,
 
-        `To find all test dependecies for multiple classes in a SFDX project:
-    $ sfdx mdata:apex:testdependencies -m foo.cls,bar.cls`,
+        `To find all test dependecies for classes in a delta package in a SFDX project with a specific naming convention for test classes:
+    $ sfdx mdata:apex:testdependencies -x package.xml -d destructiveChanges.xml --nameconv _Test`,
 
-        `To find all test dependecies up to a certain depth for multiple classes in a SFDX project:
-    $ sfdx mdata:apex:testdependencies -m foo.cls,bar.cls -d 1`,
+        `To find all test dependecies for classes in a delta package in a SFDX project when deploying into production:
+    $ sfdx mdata:apex:testdependencies -x package.xml -d destructiveChanges.xml --prod`,
 
-        `To find all test dependecies up to a certain depth for multiple classes in a SFDX project using a specific java version:
-    $ sfdx mdata:apex:testdependencies -m foo.cls,bar.cls -d 1 -j /opt/my_cool_java_version/bin/java`
+        `To find all test dependecies for classes in a delta package in a SFDX project with a custom fuzzy threshold score:
+    $ sfdx mdata:apex:testdependencies -x package.xml -d destructiveChanges.xml --fuzzythreshold 0.75`,
+
+        `To find all test dependecies up to a certain depth in a SFDX project:
+    $ sfdx mdata:apex:testdependencies -x package.xml -d destructiveChanges.xml -l 1`,
+
+        `To find all test dependecies for classes in a delta package including ApexCodeCoverage in target org in a SFDX project:
+    $ sfdx mdata:apex:testdependencies -x package.xml -d destructiveChanges.xml --usecodecoverage`
     ];
 
     protected static flagsConfig = {
@@ -67,10 +73,6 @@ export default class TestDependencies extends SfdxCommand {
         }),
         usecodecoverage: flags.boolean({
             description: messages.getMessage('apex.testdependencies.flags.usecodecoverage'),
-            default: false
-        }),
-        usedependencyapi: flags.boolean({
-            description: messages.getMessage('apex.testdependencies.flags.usedependencyapi'),
             default: false
         }),
         prod: flags.boolean({
@@ -144,12 +146,15 @@ export default class TestDependencies extends SfdxCommand {
         const frontier: Set<string> = new Set<string>();
         const closedList: Set<string> = new Set<string>();
         const apexTestClasses: Set<string> = new Set<string>();
-        let testLevel = 'RunLocalTest';
+        let testLevel = 'RunLocalTests';
 
-        if (this.sfdxProjectJson.get('mdataDeltaTests')) {
-            const metataTypesToCheck: string[] = Object.keys(this.sfdxProjectJson.get('mdataDeltaTests'));
+        const plugins = this.sfdxProjectJson.get('plugins');
+        const pluginConfig = plugins['mdataDeltaTests'];
+
+        if (pluginConfig) {
+            const metataTypesToCheck: string[] = Object.keys(pluginConfig);
             for (const metadataType of metataTypesToCheck) {
-                if (this.sfdxProjectJson.get('mdataDeltaTests')[metadataType] === 's') {
+                if (pluginConfig[metadataType] === 's') {
                     continue;
                 }
 
@@ -157,8 +162,8 @@ export default class TestDependencies extends SfdxCommand {
                 const deployMembers = jsonQuery(`Package.types[name=${metadataTypePc}].members`, { data: deltaPackageXml }).value || [];
                 const destroyMembers = jsonQuery(`Package.types[name=${metadataTypePc}].members`, { data: destructivePackageXml }).value || [];
 
-                if ((deployMembers.length > 0 && (this.sfdxProjectJson.get('mdataDeltaTests')[metadataType] === 'f' || this.sfdxProjectJson.get('mdataDeltaTests')[metadataType].onDeploy === 'f')) ||
-                    destroyMembers.length > 0 && (this.sfdxProjectJson.get('mdataDeltaTests')[metadataType] === 'f' || this.sfdxProjectJson.get('mdataDeltaTests')[metadataType].onDestroy === 'f')) {
+                if ((deployMembers.length > 0 && (pluginConfig[metadataType] === 'f' || pluginConfig[metadataType].onDeploy === 'f')) ||
+                    destroyMembers.length > 0 && (pluginConfig[metadataType] === 'f' || pluginConfig[metadataType].onDestroy === 'f')) {
                     strategy = 'full';
                     break;
                 }
@@ -191,15 +196,15 @@ export default class TestDependencies extends SfdxCommand {
             }
         }
 
-        if (!frontier.size) {
-            testLevel = this.flags.prod ? 'RunLocalTests' : 'NoTestRun';
+        if (strategy === 'full') {
             if (!this.flags.json) {
                 Mdata.log(`-l ${testLevel}`, LoggerLevel.INFO);
             }
             return this.flags.json ? { testLevel, classList: [] } : null;
         }
 
-        if (strategy === 'full') {
+        if (!frontier.size) {
+            testLevel = this.flags.prod ? 'RunLocalTests' : 'NoTestRun';
             if (!this.flags.json) {
                 Mdata.log(`-l ${testLevel}`, LoggerLevel.INFO);
             }
@@ -258,7 +263,7 @@ export default class TestDependencies extends SfdxCommand {
                     .run({ autoFetch: true, maxFetch: 1000000 });
             }));
 
-            coverageRecords.filter(coverageRecord => !apexTestClasses.has(coverageRecord['ApexTestClass'].Name) && allApexTestClasses.has(coverageRecords['ApexTestClass'].Name)).forEach(coverageRecord => {
+            coverageRecords.filter(coverageRecord => !apexTestClasses.has(coverageRecord['ApexTestClass'].Name) && allApexTestClasses.has(coverageRecord['ApexTestClass'].Name)).forEach(coverageRecord => {
                 Mdata.log(`Adding Test Class ${coverageRecord['ApexTestClass'].Name} (ApexCodeCoverage) since it covers ${coverageRecord['ApexClassOrTrigger'].Name}`, LoggerLevel.INFO);
                 apexTestClasses.add(coverageRecord['ApexTestClass'].Name);
             });
@@ -313,7 +318,7 @@ export default class TestDependencies extends SfdxCommand {
                     const sepDeleteResponse = await prompts({
                         type: 'toggle',
                         name: 'strat',
-                        message: `Do you want to specify a different strategy when a component of MetadataType "${metadataType.metadataName}" get deleted?`,
+                        message: `Do you want to specify a different strategy when a component of MetadataType "${metadataType.metadataName}" gets deleted?`,
                         initial: (Object.prototype.hasOwnProperty.call(pluginConfig, sfdxKeyName) && Object.prototype.hasOwnProperty.call(pluginConfig[sfdxKeyName], 'onDestroy')),
                         active: 'yes',
                         inactive: 'no'
@@ -350,6 +355,8 @@ export default class TestDependencies extends SfdxCommand {
         this.sfdxProjectJson.set('plugins', plugins);
 
         await this.sfdxProjectJson.write(this.sfdxProjectJson.getContents());
+
+        Mdata.log('Configuration written to sfdx-project.json', LoggerLevel.INFO);
 
         return this.flags.json ? pluginConfig : null;
     }

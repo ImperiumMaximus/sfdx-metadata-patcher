@@ -1,6 +1,7 @@
 import { expect, test } from '@salesforce/command/lib/test';
 import { testSetup } from '@salesforce/core/lib/testSetup';
-import { SfdxProject, SfdxProjectJson } from '@salesforce/core';
+import { AnyJson, ensureJsonMap, ensureString } from '@salesforce/ts-types';
+import { SfdxProject, SfdxProjectJson } from '@salesforce/core/lib/sfdxProject';
 import { spyMethod, stubMethod } from '@salesforce/ts-sinon';
 import * as fs from 'fs';
 import * as glob from 'glob';
@@ -21,6 +22,10 @@ const fakeDefaultExport = function (moduleRelativePath, stubs) {
     });
 };
 
+afterEach(() => {
+    $$.SANDBOXES.PROJECT.resetBehavior();
+})
+
 describe('apex:testdependencies', () => {
 
     describe('configure the plugin', () => {
@@ -29,25 +34,28 @@ describe('apex:testdependencies', () => {
         let promptsStub: Sinon.SinonStub;
         
 
-        const commonStubs = function (sfdxProjectJson: string) {
+        const commonStubs = function (pluginConfig: AnyJson) {
             stubMethod($$.SANDBOXES.PROJECT, SfdxProject.prototype, 'getPackageDirectories').callsFake(() => {
                 return [{ name: 'default', fullPath: 'my-dir' }];
             });
 
-            const sfdxProjectResolve = stubMethod($$.SANDBOXES.PROJECT, SfdxProject, 'resolve').callsFake(() => {
-                return sfdxProjectResolve.wrappedMethod.call(SfdxProject, path.join(__dirname, '..', '..', '..', 'data', sfdxProjectJson));
+            const sfdxProjectResolve = stubMethod($$.SANDBOXES.PROJECT, SfdxProject, 'resolve').callsFake(async () => {
+                const sfdxProject: Promise<SfdxProject> = sfdxProjectResolve.wrappedMethod.call(SfdxProject, path.join(__dirname, '..', '..', '..', 'data'));
+                if (pluginConfig) {
+                    (await sfdxProject).getSfdxProjectJson().set('plugins', pluginConfig);
+                }
+                return sfdxProject;
             });
 
             sfdxProjectJsonSet = spyMethod($$.SANDBOXES.PROJECT, SfdxProjectJson.prototype, 'set');
             sfdxProjectJsonWrite = spyMethod($$.SANDBOXES.PROJECT, SfdxProjectJson.prototype, 'write');
 
             const globSync = stubMethod($$.SANDBOX, glob, 'sync').callsFake((filePath: string) => {
-                return filePath.endsWith('/classes') || filePath.endsWith('/lwc') || filePath.includes('objects/**/fields') ? ['result'] : globSync.wrappedMethod.call(this, filePath);
+                return filePath.endsWith(`${path.sep}classes`) || filePath.endsWith(`${path.sep}lwc`) || filePath.includes(`objects${path.sep}**${path.sep}fields`) ? ['result'] : globSync.wrappedMethod.call(this, filePath);
             });
 
             promptsStub = Sinon.stub().callsFake((questions: prompts.PromptObject) => {
-                //console.error(questions);
-                if (questions.message.toString().includes('"ApexClass" get deleted?') || questions.message.toString().includes('"LightningComponentBundle" get deleted?')) {
+                if (questions.message.toString().includes('"ApexClass" gets deleted?') || questions.message.toString().includes('"LightningComponentBundle" gets deleted?')) {
                     return { 'strat': false }
                 } else if (questions.message.toString().includes('"ApexClass"')) {
                     return { 'strat': 'f' }
@@ -55,21 +63,21 @@ describe('apex:testdependencies', () => {
                     return { 'strat': 's' }
                 } else if (questions.message.toString().includes('"CustomField" appears in the Delta Deployment.')) {
                     return { 'strat': 'd' }
-                } else if (questions.message.toString().includes('"CustomField" get deleted?')) {
+                } else if (questions.message.toString().includes('"CustomField" gets deleted?')) {
                     return { 'strat': true }
                 } else if (questions.message.toString().includes('"CustomField" appears in the Destructive Changes Deployment.')) {
                     return { 'strat': 'f' }
                 }
             });
 
-            fakeDefaultExport('./../../../../src/commands/mdata/apex/testdependencies.ts', {
+            fakeDefaultExport(path.join('.', '..', '..', '..', '..', 'src', 'commands', 'mdata', 'apex', 'testdependencies.ts'), {
                 'prompts': promptsStub
             })
         }
 
         test
         .do(() => {
-            commonStubs('sfdx-project.json');
+            commonStubs({});
         })
         .stdout()
         .command(['mdata:apex:testdependencies', '--config'])
@@ -82,7 +90,16 @@ describe('apex:testdependencies', () => {
 
         test
         .do(() => {
-            commonStubs('sfdx-project_already_configured.json');
+            commonStubs({
+                "mdataDeltaTests": {
+                    "apexClass": "f",
+                    "lightningComponentBundle": "s",
+                    "customField": {
+                        "onDeploy": "d",
+                        "onDestroy": "f"
+                    }
+                }
+            });
         })
         .stdout()
         .command(['mdata:apex:testdependencies', '--config'])
@@ -102,169 +119,409 @@ describe('apex:testdependencies', () => {
     });
 
     describe('get dependencies', () => {
-        const commonStubs = function () {
+        const commonStubs = function (pluginConfig) {
             stubMethod($$.SANDBOXES.PROJECT, SfdxProject.prototype, 'getPackageDirectories').callsFake(() => {
                 return [{ name: 'default', fullPath: 'my-dir' }];
             });
 
-            const sfdxProjectResolve = stubMethod($$.SANDBOXES.PROJECT, SfdxProject, 'resolve').callsFake(() => {
-                return sfdxProjectResolve.wrappedMethod.call(SfdxProject, path.join(__dirname, '..', '..', '..', 'data', 'sfdx-project_already_configured.json'));
+            const sfdxProjectResolve = stubMethod($$.SANDBOXES.PROJECT, SfdxProject, 'resolve').callsFake(async () => {
+                const sfdxProjectPromise: Promise<SfdxProject> = sfdxProjectResolve.wrappedMethod.call(SfdxProject, path.join(__dirname, '..', '..', '..', 'data'));
+                (await sfdxProjectPromise).getSfdxProjectJson().set('plugins', pluginConfig);
+                return sfdxProjectPromise;
             });
 
             const globSync = stubMethod($$.SANDBOX, glob, 'sync').callsFake((filePath: string) => {
-                return filePath.endsWith('.cls') ? ['my-dir/main/default/classes/SomeClass1.cls', 'my-dir/main/default/classes/SomeClass1Test.cls', 'my-dir/main/default/classes/SomeClass2.cls', 'my-dir/main/default/classes/SomeClass2Test.cls'] : globSync.wrappedMethod.call(this, filePath);
+                return filePath.endsWith('.cls') ? [path.join('my-dir', 'main', 'default', 'classes', 'SomeClass1.cls'), path.join('my-dir', 'main', 'default', 'classes', 'SomeClass1Test.cls'), path.join('my-dir', 'main', 'default', 'classes', 'SomeClass2.cls'), path.join('my-dir', 'main', 'default', 'classes', 'SomeClass2Test.cls'), path.join('my-dir', 'main', 'default', 'classes', 'SomeClass3Test.cls')] : globSync.wrappedMethod.call(this, filePath);
             });
 
             const fsReadFileSync = stubMethod($$.SANDBOX, fs, 'readFileSync').callsFake((filePath: string) => {
                 if (filePath.endsWith('.cls')) {
                     return fsReadFileSync.wrappedMethod.call(this, path.join(__dirname, '..', '..', '..', 'data', 'force-app', 'classes', path.basename(filePath)));
                 } else if (filePath.includes('package') && filePath.endsWith('.xml')) {
-                    return fsReadFileSync.wrappedMethod.call(this, path.join(__dirname, '..', '..', '..', 'data', 'force-app', 'manifest', path.basename(filePath)));
+                    return fsReadFileSync.wrappedMethod.call(this, path.join(__dirname, '..', '..', '..', 'data', 'manifest', path.basename(filePath)));
                 } else if (filePath.includes('destructiveChanges') && filePath.endsWith('.xml')) {
-                    return fsReadFileSync.wrappedMethod.call(this, path.join(__dirname, '..', '..', '..', 'data', 'force-app', 'manifest', path.basename(filePath)));
+                    return fsReadFileSync.wrappedMethod.call(this, path.join(__dirname, '..', '..', '..', 'data', 'manifest', path.basename(filePath)));
                 }
-                return fsReadFileSync.wrappedMethod.call(this, filePath);
+                return fsReadFileSync.wrappedMethod.call(null, filePath).toString();
             });
         }
 
         test
-        .do(() => {
-            commonStubs();
-        })
-        .stdout()
-        .command(['mdata:apex:testdependencies', '-x', 'package.xml', '-d', 'destructiveChanges.xml'])
-        .it('runs mdata:apex:testdependencies with json output', ctx => {
-            expect(true).to.be.true;
-        });
-    });
-
-    /*describe('get dependencies', () => {
-
-        let apexLspStubEmitter = new events.EventEmitter();
-        apexLspStubEmitter['stdout'] = new Readable();
-        apexLspStubEmitter['stdin'] = new WriteOnlyMemory();
-
-        apexLspStubEmitter['stdout'].push(null);
-
-
-        const commonStubs = function () {
-            stubMethod($$.SANDBOX, child_process, 'spawn').callsFake((_: string, __: string[]) => {
-                return apexLspStubEmitter;
-            });
-
-            stubMethod($$.SANDBOX, LspClient.prototype, 'initialize').callsFake((_: InitializeParams) => {
-                const initRes: InitializeResult = {
-                    capabilities: {}
-                };
-                return initRes;
-            });
-
-            stubMethod($$.SANDBOX, LspClient.prototype, 'documentSymbol').callsFake((params: DocumentSymbolParams) => {
-                const documentSymbolRes: SymbolInformation[] = [
-                    {
-                        kind: SymbolKind.Method,
-                        name: 'stubbedMethod',
-                        location: {
-                            range: {
-                                start: {
-                                    character: 1,
-                                    line: 1
-                                },
-                                end: {
-                                    character: 10,
-                                    line: 1
-                                }
-                            },
-                            uri: 'file:///fake.cls'
+            .do(() => {
+                commonStubs({
+                    "mdataDeltaTests": {
+                        "apexClass": "d",
+                        "lightningComponentBundle": "s",
+                        "customField": {
+                            "onDeploy": "d",
+                            "onDestroy": "f"
                         }
                     }
-                ];
-
-                return documentSymbolRes;
-            });
-
-            stubMethod($$.SANDBOX, LspClient.prototype, 'references').callsFake((params: ReferenceParams) => {
-                const referencesRes: Location[] = [
-                    {
-                        uri: 'file:///force-app/main/default/classes/fflib_SObjectDomainTest.cls',
-                        range: {
-                            start: {
-                                character: 1,
-                                line: 1
-                            },
-                            end: {
-                                character: 10,
-                                line: 1
-                            }
-                        },
-                    },
-                    {
-                        uri: 'file:///force-app/main/default/classes/fflib_Application.cls',
-                        range: {
-                            start: {
-                                character: 1,
-                                line: 1
-                            },
-                            end: {
-                                character: 10,
-                                line: 1
-                            }
-                        },
-                    }
-                ]
-
-                return referencesRes;
-            });
-
-            stubMethod($$.SANDBOX, LspClient.prototype, 'shutdown').callsFake(() => {
-                return {};
+                });
             })
-            
-            stubMethod($$.SANDBOX, LspClient.prototype, 'once').callsFake((_: string) => {
-                return {};
+            .stdout()
+            .command(['mdata:apex:testdependencies', '-x', 'package_delta_skip.xml', '-d', 'destructiveChanges_delta_skip.xml'])
+            .it('runs mdata:apex:testdependencies and skips tests if not in prod and all metadata types in delta are configured to skip test classes', ctx => {
+                expect(ctx.stdout).to.include('-l NoTestRun');
             });
-
-            const fsExistsSync = stubMethod($$.SANDBOX, fs, 'existsSync');
-            
-            fsExistsSync.callsFake((filePath: string) => {
-                if (filePath.includes('force-app')) return true;
-                return fsExistsSync.wrappedMethod.call(this, filePath);
-            });
-
-            const fsReadFileSync = stubMethod($$.SANDBOX, fs, 'readFileSync');
-
-            fsReadFileSync.callsFake((filePath: string) => {
-                if (filePath.endsWith('fflib_SObjectDomain.cls')) return 'public class fflib_SObjectDomain {}';
-                else if (filePath.endsWith('fflib_Application.cls')) return '@isTest public class fflib_Application {}';
-                return fsReadFileSync.wrappedMethod.call(this, filePath).toString();
-            });
-
-            stubMethod($$.SANDBOXES.PROJECT, SfdxProject.prototype, 'getPackageDirectories').callsFake(() => {
-                return [{
-                    "fullPath": "force-app/",
-                    "name": "force-app"
-                }]
-            });
-        }  
 
         test
-        .do(() => {
-            commonStubs();
-        })
-        .stdout()
-        .command(['mdata:apex:testdependencies', '-m', 'fflib_SObjectDomain.cls', '-j', '/usr/bin/java'])
-        .it('runs mdata:apex:testdependencies with non-json output', ctx => {
-            expect(ctx.stdout).to.contain('-l RunSpecifiedTests -r fflib_SObjectDomainTest,fflib_ApplicationTest');
-        });
+            .do(() => {
+                commonStubs({
+                    "mdataDeltaTests": {
+                        "apexClass": "d",
+                        "lightningComponentBundle": "s",
+                        "customField": {
+                            "onDeploy": "d",
+                            "onDestroy": "f"
+                        }
+                    }
+                });
+            })
+            .stdout()
+            .command(['mdata:apex:testdependencies', '-x', 'package_delta_skip.xml', '-d', 'destructiveChanges_delta_skip.xml', '--json'])
+            .it('runs mdata:apex:testdependencies and skips tests if not in prod and all metadata types in delta are configured to skip test classes', ctx => {
+                expect(JSON.parse(ctx.stdout)).to.deep.equal({
+                    "status": 0,
+                    "result": {
+                        "testLevel": "NoTestRun",
+                        "classList": []
+                    }
+                });
+            });
 
         test
-        .do(() => {
-            commonStubs();
-        })
-        .stdout()
-        .command(['mdata:apex:testdependencies', '-m', 'fflib_SObjectDomain.cls', '--json', '-j', '/usr/bin/java'])
-        .it('runs mdata:apex:testdependencies with json output', ctx => {
-            expect(JSON.parse(ctx.stdout).result).to.deep.equal(['fflib_SObjectDomainTest','fflib_ApplicationTest']);
-        });
-    })*/
+            .do(() => {
+                commonStubs({
+                    "mdataDeltaTests": {
+                        "apexClass": "d",
+                        "lightningComponentBundle": "s",
+                        "customField": {
+                            "onDeploy": "d",
+                            "onDestroy": "f"
+                        }
+                    }
+                });
+            })
+            .stdout()
+            .command(['mdata:apex:testdependencies', '-x', 'package_delta_skip.xml', '-d', 'destructiveChanges_delta_skip.xml', '--prod'])
+            .it('runs mdata:apex:testdependencies and runs all tests if in prod and all metadata types in delta are configured to skip test classes', ctx => {
+                expect(ctx.stdout).to.include('-l RunLocalTests');
+            });
+
+        test
+            .do(() => {
+                commonStubs({
+                    "mdataDeltaTests": {
+                        "apexClass": "d",
+                        "lightningComponentBundle": "s",
+                        "customField": {
+                            "onDeploy": "d",
+                            "onDestroy": "f"
+                        }
+                    }
+                });
+            })
+            .stdout()
+            .command(['mdata:apex:testdependencies', '-x', 'package_delta_skip.xml', '-d', 'destructiveChanges_delta_skip.xml', '--prod', '--json'])
+            .it('runs mdata:apex:testdependencies and runs all tests if in prod and all metadata types in delta are configured to skip test classes', ctx => {
+                expect(JSON.parse(ctx.stdout)).to.deep.equal({
+                    "status": 0,
+                    "result": {
+                        "testLevel": "RunLocalTests",
+                        "classList": []
+                    }
+                });
+            });
+
+        test
+            .do(() => {
+                commonStubs({
+                    "mdataDeltaTests": {
+                        "apexClass": "d",
+                        "lightningComponentBundle": "s",
+                        "customField": {
+                            "onDeploy": "d",
+                            "onDestroy": "f"
+                        }
+                    }
+                });
+            })
+            .stdout()
+            .command(['mdata:apex:testdependencies', '-x', 'package_delta.xml', '-d', 'destructiveChanges_delta_skip.xml'])
+            .it('runs mdata:apex:testdependencies and returns only test classes based on the delta package', ctx => {
+                expect(ctx.stdout).to.include('-l RunSpecifiedTests -r SomeClass2Test');
+            });
+
+        test
+            .do(() => {
+                commonStubs({
+                    "mdataDeltaTests": {
+                        "apexClass": "d",
+                        "lightningComponentBundle": "s",
+                        "customField": {
+                            "onDeploy": "d",
+                            "onDestroy": "f"
+                        }
+                    }
+                });
+            })
+            .stdout()
+            .command(['mdata:apex:testdependencies', '-x', 'package_delta.xml', '-d', 'destructiveChanges_delta_skip.xml', '--json'])
+            .it('runs mdata:apex:testdependencies and returns only test classes based on the delta package', ctx => {
+                expect(JSON.parse(ctx.stdout)).to.deep.equal({
+                    "status": 0,
+                    "result": {
+                        "testLevel": "RunSpecifiedTests",
+                        "classList": ["SomeClass2Test"]
+                    }
+                });
+            });
+
+        test
+            .do(() => {
+                commonStubs({
+                    "mdataDeltaTests": {
+                        "apexClass": "d",
+                        "lightningComponentBundle": "s",
+                        "customField": {
+                            "onDeploy": "d",
+                            "onDestroy": "f"
+                        }
+                    }
+                });
+            })
+            .stdout()
+            .command(['mdata:apex:testdependencies', '-x', 'package_delta_depth.xml', '-d', 'destructiveChanges_delta_skip.xml'])
+            .it('runs mdata:apex:testdependencies and returns only test classes based on the delta package', ctx => {
+                expect(ctx.stdout).to.include('-l RunSpecifiedTests -r SomeClass1Test,SomeClass2Test');
+            });
+
+        test
+            .do(() => {
+                commonStubs({
+                    "mdataDeltaTests": {
+                        "apexClass": "d",
+                        "lightningComponentBundle": "s",
+                        "customField": {
+                            "onDeploy": "d",
+                            "onDestroy": "f"
+                        }
+                    }
+                });
+            })
+            .stdout()
+            .command(['mdata:apex:testdependencies', '-x', 'package_delta_depth.xml', '-d', 'destructiveChanges_delta_skip.xml', '--json'])
+            .it('runs mdata:apex:testdependencies and returns only test classes based on the delta package', ctx => {
+                expect(JSON.parse(ctx.stdout)).to.deep.equal({
+                    "status": 0,
+                    "result": {
+                        "testLevel": "RunSpecifiedTests",
+                        "classList": ["SomeClass1Test", "SomeClass2Test"]
+                    }
+                });
+            });
+
+        test
+            .do(() => {
+                commonStubs({
+                    "mdataDeltaTests": {
+                        "apexClass": "d",
+                        "lightningComponentBundle": "s",
+                        "customField": {
+                            "onDeploy": "d",
+                            "onDestroy": "f"
+                        }
+                    }
+                });
+            })
+            .stdout()
+            .command(['mdata:apex:testdependencies', '-x', 'package_delta_depth_becomes_full.xml', '-d', 'destructiveChanges_delta_skip.xml'])
+            .it('runs mdata:apex:testdependencies and returns only test classes based on the delta package', ctx => {
+                expect(ctx.stdout).to.include('-l RunLocalTests');
+            });
+
+        test
+            .do(() => {
+                commonStubs({
+                    "mdataDeltaTests": {
+                        "apexClass": "d",
+                        "lightningComponentBundle": "s",
+                        "customField": {
+                            "onDeploy": "d",
+                            "onDestroy": "f"
+                        }
+                    }
+                });
+            })
+            .stdout()
+            .command(['mdata:apex:testdependencies', '-x', 'package_delta_depth_becomes_full.xml', '-d', 'destructiveChanges_delta_skip.xml', '--json'])
+            .it('runs mdata:apex:testdependencies and returns only test classes based on the delta package', ctx => {
+                expect(JSON.parse(ctx.stdout)).to.deep.equal({
+                    "status": 0,
+                    "result": {
+                        "testLevel": "RunLocalTests",
+                        "classList": []
+                    }
+                });
+            });
+
+        test
+            .do(() => {
+                commonStubs({
+                    "mdataDeltaTests": {
+                        "apexClass": "d",
+                        "lightningComponentBundle": "s",
+                        "customField": {
+                            "onDeploy": "d",
+                            "onDestroy": "f"
+                        }
+                    }
+                });
+            })
+            .stdout()
+            .command(['mdata:apex:testdependencies', '-x', 'package_delta_skip.xml', '-d', 'destructiveChanges_full.xml'])
+            .it('runs mdata:apex:testdependencies and returns only test classes based on the delta package', ctx => {
+                expect(ctx.stdout).to.include('-l RunLocalTests');
+            });
+
+        test
+            .do(() => {
+                commonStubs({
+                    "mdataDeltaTests": {
+                        "apexClass": "d",
+                        "lightningComponentBundle": "s",
+                        "customField": {
+                            "onDeploy": "d",
+                            "onDestroy": "f"
+                        }
+                    }
+                });
+            })
+            .stdout()
+            .command(['mdata:apex:testdependencies', '-x', 'package_delta_skip.xml', '-d', 'destructiveChanges_full.xml', '--json'])
+            .it('runs mdata:apex:testdependencies and returns only test classes based on the delta package', ctx => {
+                expect(JSON.parse(ctx.stdout)).to.deep.equal({
+                    "status": 0,
+                    "result": {
+                        "testLevel": "RunLocalTests",
+                        "classList": []
+                    }
+                });
+            });
+
+        test
+            .do(() => {
+                commonStubs({
+                    "mdataDeltaTests": {
+                        "apexClass": "d",
+                        "lightningComponentBundle": "s",
+                        "customField": {
+                            "onDeploy": "d",
+                            "onDestroy": "f"
+                        }
+                    }
+                });
+            })
+            .withOrg({ username: 'test@org.com' }, true)
+            .withConnectionRequest((request: any) => {
+                if (typeof request == 'object' && ensureJsonMap(request) && ensureString(request.url).includes(encodeURIComponent('FROM ApexCodeCoverage'))) {
+                    return Promise.resolve(
+                        {
+                            "size": 1,
+                            "totalSize": 1,
+                            "done": true,
+                            "queryLocator": null,
+                            "entityTypeName": "ApexCodeCoverage",
+                            "records": [{
+                                "attributes": {
+                                    "type": "ApexCodeCoverage",
+                                    "url": "/services/data/v52.0/tooling/sobjects/ApexCodeCoverage/7141i00000DXx0BAAT"
+                                },
+                                "ApexTestClass": {
+                                    "attributes": {
+                                        "type": "ApexClass",
+                                        "url": "/services/data/v52.0/tooling/sobjects/ApexClass/01p1i000001NALaAAO"
+                                    },
+                                    "Name": "SomeClass3Test"
+                                },
+                                "ApexClassOrTrigger": {
+                                    "attributes": {
+                                        "type": "Name",
+                                        "url": "/services/data/v52.0/tooling/sobjects/ApexClass/01p1i000001vP3qAAE"
+                                    },
+                                    "Name": "SomeClass2"
+                                }
+                            }]
+                        }
+                    );
+                }
+                return Promise.resolve({});
+            })
+            .stdout()
+            .command(['mdata:apex:testdependencies', '-x', 'package_delta.xml', '-d', 'destructiveChanges_delta_skip.xml', '--usecodecoverage'])
+            .it('runs mdata:apex:testdependencies and returns only test classes based on the delta package', ctx => {
+                expect(ctx.stdout).to.include('-l RunSpecifiedTests -r SomeClass2Test,SomeClass3Test');
+            });
+
+        test
+            .do(() => {
+                commonStubs({
+                    "mdataDeltaTests": {
+                        "apexClass": "d",
+                        "lightningComponentBundle": "s",
+                        "customField": {
+                            "onDeploy": "d",
+                            "onDestroy": "f"
+                        }
+                    }
+                });
+            })
+            .withOrg({ username: 'test@org.com' }, true)
+            .withConnectionRequest((request: any) => {
+                if (typeof request == 'object' && ensureJsonMap(request) && ensureString(request.url).includes(encodeURIComponent('FROM ApexCodeCoverage'))) {
+                    return Promise.resolve(
+                        {
+                            "size": 1,
+                            "totalSize": 1,
+                            "done": true,
+                            "queryLocator": null,
+                            "entityTypeName": "ApexCodeCoverage",
+                            "records": [{
+                                "attributes": {
+                                    "type": "ApexCodeCoverage",
+                                    "url": "/services/data/v52.0/tooling/sobjects/ApexCodeCoverage/7141i00000DXx0BAAT"
+                                },
+                                "ApexTestClass": {
+                                    "attributes": {
+                                        "type": "ApexClass",
+                                        "url": "/services/data/v52.0/tooling/sobjects/ApexClass/01p1i000001NALaAAO"
+                                    },
+                                    "Name": "SomeClass3Test"
+                                },
+                                "ApexClassOrTrigger": {
+                                    "attributes": {
+                                        "type": "Name",
+                                        "url": "/services/data/v52.0/tooling/sobjects/ApexClass/01p1i000001vP3qAAE"
+                                    },
+                                    "Name": "SomeClass2"
+                                }
+                            }]
+                        }
+                    );
+                }
+                return Promise.resolve({});
+            })
+            .stdout()
+            .command(['mdata:apex:testdependencies', '-x', 'package_delta.xml', '-d', 'destructiveChanges_delta_skip.xml', '--usecodecoverage', '--json'])
+            .it('runs mdata:apex:testdependencies and returns only test classes based on the delta package', ctx => {
+                expect(JSON.parse(ctx.stdout)).to.deep.equal({
+                    "status": 0,
+                    "result": {
+                        "testLevel": "RunSpecifiedTests",
+                        "classList": ["SomeClass2Test", "SomeClass3Test"]
+                    }
+                });
+            });
+    });
 });

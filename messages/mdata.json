@@ -92,7 +92,6 @@
         "manifest": "file path for manifest (package.xml) of components to deploy in delta",
         "destructivemanifest": "file path for destructive manifest (package.xml) of components to delete in delta",
         "usecodecoverage": "include target org existing code coverage tables to extract dependencies",
-        "usedependencyapi": "use target org Dependency API (Beta) to extract dependencies",
         "fuzzythreshold": "the minimum score that can be returned in the fuzzy match",
         "prod": "pass this flag if the command is running while validating / deploying to production"
       }

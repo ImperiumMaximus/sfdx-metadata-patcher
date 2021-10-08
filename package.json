@@ -58,6 +58,7 @@
     "node": ">=8.0.0"
   },
   "files": [
+    "/cfg",
     "/lib",
     "/messages",
     "/npm-shrinkwrap.json",

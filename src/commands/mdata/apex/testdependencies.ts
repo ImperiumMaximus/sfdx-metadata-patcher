@@ -119,7 +119,7 @@ export default class TestDependencies extends SfdxCommand {
     public async run(): Promise<AnyJson> {
         Mdata.setLogLevel(this.flags.loglevel, this.flags.json);
 
-        this.metadataTypeInfos = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', '..', '..', 'node_modules', 'salesforce-alm', 'metadata', 'metadataTypeInfos.json')).toString());
+        this.metadataTypeInfos = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', '..', '..', 'cfg', 'metadata', 'metadataTypeInfos.json')).toString());
         this.project = await SfdxProject.resolve();
         this.sfdxProjectJson = this.project.getSfdxProjectJson();
 

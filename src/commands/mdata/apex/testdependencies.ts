@@ -212,37 +212,41 @@ export default class TestDependencies extends SfdxCommand {
         }
 
         if (strategy === 'delta') {
-            const frontierQueue = Array.from(frontier);
+            const curFrontier = new Set<string>(frontier);
             let curDepth = 0;
-            while ((this.flags.depth < 0 || curDepth < this.flags.depth) && frontierQueue.length) {
-                const curMember = frontierQueue.splice(0, 1)[0];
-                closedList.add(curMember);
-                Object.keys(apexClassesContentsByName).forEach(apexClass => {
-                    let fuzzyRes: fastFuzzy.MatchData<string>;
-                    const potentialTestClass = `${apexClass}${this.flags.nameconv}`;
-                    if (allApexTestClasses.has(potentialTestClass) && !apexTestClasses.has(potentialTestClass) && apexClassesContentsByName[apexClass].includes(curMember)) {
-                        Mdata.log(`Adding Test Class ${potentialTestClass} (exact match) since it depends on ${curMember}`, LoggerLevel.INFO);
-                        if (!frontier.has(apexClass) && !closedList.has(apexClass)) {
-                            frontierQueue.push(apexClass);
+            while ((this.flags.depth < 0 || curDepth < this.flags.depth) && curFrontier.size) {
+                const frontierQueue = Array.from(curFrontier);
+                curFrontier.clear();
+                while (frontierQueue.length) {
+                    const curMember = frontierQueue.splice(0, 1)[0];
+                    closedList.add(curMember);
+                    Object.keys(apexClassesContentsByName).forEach(apexClass => {
+                        let fuzzyRes: fastFuzzy.MatchData<string>;
+                        const potentialTestClass = `${apexClass}${this.flags.nameconv}`;
+                        if (allApexTestClasses.has(potentialTestClass) && !apexTestClasses.has(potentialTestClass) && apexClassesContentsByName[apexClass].includes(curMember)) {
+                            Mdata.log(`Adding Test Class ${potentialTestClass} (exact match) since it depends on ${curMember}`, LoggerLevel.INFO);
+                            if (!curFrontier.has(apexClass) && !closedList.has(apexClass)) {
+                                curFrontier.add(apexClass);
+                            }
+                            deltaApexCodeClasses.add(apexClass);
+                            apexTestClasses.add(potentialTestClass);
+                        } else if (allApexTestClasses.has(potentialTestClass) && !apexTestClasses.has(potentialTestClass) && apexClassesContentsByName[apexClass].match(new RegExp(curMember, 'ig'))) {
+                            Mdata.log(`Adding Test Class ${potentialTestClass} (regex match) since it depends on ${curMember}`, LoggerLevel.INFO);
+                            if (!curFrontier.has(apexClass) && !closedList.has(apexClass)) {
+                                curFrontier.add(apexClass);
+                            }
+                            deltaApexCodeClasses.add(apexClass);
+                            apexTestClasses.add(potentialTestClass);
+                        } else if (allApexTestClasses.has(potentialTestClass) && !apexTestClasses.has(potentialTestClass) && ((fuzzyRes = fastFuzzy.fuzzy(curMember, apexClassesContentsByName[apexClass], { useSellers: false, returnMatchData: true })).score >= this.flags.fuzzythreshold)) {
+                            Mdata.log(`Adding Test Class ${potentialTestClass} (fuzzy match, score: ${fuzzyRes.score}) since it depends on ${curMember}`, LoggerLevel.INFO);
+                            if (!frontier.has(apexClass) && !closedList.has(apexClass)) {
+                                curFrontier.add(apexClass);
+                            }
+                            deltaApexCodeClasses.add(apexClass);
+                            apexTestClasses.add(potentialTestClass);
                         }
-                        deltaApexCodeClasses.add(apexClass);
-                        apexTestClasses.add(potentialTestClass);
-                    } else if (allApexTestClasses.has(potentialTestClass) && !apexTestClasses.has(potentialTestClass) && apexClassesContentsByName[apexClass].match(new RegExp(curMember, 'ig'))) {
-                        Mdata.log(`Adding Test Class ${potentialTestClass} (regex match) since it depends on ${curMember}`, LoggerLevel.INFO);
-                        if (!frontier.has(apexClass) && !closedList.has(apexClass)) {
-                            frontierQueue.push(apexClass);
-                        }
-                        deltaApexCodeClasses.add(apexClass);
-                        apexTestClasses.add(potentialTestClass);
-                    } else if (allApexTestClasses.has(potentialTestClass) && !apexTestClasses.has(potentialTestClass) && ((fuzzyRes = fastFuzzy.fuzzy(curMember, apexClassesContentsByName[apexClass], { useSellers: false, returnMatchData: true })).score >= this.flags.fuzzythreshold)) {
-                        Mdata.log(`Adding Test Class ${potentialTestClass} (fuzzy match, score: ${fuzzyRes.score}) since it depends on ${curMember}`, LoggerLevel.INFO);
-                        if (!frontier.has(apexClass) && !closedList.has(apexClass)) {
-                            frontierQueue.push(apexClass);
-                        }
-                        deltaApexCodeClasses.add(apexClass);
-                        apexTestClasses.add(potentialTestClass);
-                    }
-                });
+                    });
+                }
                 curDepth++;
             }
         }

@@ -220,21 +220,21 @@ export default class TestDependencies extends SfdxCommand {
                 Object.keys(apexClassesContentsByName).forEach(apexClass => {
                     let fuzzyRes: fastFuzzy.MatchData<string>;
                     const potentialTestClass = `${apexClass}${this.flags.nameconv}`;
-                    if (apexClassesContentsByName[apexClass].includes(curMember) && allApexTestClasses.has(potentialTestClass)) {
+                    if (allApexTestClasses.has(potentialTestClass) && !apexTestClasses.has(potentialTestClass) && apexClassesContentsByName[apexClass].includes(curMember)) {
                         Mdata.log(`Adding Test Class ${potentialTestClass} (exact match) since it depends on ${curMember}`, LoggerLevel.INFO);
                         if (!frontier.has(apexClass) && !closedList.has(apexClass)) {
                             frontierQueue.push(apexClass);
                         }
                         deltaApexCodeClasses.add(apexClass);
                         apexTestClasses.add(potentialTestClass);
-                    } else if (apexClassesContentsByName[apexClass].match(new RegExp(curMember, 'ig')) && allApexTestClasses.has(potentialTestClass)) {
+                    } else if (allApexTestClasses.has(potentialTestClass) && !apexTestClasses.has(potentialTestClass) && apexClassesContentsByName[apexClass].match(new RegExp(curMember, 'ig'))) {
                         Mdata.log(`Adding Test Class ${potentialTestClass} (regex match) since it depends on ${curMember}`, LoggerLevel.INFO);
                         if (!frontier.has(apexClass) && !closedList.has(apexClass)) {
                             frontierQueue.push(apexClass);
                         }
                         deltaApexCodeClasses.add(apexClass);
                         apexTestClasses.add(potentialTestClass);
-                    } else if (((fuzzyRes = fastFuzzy.fuzzy(curMember, apexClassesContentsByName[apexClass], { useSellers: false, returnMatchData: true })).score >= this.flags.fuzzythreshold) && allApexTestClasses.has(potentialTestClass)) {
+                    } else if (allApexTestClasses.has(potentialTestClass) && !apexTestClasses.has(potentialTestClass) && ((fuzzyRes = fastFuzzy.fuzzy(curMember, apexClassesContentsByName[apexClass], { useSellers: false, returnMatchData: true })).score >= this.flags.fuzzythreshold)) {
                         Mdata.log(`Adding Test Class ${potentialTestClass} (fuzzy match, score: ${fuzzyRes.score}) since it depends on ${curMember}`, LoggerLevel.INFO);
                         if (!frontier.has(apexClass) && !closedList.has(apexClass)) {
                             frontierQueue.push(apexClass);

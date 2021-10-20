@@ -170,11 +170,16 @@ export default class Patch extends SfdxCommand {
           await prevWrkSpcPromise;
           const wrkSpcFile: WorkspaceMdapiElement = mdapiMapParsed[wrkSpcPath];
           if (Object.prototype.hasOwnProperty.call(MDATANAME_TO_XMLTAG, wrkSpcFile.metadataName)) {
-            const fixes = Object.assign({}, this.fixes[filePath]);
-            if (fixes.where) {
-              const fullName = wrkSpcFile.fullName.replace(`${wrkSpcFile.mdapiType}.`, '');
-              fixes.where = `${MDATANAME_TO_XMLTAG[wrkSpcFile.metadataName]}[fullName=${fullName}]`;
-            }
+            let fixes = _.clone(this.fixes[filePath]);
+            if (!_.isArray(fixes)) fixes = [fixes];
+
+            _.each(fixes, fix => {
+              if (fix.where) {
+                const fullName = wrkSpcFile.fullName.replace(`${wrkSpcFile.mdapiType}.`, '');
+                fix.where = `${MDATANAME_TO_XMLTAG[wrkSpcFile.metadataName]}[fullName=${fullName}]`;
+              }
+            });
+
             Mdata.log(`Patching ${path.join(self.baseDir, wrkSpcFile.mdapiFilePath)} with fixes: ${JSON.stringify(fixes)}`,  LoggerLevel.INFO);
             return patchFile(path.join(self.baseDir, wrkSpcFile.mdapiFilePath), fixes);
           } else {
@@ -204,129 +209,137 @@ export default class Patch extends SfdxCommand {
     }
   }
 
-  public async processConf(xml, conf): Promise<void> {
+  public async processConf(xml, confs): Promise<void> {
     let token = xml;
-    if (conf.where) token = jsonQuery(conf.where, { data: xml });
+    if (!_.isArray(confs)) confs = [confs];
 
-    if (!token.value) return xml;
-    token = token.value;
-    if (!_.isArray(token)) token = [token];
+    _.each(confs, conf => {
+      if (conf.where) token = jsonQuery(conf.where, { data: xml });
 
-    if (conf.replace) {
-      _.each(_.keys(conf.replace), t => {
-        _.each(token, tk => {
-          tk[t] = conf.replace[t];
+      if (!token.value) return xml;
+      token = token.value;
+      if (!_.isArray(token)) token = [token];
+
+      if (conf.replace) {
+        _.each(_.keys(conf.replace), t => {
+          _.each(token, tk => {
+            tk[t] = conf.replace[t];
+          });
         });
-      });
-    }
+      }
 
-    if (conf.concat) {
-      _.each(conf.concat, tk => {
-        token[0] = Object.assign(token[0], tk);
-      });
-    }
-
-    if (conf.filter) {
-      _.each(conf.filter, valueToFilter => {
-        delete token[0][valueToFilter];
-      });
-    }
-
-    if (conf.deletePermissionBlocks) {
-      _.each(conf.deletePermissionBlocks, perm => {
-        if (_.findIndex(token[0].userPermissions, (p: GenericEntity) => p.name[0] === perm) !== -1) {
-          _.remove(token[0].userPermissions, (p: GenericEntity) => {
-            return p.name[0] === perm;
+      if (conf.concat) {
+        _.each(conf.concat, t => {
+          _.each(token, tk => {
+            tk = Object.assign(tk, t);
           });
-        }
-      });
-    }
+        });
+      }
 
-    if (conf.disablePermissions && token[0].userPermissions) {
-      _.each(conf.disablePermissions, perm => {
-        if (_.findIndex(token[0].userPermissions, (p: GenericEntity) => p.name[0] === perm) === -1) {
-          this.maybeCreateTag(token[0], 'userPermissions', []);
-          token[0].userPermissions.push({
-            enabled: false,
-            name: perm
+      if (conf.filter) {
+        _.each(conf.filter, valueToFilter => {
+          _.each(token, tk => {
+            delete tk[valueToFilter];
           });
-        }
-      });
-    }
+        });
+      }
 
-    if (conf.deleteListView) {
-      _.each(conf.deleteListView, perm => {
-        if (_.findIndex(token[0].listViews, (p: GenericEntity) => p.fullName[0] === perm) !== -1) {
-          _.remove(token[0].listViews, (p: GenericEntity) => {
-            return p.fullName[0] === perm;
-          });
-        }
-      });
-    }
+      if (conf.deletePermissionBlocks) {
+        _.each(conf.deletePermissionBlocks, perm => {
+          if (_.findIndex(token[0].userPermissions, (p: GenericEntity) => p.name[0] === perm) !== -1) {
+            _.remove(token[0].userPermissions, (p: GenericEntity) => {
+              return p.name[0] === perm;
+            });
+          }
+        });
+      }
 
-    if (conf.deleteFieldPermissions && token[0].fieldPermissions) {
-      _.each(conf.deleteFieldPermissions, perm => {
-        if (_.findIndex(token[0].fieldPermissions, (p: CustomField) => p.field[0] === perm) !== -1) {
-          _.remove(token[0].fieldPermissions, (p: CustomField) => {
-            return p.field[0] === perm;
-          });
-        }
-      });
-    }
+      if (conf.disablePermissions && token[0].userPermissions) {
+        _.each(conf.disablePermissions, perm => {
+          if (_.findIndex(token[0].userPermissions, (p: GenericEntity) => p.name[0] === perm) === -1) {
+            this.maybeCreateTag(token[0], 'userPermissions', []);
+            token[0].userPermissions.push({
+              enabled: false,
+              name: perm
+            });
+          }
+        });
+      }
 
-    if (conf.disableTabs) {
-      _.each(conf.disableTabs, perm => {
-        if (_.findIndex(token[0].tabVisibilities, (t: CustomTab) => t.tab[0] === perm) === -1) {
-          this.maybeCreateTag(token[0], 'tabVisibilities', []);
-          token[0].tabVisibilities.push({
-            tab: perm,
-            visibility: 'Hidden'
-          });
-        }
-      });
-    }
+      if (conf.deleteListView) {
+        _.each(conf.deleteListView, perm => {
+          if (_.findIndex(token[0].listViews, (p: GenericEntity) => p.fullName[0] === perm) !== -1) {
+            _.remove(token[0].listViews, (p: GenericEntity) => {
+              return p.fullName[0] === perm;
+            });
+          }
+        });
+      }
 
-    if (conf.disableApplications) {
-      _.each(conf.disableApplications, app => {
-        if (_.findIndex(token[0].applicationVisibilities, (t: CustomApplication) => t.application[0] === app) === -1) {
-          this.maybeCreateTag(token[0], 'applicationVisibilities', []);
-          token[0].applicationVisibilities.push({
-            application: app,
-            default: 'false',
-            visible: 'false'
-          });
-        }
-      });
-    }
+      if (conf.deleteFieldPermissions && token[0].fieldPermissions) {
+        _.each(conf.deleteFieldPermissions, perm => {
+          if (_.findIndex(token[0].fieldPermissions, (p: CustomField) => p.field[0] === perm) !== -1) {
+            _.remove(token[0].fieldPermissions, (p: CustomField) => {
+              return p.field[0] === perm;
+            });
+          }
+        });
+      }
 
-    if (conf.enableTabs) {
-      _.each(conf.enableTabs, perm => {
-        if (_.findIndex(token[0].tabVisibilities, (t: CustomTab) => t.tab[0] === perm) === -1) {
-          this.maybeCreateTag(token[0], 'tabVisibilities', []);
-          token[0].tabVisibilities.push({
-            tab: perm,
-            visibility: 'DefaultOn'
-          });
-        }
-      });
-    }
+      if (conf.disableTabs) {
+        _.each(conf.disableTabs, perm => {
+          if (_.findIndex(token[0].tabVisibilities, (t: CustomTab) => t.tab[0] === perm) === -1) {
+            this.maybeCreateTag(token[0], 'tabVisibilities', []);
+            token[0].tabVisibilities.push({
+              tab: perm,
+              visibility: 'Hidden'
+            });
+          }
+        });
+      }
 
-    if (conf.disableObjects) {
-      _.each(conf.disableObjects, obj => {
-        if (_.findIndex(token[0].objectPermissions, (o: ObjectPermission) => o.object[0] === obj) === -1) {
-          this.maybeCreateTag(token[0], 'objectPermissions', []);
-          token[0].objectPermissions.push({
-            allowCreate: false,
-            allowDelete: false,
-            allowEdit: false,
-            allowRead: false,
-            modifyAllRecords: false,
-            object: obj,
-            viewAllRecords: false
-          });
-        }
-      });
-    }
+      if (conf.disableApplications) {
+        _.each(conf.disableApplications, app => {
+          if (_.findIndex(token[0].applicationVisibilities, (t: CustomApplication) => t.application[0] === app) === -1) {
+            this.maybeCreateTag(token[0], 'applicationVisibilities', []);
+            token[0].applicationVisibilities.push({
+              application: app,
+              default: 'false',
+              visible: 'false'
+            });
+          }
+        });
+      }
+
+      if (conf.enableTabs) {
+        _.each(conf.enableTabs, perm => {
+          if (_.findIndex(token[0].tabVisibilities, (t: CustomTab) => t.tab[0] === perm) === -1) {
+            this.maybeCreateTag(token[0], 'tabVisibilities', []);
+            token[0].tabVisibilities.push({
+              tab: perm,
+              visibility: 'DefaultOn'
+            });
+          }
+        });
+      }
+
+      if (conf.disableObjects) {
+        _.each(conf.disableObjects, obj => {
+          if (_.findIndex(token[0].objectPermissions, (o: ObjectPermission) => o.object[0] === obj) === -1) {
+            this.maybeCreateTag(token[0], 'objectPermissions', []);
+            token[0].objectPermissions.push({
+              allowCreate: false,
+              allowDelete: false,
+              allowEdit: false,
+              allowRead: false,
+              modifyAllRecords: false,
+              object: obj,
+              viewAllRecords: false
+            });
+          }
+        });
+      }
+    });
   }
 }
 

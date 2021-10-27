@@ -165,7 +165,10 @@ export class ExcelUtility {
             rawValue.startsWith('-') || rawValue.startsWith('\'') || rawValue.includes('.') ||
             (rawValue.startsWith('0') && this.isNumeric(rawValue) && rawValue !== '0'))) {
             return '\'' + rawValue;
+        } else if (rawValue && rawValue.length > 0 && rawValue.startsWith('"') && rawValue.endsWith('"')) {
+            return rawValue.substring(1, rawValue.length - 1);
         }
+
         const maybeDate = new Date(rawValue);
         if (this.isValidDate(maybeDate)) {
             return maybeDate;

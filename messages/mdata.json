@@ -93,7 +93,12 @@
         "destructivemanifest": "file path for destructive manifest (package.xml) of components to delete in delta",
         "usecodecoverage": "include target org existing code coverage tables to extract dependencies",
         "fuzzythreshold": "the minimum score that can be returned in the fuzzy match",
-        "prod": "pass this flag if the command is running while validating / deploying to production"
+        "prod": "pass this flag if the command is running while validating / deploying to production",
+        "report": "executes test one by one to assess that the direct class is covered at least 75%",
+        "outfile": "Output filepath to store the result of the report"
+      },
+      "infos": {
+        "progressBarFormat": "Testing [{bar}] {percentage}% | {value}/{total} | Class: {className}"
       }
     }
   },

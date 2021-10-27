@@ -1,7 +1,10 @@
+import { IConfig } from '@oclif/config';
 import { flags, SfdxCommand } from '@salesforce/command';
 import { Messages, SfdxProject } from '@salesforce/core';
 import { SfdxProjectJson } from '@salesforce/core/lib/sfdxProject';
+import * as ApexTestRunCommand from '@salesforce/plugin-apex/lib/commands/force/apex/test/run';
 import { AnyJson } from '@salesforce/ts-types';
+import * as cliProgress from 'cli-progress';
 import * as fastFuzzy from 'fast-fuzzy';
 import * as fs from 'fs';
 import * as glob from 'glob';
@@ -9,10 +12,14 @@ import * as jsonQuery from 'json-query';
 import * as path from 'path';
 import * as prompts from 'prompts';
 import * as sqlstring from 'sqlstring';
+import { ExcelUtility } from '../../../excelUtility';
 import { Mdata } from '../../../mdata';
 import { MetadataTypeInfos } from '../../../metadataTypeInfos';
-import { LoggerLevel } from '../../../typeDefs';
+import { LoggerLevel, TranslationDataTable } from '../../../typeDefs';
 import { parseXml } from '../../../xmlUtility';
+
+// tslint:disable-next-line: no-var-requires
+const intercept = require('intercept-stdout');
 
 // Initialize Messages with the current plugin directory
 Messages.importMessagesDirectory(__dirname);
@@ -45,7 +52,15 @@ export default class TestDependencies extends SfdxCommand {
     protected static flagsConfig = {
         config: flags.boolean({
             description: messages.getMessage('apex.testdependencies.flags.config'),
-            exclusive: ['metadata', 'nameconv', 'depth', 'manifest', 'destructivemanifest', 'fuzzythreshold', 'usecodecoverage', 'usedependencyapi']
+            exclusive: ['metadata', 'nameconv', 'depth', 'manifest', 'destructivemanifest', 'fuzzythreshold', 'usecodecoverage', 'usedependencyapi', 'report', 'outfile']
+        }),
+        report: flags.boolean({
+            description: messages.getMessage('apex.testdependencies.flags.report'),
+            exclusive: ['metadata', 'depth', 'manifest', 'destructivemanifest', 'fuzzythreshold', 'usecodecoverage', 'usedependencyapi', 'config']
+        }),
+        outfile: flags.string({
+            description: messages.getMessage('apex.testdependencies.flags.outfile'),
+            exclusive: ['metadata', 'depth', 'manifest', 'destructivemanifest', 'fuzzythreshold', 'usecodecoverage', 'usedependencyapi', 'config']
         }),
         nameconv: flags.string({
             char: 'n',
@@ -125,6 +140,8 @@ export default class TestDependencies extends SfdxCommand {
 
         if (this.flags.config) {
             return this.configurePlugin();
+        } else if (this.flags.report) {
+            return this.generateCodeCoverageReport();
         }
 
         return this.computeDeltaTestClassesList();
@@ -285,6 +302,58 @@ export default class TestDependencies extends SfdxCommand {
             }
             return this.flags.json ? { testLevel, classList: Array.from(apexTestClasses) } : null;
         }
+    }
+
+    private async generateCodeCoverageReport(): Promise<AnyJson> {
+        const allApexClasses = glob.sync(`${this.project.getPackageDirectories()[0].fullPath}main/default/classes/*.cls`);
+        const allApexNonTestClasses = new Set(allApexClasses.filter(c => !path.basename(c, '.cls').endsWith(this.flags.nameconv)).map(c => path.basename(c, '.cls')));
+        const allApexTestClasses = new Set(allApexClasses.filter(c => path.basename(c, '.cls').endsWith(this.flags.nameconv)).map(c => path.basename(c, '.cls')));
+
+        const reportDataTable: TranslationDataTable = { name: this.org.getOrgId(), columns : ['Class', 'Coverage', 'Notes'], rows: [] };
+
+        let bar: cliProgress.SingleBar;
+
+        if (!this.flags.json) {
+            bar = new cliProgress.SingleBar({
+                format: messages.getMessage('apex.testdependencies.infos.progressBarFormat')
+            }, cliProgress.Presets.shades_classic);
+            bar.start(allApexNonTestClasses.size, 0, { className: '' });
+        }
+
+        for (const apexNonTestClass of allApexNonTestClasses) {
+            const row: AnyJson = {};
+
+            if (!this.flags.json) {
+                bar.increment(1, { className: apexNonTestClass });
+            }
+
+            if (allApexTestClasses.has(`${apexNonTestClass}${this.flags.nameconv}`)) {
+                const config: AnyJson = {};
+                const unhookIntercept = intercept(() => {
+                    return '';
+                });
+                const coverageResult = await new ApexTestRunCommand.default(['-n', `${apexNonTestClass}${this.flags.nameconv}`, '-c', '-y', '-r', 'json'], config as unknown as IConfig)._run();
+                unhookIntercept();
+                const coveredPercent = jsonQuery(`coverage.coverage[name=${apexNonTestClass}].coveredPercent`, { data: coverageResult }).value || 0;
+                row['Class'] = `"${apexNonTestClass}"`;
+                row['Coverage'] = `"${coveredPercent}%"`;
+                row['Notes'] = coveredPercent < 75 ? '"Below 75%"' : '';
+                reportDataTable.rows.push(row);
+            } else {
+                row['Class'] = `"${apexNonTestClass}"`;
+                row['Coverage'] = '"0%"';
+                row['Notes'] = '"Direct Test Class not found"';
+                reportDataTable.rows.push(row);
+            }
+        }
+
+        if (!this.flags.json) {
+            bar.stop();
+        }
+
+        await ExcelUtility.toExcel([reportDataTable], this.flags.outfile);
+
+        return null;
     }
 
     private async configurePlugin(): Promise<AnyJson> {

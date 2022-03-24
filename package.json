@@ -10,7 +10,7 @@
     "@oclif/errors": "^1",
     "@salesforce/command": "^2",
     "@salesforce/core": "^2",
-    "@salesforce/source-deploy-retrieve": "^4.0.0",
+    "@salesforce/source-deploy-retrieve": "^4.5.12",
     "@types/cli-progress": "^3.9.0",
     "@types/micromatch": "^4.0.1",
     "cli-progress": "^3.9.0",

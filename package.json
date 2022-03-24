@@ -5,7 +5,7 @@
   "author": "Raffaele Fioratto",
   "bugs": "https://github.com/ImperiumMaximus/sfdx-metadata-patcher/issues",
   "dependencies": {
-    "@oclif/command": "^1",
+    "@oclif/command": "^1.8.16",
     "@oclif/config": "^1",
     "@oclif/errors": "^1",
     "@salesforce/command": "^2",

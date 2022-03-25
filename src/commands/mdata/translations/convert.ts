@@ -1,7 +1,7 @@
+import * as path from 'path';
 import { flags, SfdxCommand } from '@salesforce/command';
 import { Messages } from '@salesforce/core';
 import { AnyJson } from '@salesforce/ts-types';
-import * as path from 'path';
 import { ExcelUtility } from '../../../excelUtility';
 import { Mdata } from '../../../mdata';
 import { TranslationUtility } from '../../../translationUtility';
@@ -26,7 +26,7 @@ const ALLOWED_FROM_TO_COMBO = {
 export default class Publish extends SfdxCommand {
     public static description = messages.getMessage('translations.convert.description');
 
-    /*public static examples = [
+    /* public static examples = [
         `To publish all the communities in the org:
     $ sfdx mdata:communities:publish`,
 

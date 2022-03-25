@@ -5,7 +5,7 @@ export class WritableMemoryStream extends stream.Writable {
     private memStore: Buffer;
     private encoding: BufferEncoding;
 
-    constructor(encoding: BufferEncoding) {
+    public constructor(encoding: BufferEncoding) {
         super();
         this.encoding = this.encoding;
         this.memStore = Buffer.from('', encoding);

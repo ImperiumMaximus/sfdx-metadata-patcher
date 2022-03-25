@@ -6,7 +6,7 @@
 //
 // These functions will throw an error if the JSON doesn't
 // match the expected interface, even if the JSON is valid.
-// tslint:disable: no-any no-shadowed-variable
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-shadow, prefer-arrow/prefer-arrow-functions, no-shadow, @typescript-eslint/naming-convention */
 
 export interface MetadataTypeInfos {
     typeDefs: TypeDefs;
@@ -194,8 +194,8 @@ function transform(val: any, typ: any, getProps: any, key: any = ''): any {
     if (typeof typ === 'object') {
         return typ.hasOwnProperty('unionMembers') ? transformUnion(typ.unionMembers, val)
             : typ.hasOwnProperty('arrayItems')    ? transformArray(typ.arrayItems, val)
-            : typ.hasOwnProperty('props')         ? transformObject(getProps(typ), typ.additional, val)
-            : invalidValue(typ, val);
+                : typ.hasOwnProperty('props')         ? transformObject(getProps(typ), typ.additional, val)
+                    : invalidValue(typ, val);
     }
     // Numbers can be parsed by Date but shouldn't be.
     if (typ === Date && typeof val !== 'number') return transformDate(val);

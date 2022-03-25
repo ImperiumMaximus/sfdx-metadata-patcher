@@ -1,8 +1,8 @@
+import * as path from 'path';
 import { flags, SfdxCommand } from '@salesforce/command';
 import { Messages, Org, SfdxProject } from '@salesforce/core';
 import { ComponentSet } from '@salesforce/source-deploy-retrieve';
 import { AnyJson } from '@salesforce/ts-types';
-import * as path from 'path';
 import { Mdata } from '../../../mdata';
 import { retrieveMetadataButKeepSubset } from '../../../retrieveUtility';
 import { LoggerLevel } from '../../../typeDefs';

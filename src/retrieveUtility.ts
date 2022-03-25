@@ -1,10 +1,10 @@
 
-import { Messages } from '@salesforce/core';
-import { ComponentSet } from '@salesforce/source-deploy-retrieve';
 import { once } from 'events';
 import * as fs from 'fs';
-import * as JSZip from 'jszip';
 import * as path from 'path';
+import { Messages } from '@salesforce/core';
+import { ComponentSet } from '@salesforce/source-deploy-retrieve';
+import * as JSZip from 'jszip';
 import * as tmp from 'tmp';
 import { Mdata } from './mdata';
 import { sleep } from './miscUtility';
@@ -17,7 +17,7 @@ Messages.importMessagesDirectory(__dirname);
 // or any library that is using the messages framework can also be loaded this way.
 const messages = Messages.loadMessages('sfdx-metadata-patcher', 'mdata');
 
-export async function retrieveMetadataButKeepSubset(username: string, componentSet: ComponentSet, metadataType: string, metadataFolderName: string, outDir: string, metadata?: string): Promise<string[]> {
+export const retrieveMetadataButKeepSubset = async (username: string, componentSet: ComponentSet, metadataType: string, metadataFolderName: string, outDir: string, metadata?: string): Promise<string[]> => {
     let encodedMetadata: string[];
     if (metadata) {
         encodedMetadata = metadata.split(',').map((p: string) => encodeURI(p));
@@ -57,4 +57,4 @@ export async function retrieveMetadataButKeepSubset(username: string, componentS
         writeStream.close();
         return Promise.resolve(`${path.basename(f)}-meta.xml`);
     }));
-}
+};

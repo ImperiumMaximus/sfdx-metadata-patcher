@@ -1,8 +1,8 @@
+import * as fs from 'fs';
 import { flags, SfdxCommand } from '@salesforce/command';
 import { Messages , SfdxProject } from '@salesforce/core';
 import { ComponentSet } from '@salesforce/source-deploy-retrieve';
 import { AnyJson } from '@salesforce/ts-types';
-import * as fs from 'fs';
 import * as xml2js from 'xml2js';
 import { Mdata } from '../../../mdata';
 

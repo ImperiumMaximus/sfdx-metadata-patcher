@@ -1,7 +1,7 @@
+import * as fs from 'fs';
 import { flags, SfdxCommand } from '@salesforce/command';
 import { Messages } from '@salesforce/core';
 import { AnyJson } from '@salesforce/ts-types';
-import * as fs from 'fs';
 import { Mdata } from '../../../mdata';
 import { LoggerLevel, PackageXml } from '../../../typeDefs';
 import { parseXml, writeXml } from '../../../xmlUtility';

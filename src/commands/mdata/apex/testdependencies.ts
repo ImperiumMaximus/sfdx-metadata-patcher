@@ -1,12 +1,12 @@
+import * as fs from 'fs';
+import * as path from 'path';
 import { flags, SfdxCommand } from '@salesforce/command';
 import { Messages, SfdxProject } from '@salesforce/core';
 import { SfdxProjectJson } from '@salesforce/core/lib/sfdxProject';
 import { AnyJson } from '@salesforce/ts-types';
 import * as fastFuzzy from 'fast-fuzzy';
-import * as fs from 'fs';
 import * as glob from 'glob';
 import * as jsonQuery from 'json-query';
-import * as path from 'path';
 import * as prompts from 'prompts';
 import * as sqlstring from 'sqlstring';
 import { Mdata } from '../../../mdata';
@@ -254,7 +254,7 @@ export default class TestDependencies extends SfdxCommand {
         if (this.flags.usecodecoverage && deltaApexCodeClasses.size > 0) {
             const coverageRecords: AnyJson[] = await (new Promise((resolve, reject) => {
                 const records: AnyJson[] = [];
-                this.org.getConnection().tooling.query(`SELECT ApexTestClass.Name, ApexClassOrTrigger.Name FROM ApexCodeCoverage WHERE ApexClassOrTrigger.Name IN (${sqlstring.escape(Array.from(deltaApexCodeClasses))})`)
+                void this.org.getConnection().tooling.query(`SELECT ApexTestClass.Name, ApexClassOrTrigger.Name FROM ApexCodeCoverage WHERE ApexClassOrTrigger.Name IN (${sqlstring.escape(Array.from(deltaApexCodeClasses))})`)
                     .on('record', record => {
                         records.push(record);
                     })
@@ -273,7 +273,7 @@ export default class TestDependencies extends SfdxCommand {
             });
         }
 
-        if (apexTestClasses.size === 0 || this._eqSet(allApexTestClasses, apexTestClasses)) {
+        if (apexTestClasses.size === 0 || this.eqSet(allApexTestClasses, apexTestClasses)) {
             if (!this.flags.json) {
                 Mdata.log(`-l ${testLevel}`, LoggerLevel.INFO);
             }
@@ -365,8 +365,8 @@ export default class TestDependencies extends SfdxCommand {
         return this.flags.json ? pluginConfig : null;
     }
 
-    // tslint:disable-next-line: no-any
-    private _eqSet(as: Set<any>, bs: Set<any>) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private eqSet(as: Set<any>, bs: Set<any>) {
         if (as.size !== bs.size) return false;
         for (const a of as) if (!bs.has(a)) return false;
         return true;

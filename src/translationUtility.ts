@@ -1,9 +1,9 @@
+import * as fs from 'fs';
+import * as path from 'path';
 import { Messages } from '@salesforce/core';
 import * as csvParse from 'csv-parse';
-import * as fs from 'fs';
 import * as JSZip from 'jszip';
 import * as lineReader from 'line-reader';
-import * as path from 'path';
 import { StfType, TranslationDataTable } from './typeDefs';
 import { WritableMemoryStream } from './writableStream';
 

@@ -1,7 +1,7 @@
-import { Messages } from '@salesforce/core';
-import * as ExcelJS from 'exceljs';
 import * as fs from 'fs';
 import * as path from 'path';
+import { Messages } from '@salesforce/core';
+import * as ExcelJS from 'exceljs';
 import { TranslationDataTable } from './typeDefs';
 
 Messages.importMessagesDirectory(__dirname);
@@ -9,6 +9,7 @@ Messages.importMessagesDirectory(__dirname);
 const messages = Messages.loadMessages('sfdx-metadata-patcher', 'mdata');
 
 export class ExcelUtility {
+    private static groupHeaderSeparator = '\n';
 
     public static async toExcel(dataTableList: TranslationDataTable[], saveTofilePath: string) {
         if (!fs.existsSync(path.dirname(saveTofilePath))) {
@@ -106,8 +107,6 @@ export class ExcelUtility {
 
         return dataTableList;
     }
-
-    private static groupHeaderSeparator = '\n';
 
     private static generateSheetName(originalName: string, usedSheets: string[]): string {
         const maxSheetNameLength = 31;

@@ -36,7 +36,6 @@ $ sfdx plugins:install sfdx-metadata-patcher
 computes the list of (statically) dependant Apex Test Classes to a list of Apex Classes supplied in input up to a certain depth
 
 ```
-computes the list of (statically) dependant Apex Test Classes to a list of Apex Classes supplied in input up to a certain depth
 
 USAGE
   $ sfdx mdata:apex:testdependencies
@@ -86,30 +85,28 @@ OPTIONS
 
 EXAMPLES
   To configure the plugin:
-       $ sfdx mdata:apex:testdependencies --config
+      $ sfdx mdata:apex:testdependencies --config
   To find all test dependecies for classes in a delta package in a SFDX project with a specific naming convention for 
   test classes:
-       $ sfdx mdata:apex:testdependencies -x package.xml -d destructiveChanges.xml --nameconv _Test
+      $ sfdx mdata:apex:testdependencies -x package.xml -d destructiveChanges.xml --nameconv _Test
   To find all test dependecies for classes in a delta package in a SFDX project when deploying into production:
-       $ sfdx mdata:apex:testdependencies -x package.xml -d destructiveChanges.xml --prod
+      $ sfdx mdata:apex:testdependencies -x package.xml -d destructiveChanges.xml --prod
   To find all test dependecies for classes in a delta package in a SFDX project with a custom fuzzy threshold score:
-       $ sfdx mdata:apex:testdependencies -x package.xml -d destructiveChanges.xml --fuzzythreshold 0.75
+      $ sfdx mdata:apex:testdependencies -x package.xml -d destructiveChanges.xml --fuzzythreshold 0.75
   To find all test dependecies up to a certain depth in a SFDX project:
-       $ sfdx mdata:apex:testdependencies -x package.xml -d destructiveChanges.xml -l 1
+      $ sfdx mdata:apex:testdependencies -x package.xml -d destructiveChanges.xml -l 1
   To find all test dependecies for classes in a delta package including ApexCodeCoverage in target org in a SFDX 
   project:
-       $ sfdx mdata:apex:testdependencies -x package.xml -d destructiveChanges.xml --usecodecoverage
+      $ sfdx mdata:apex:testdependencies -x package.xml -d destructiveChanges.xml --usecodecoverage
 ```
 
-_See code: [src/commands/mdata/apex/testdependencies.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.20/src/commands/mdata/apex/testdependencies.ts)_
+_See code: [src/commands/mdata/apex/testdependencies.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.21/src/commands/mdata/apex/testdependencies.ts)_
 
 ## `sfdx mdata:communities:publish [-n <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
 publishes one or more Experience Cloud communities
 
 ```
-publishes one or more Experience Cloud communities
-
 USAGE
   $ sfdx mdata:communities:publish [-n <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel 
   trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
@@ -131,27 +128,25 @@ OPTIONS
 
 EXAMPLES
   To publish all the communities in the org:
-       $ sfdx mdata:communities:publish
+      $ sfdx mdata:communities:publish
   To find a community named Customer and publish it:
-       $ sfdx mdata:communities:publish -n Customer
+      $ sfdx mdata:communities:publish -n Customer
   To find communities named Customer, Partner and publish them:
-       $ sfdx mdata:communities:publish -n Customer,Partner
+      $ sfdx mdata:communities:publish -n Customer,Partner
 
   To find a community named Customer in Org with alias uat and publish it:
-       $ sfdx mdata:communities:publish -n Customer -u uat
+      $ sfdx mdata:communities:publish -n Customer -u uat
   To find a community named Customer in Org with username admin.user@uat.myorg.com and publish it:
-       $ sfdx mdata:communities:publish -n Customer -u admin.user@uat.myorg.com
+      $ sfdx mdata:communities:publish -n Customer -u admin.user@uat.myorg.com
 ```
 
-_See code: [src/commands/mdata/communities/publish.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.20/src/commands/mdata/communities/publish.ts)_
+_See code: [src/commands/mdata/communities/publish.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.21/src/commands/mdata/communities/publish.ts)_
 
 ## `sfdx mdata:manifest:align [-r <string>] [-p <string>] [-x <string>] [-m <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
 align manifest (package.xml) in a project using the source format according to the components present in the project itself
 
 ```
-align manifest (package.xml) in a project using the source format according to the components present in the project itself
-
 USAGE
   $ sfdx mdata:manifest:align [-r <string>] [-p <string>] [-x <string>] [-m <string>] [--json] [--loglevel 
   trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
@@ -179,24 +174,22 @@ OPTIONS
 
 EXAMPLES
   To align the manifest from the default package source directory
-       $ sfdx mdata:manifest:align -x manifest/package.xml
+      $ sfdx mdata:manifest:align -x manifest/package.xml
   To align the manifest from a list of source directories
-       $ sfdx mdata:manifest:align -p /path/to/source1,/path/to/source2,/path/to/source3 -x manifest/package.xml
+      $ sfdx mdata:manifest:align -p /path/to/source1,/path/to/source2,/path/to/source3 -x manifest/package.xml
   To align the manifest from the default package source directory together with components of another directory
-       $ sfdx mdata:manifest:align -r /path/to/root/dir -x manifest/package.xml
+      $ sfdx mdata:manifest:align -r /path/to/root/dir -x manifest/package.xml
   To align the manifest from the default package source directory with only specific metadata
-       $ sfdx mdata:manifest:align -m ApexClass,ApexTrigger,CustomObject -x manifest/package.xml
+      $ sfdx mdata:manifest:align -m ApexClass,ApexTrigger,CustomObject -x manifest/package.xml
 ```
 
-_See code: [src/commands/mdata/manifest/align.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.20/src/commands/mdata/manifest/align.ts)_
+_See code: [src/commands/mdata/manifest/align.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.21/src/commands/mdata/manifest/align.ts)_
 
 ## `sfdx mdata:manifest:sort -x <string> [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
 sort alphabetically the components in a manifest (package.xml) file
 
 ```
-sort alphabetically the components in a manifest (package.xml) file
-
 USAGE
   $ sfdx mdata:manifest:sort -x <string> [--json] [--loglevel 
   trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
@@ -212,18 +205,16 @@ OPTIONS
 
 EXAMPLE
   To sort the components of a manifest file
-       $ sfdx mdata:manifest:sort -x manifest/package.xml
+      $ sfdx mdata:manifest:sort -x manifest/package.xml
 ```
 
-_See code: [src/commands/mdata/manifest/sort.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.20/src/commands/mdata/manifest/sort.ts)_
+_See code: [src/commands/mdata/manifest/sort.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.21/src/commands/mdata/manifest/sort.ts)_
 
 ## `sfdx mdata:patch [-e <string>] [-r <string>] [-m <string>] [-s <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
 patches source metadata files in order to solve common Salesforce deployment bugs or to modifly on the fly API endpoints
 
 ```
-patches source metadata files in order to solve common Salesforce deployment bugs or to modifly on the fly API endpoints
-
 USAGE
   $ sfdx mdata:patch [-e <string>] [-r <string>] [-m <string>] [-s <string>] [--json] [--loglevel 
   trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
@@ -254,15 +245,13 @@ OPTIONS
                                                                                     this command invocation
 ```
 
-_See code: [src/commands/mdata/patch.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.20/src/commands/mdata/patch.ts)_
+_See code: [src/commands/mdata/patch.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.21/src/commands/mdata/patch.ts)_
 
 ## `sfdx mdata:permset:retrieve [-r <string>] [-p <string>] [-x <string>] [-m <string>] [-d <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
 retrieve one or more profiles in a project considering all the rest of sources
 
 ```
-retrieve one or more profiles in a project considering all the rest of sources
-
 USAGE
   $ sfdx mdata:permset:retrieve [-r <string>] [-p <string>] [-x <string>] [-m <string>] [-d <string>] [-u <string>] 
   [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
@@ -301,29 +290,27 @@ OPTIONS
 
 EXAMPLES
   To retrieve the permission sets in the default package source directory
-       $ sfdx mdata:permsets:retrieve
+      $ sfdx mdata:permsets:retrieve
   To retrieve the permission sets in the default package source directory from a list of source directories
-       $ sfdx mdata:permsets:retrieve -p /path/to/source1,/path/to/source2,/path/to/source3
+      $ sfdx mdata:permsets:retrieve -p /path/to/source1,/path/to/source2,/path/to/source3
   To retrieve the permission sets in the default package source directory from the default source directory together 
   with components of another directory
-       $ sfdx mdata:permsets:retrieve -r /path/to/root/dir
+      $ sfdx mdata:permsets:retrieve -r /path/to/root/dir
   To retrieve the permission sets in the default package source directory from a manifest (package.xml)
-       $ sfdx mdata:permsets:retrieve -x manifest/package.xml
+      $ sfdx mdata:permsets:retrieve -x manifest/package.xml
   To retrieve the permission sets in a specific output folder from the default source directory
-       $ sfdx mdata:permsets:retrieve -d /path/to/out/dir
+      $ sfdx mdata:permsets:retrieve -d /path/to/out/dir
   To retrieve a specific list of permission sets in the default package source directory
-       $ sfdx mdata:permsets:retrieve -m "MyCoolPermSet1,MyCoolPermSet2"
+      $ sfdx mdata:permsets:retrieve -m "MyCoolPermSet1,MyCoolPermSet2"
 ```
 
-_See code: [src/commands/mdata/permset/retrieve.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.20/src/commands/mdata/permset/retrieve.ts)_
+_See code: [src/commands/mdata/permset/retrieve.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.21/src/commands/mdata/permset/retrieve.ts)_
 
 ## `sfdx mdata:profile:retrieve [-r <string>] [-p <string>] [-x <string>] [-m <string>] [-d <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
 retrieve one or more profiles in a project considering all the rest of sources
 
 ```
-retrieve one or more profiles in a project considering all the rest of sources
-
 USAGE
   $ sfdx mdata:profile:retrieve [-r <string>] [-p <string>] [-x <string>] [-m <string>] [-d <string>] [-u <string>] 
   [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
@@ -362,29 +349,27 @@ OPTIONS
 
 EXAMPLES
   To retrieve the profiles in the default package source directory
-       $ sfdx mdata:permsets:retrieve
+      $ sfdx mdata:permsets:retrieve
   To retrieve the profiles in the default package source directory from a list of source directories
-       $ sfdx mdata:permsets:retrieve -p /path/to/source1,/path/to/source2,/path/to/source3
+      $ sfdx mdata:permsets:retrieve -p /path/to/source1,/path/to/source2,/path/to/source3
   To retrieve the profiles in the default package source directory from the default source directory together with 
   components of another directory
-       $ sfdx mdata:permsets:retrieve -r /path/to/root/dir
+      $ sfdx mdata:permsets:retrieve -r /path/to/root/dir
   To retrieve the profiles in the default package source directory from a manifest (package.xml)
-       $ sfdx mdata:permsets:retrieve -x manifest/package.xml
+      $ sfdx mdata:permsets:retrieve -x manifest/package.xml
   To retrieve the profiles in a specific output folder from the default source directory
-       $ sfdx mdata:permsets:retrieve -d /path/to/out/dir
+      $ sfdx mdata:permsets:retrieve -d /path/to/out/dir
   To retrieve a specific list of profiles in the default package source directory
-       $ sfdx mdata:permsets:retrieve -m "Admin,Read Only,Custom: Sales Profile"
+      $ sfdx mdata:permsets:retrieve -m "Admin,Read Only,Custom: Sales Profile"
 ```
 
-_See code: [src/commands/mdata/profile/retrieve.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.20/src/commands/mdata/profile/retrieve.ts)_
+_See code: [src/commands/mdata/profile/retrieve.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.21/src/commands/mdata/profile/retrieve.ts)_
 
 ## `sfdx mdata:translations:convert -f <string> -t <string> -i <string> -o <string> [-m <string>] [-s <string>] [-r <number>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
 converts a translation file from one format to another (e.g. from Salesforce Translation Format (STF) to Excel or viceversa)
 
 ```
-converts a translation file from one format to another (e.g. from Salesforce Translation Format (STF) to Excel or viceversa)
-
 USAGE
   $ sfdx mdata:translations:convert -f <string> -t <string> -i <string> -o <string> [-m <string>] [-s <string>] [-r 
   <number>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
@@ -413,5 +398,5 @@ OPTIONS
                                                                                     this command invocation
 ```
 
-_See code: [src/commands/mdata/translations/convert.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.20/src/commands/mdata/translations/convert.ts)_
+_See code: [src/commands/mdata/translations/convert.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.21/src/commands/mdata/translations/convert.ts)_
 <!-- commandsstop -->

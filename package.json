@@ -11,7 +11,7 @@
     "@salesforce/command": "^4",
     "@salesforce/core": "^2",
     "@salesforce/source-deploy-retrieve": "^4.0.0",
-    "@types/cli-progress": "^3.9.0",
+    "@types/cli-progress": "^3.11.0",
     "@types/micromatch": "^4.0.1",
     "cli-progress": "^3.9.0",
     "common-substrings": "^3.0.1",

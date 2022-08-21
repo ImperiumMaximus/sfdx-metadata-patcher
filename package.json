@@ -17,7 +17,7 @@
     "common-substrings": "^3.0.1",
     "csv": "^5.5.0",
     "exceljs": "^4.2.1",
-    "fast-fuzzy": "^1.10.10",
+    "fast-fuzzy": "^1.11.2",
     "find-java-home": "1.2.2",
     "json-query": "^2.2.2",
     "jszip": "^3.8.0",

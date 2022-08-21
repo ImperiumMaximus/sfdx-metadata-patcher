@@ -2332,10 +2332,10 @@ fast-deep-equal@^3.1.1, fast-deep-equal@^3.1.3:
   resolved "https://registry.yarnpkg.com/fast-deep-equal/-/fast-deep-equal-3.1.3.tgz#3a7d56b559d6cbc3eb512325244e619a65c6c525"
   integrity sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q==
 
-fast-fuzzy@^1.10.10:
-  version "1.11.1"
-  resolved "https://registry.yarnpkg.com/fast-fuzzy/-/fast-fuzzy-1.11.1.tgz#91b437856ba08f7dc1b0c818d07048bc5b54d126"
-  integrity sha512-FaO8kAsdAqV0SOBbLelpuBNar4C6lUS82OqDlM6Y/I0Q9joMmxAxll8AMrfTLp82rRuZj/2+BzFZgOHA18vN6A==
+fast-fuzzy@^1.11.2:
+  version "1.11.2"
+  resolved "https://registry.yarnpkg.com/fast-fuzzy/-/fast-fuzzy-1.11.2.tgz#25e6f81f10636237da48071e64eb9fa95e1e2574"
+  integrity sha512-H1ct10Pzx+pSO4h7F1uBXET91ay2hy67J1aQZFKL23EXsOoanpwjPNQQoc+NhClKJMmlGGN+0bXhIdFJX70BJw==
   dependencies:
     graphemesplit "^2.4.1"
 

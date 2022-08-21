@@ -13,7 +13,7 @@
     "@salesforce/source-deploy-retrieve": "^4.0.0",
     "@types/cli-progress": "^3.11.0",
     "@types/micromatch": "^4.0.1",
-    "cli-progress": "^3.11.0",
+    "cli-progress": "^3.11.2",
     "common-substrings": "^3.0.1",
     "csv": "^5.5.0",
     "exceljs": "^4.2.1",

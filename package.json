@@ -9,7 +9,7 @@
     "@oclif/config": "^1",
     "@oclif/errors": "^1",
     "@salesforce/command": "^4",
-    "@salesforce/core": "^2",
+    "@salesforce/core": "^2.37.1",
     "@salesforce/source-deploy-retrieve": "^4.0.0",
     "@types/cli-progress": "^3.11.0",
     "@types/micromatch": "^4.0.1",

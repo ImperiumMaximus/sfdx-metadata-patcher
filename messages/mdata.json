@@ -143,6 +143,37 @@
       }
     }
   },
+  "statecountry": {
+    "configure": {
+      "description": "configure new and/or existing Country and State Picklist values from an Excel file mapping using Selenium Webdriver",
+      "flags": {
+        "mappingpath": "Excel file containing the mappings of Countries and States to configure in the target Org",
+        "conflicts": "specify the policy to use in resolving conflicts with existing Country and / or State codes with different labels. Use \"skip\" to ignore the change proposed in the Excel file and keep the value already in the Org as it is. Use \"rename\" to edit the existing value in the Org with the label supplied in the Excel file",
+        "mdatafile": "file path to an existing AddressSettings file to determine possible conflicts between the configuration in the target Org and the mapping supplied in the Excel file. If not specified a fresh one is retrieved from the target Org"
+      },
+      "infos": {
+        "countryProgressBarFormat": "Processing [{bar}] {percentage}% | {value}/{total} | Country: {countryIsoCode}",
+        "stateProgressBarFormat": "Processing [{bar}] {percentage}% | {value}/{total} | Country: {countryIsoCode} / State: {stateIsoCode}",
+        "checkOkMessage": "Check between supplied Excel file and configuration on the Org completed successfully."
+      },
+      "errors": {
+        "cannotretrieveASMdata": "cannot retrieve AddressSettings metadata XML from the target Org!",
+        "checkKoMessage": "Check between supplied Excel file and configuration on the Org failed.",
+        "cannotAddNewCountry": "Cannot add new Country %s",
+        "cannotEditExistingCountry": "Cannot edit existing Country %s",
+        "cannotAddNewState": "Cannot add new State %s for Country %s",
+        "cannotEditExistingState": "Cannot edit existing State %s for Country %s",
+        "cannotConfigStateCountryNotExists": "'Trying to configure State %s to non-existing Country %s"
+      }
+    },
+    "template": {
+      "description": "generate an Excel file template from the currently configured Country and State picklist in the target Org",
+      "flags": {
+        "outputpath": "File path where the resulting Excel file will be written to",
+        "mdatafile": "file path to an existing AddressSettings file to determine possible conflicts between the configuration in the target Org and the mapping supplied in the Excel file. If not specified a fresh one is retrieved from the target Org"
+      }
+    }
+  },
   "utility": {
     "retrieve": {
       "info": {

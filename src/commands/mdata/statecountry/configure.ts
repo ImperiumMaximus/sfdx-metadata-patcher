@@ -92,7 +92,7 @@ export default class StateCountryConfigure extends SfdxCommand {
         const addressSettingsJson = await getAddressSettingsJson(this.flags.mdatafile, this.org.getUsername());
 
         const statesByCountries: AnyJson = addressSettingsJson['AddressSettings']['countriesAndStates'][0]['countries'].reduce((acc: AnyJson, country: AnyJson) => {
-            acc[country['isoCode'][0]] = [];
+            acc[country['isoCode'][0]] = new Set();
             if (Object.prototype.hasOwnProperty.call(country, 'states')) {
                 acc[country['isoCode'][0]] = new Set(country['states'].map((state: AnyJson) => state['isoCode'][0]));
             }
@@ -299,14 +299,14 @@ export default class StateCountryConfigure extends SfdxCommand {
             await SeleniumUtility.fillTextInput(driver, 'configurenew:j_id1:blockNew:j_id7:codeSectionItem:editIsoCode', country['isoCode']);
             await SeleniumUtility.clearAndFillTextInput(driver, 'configurenew:j_id1:blockNew:j_id7:intValSectionItem:editIntVal', country['integrationValue']);
 
-            const isActive = country['active'] === 'true';
+            const isActive = country['active'].toString() === 'true';
             const activeChanged = await SeleniumUtility.setCheckboxValue(driver, 'configurenew:j_id1:blockNew:j_id7:activeSectionItem:editActive', isActive);
 
             if (activeChanged) {
                 await SeleniumUtility.waitToBeStaleness(driver, 'configurenew:j_id1:blockNew:j_id7:visibleSectionItem:editVisible');
             }
 
-            const isVisible = country['visible'] === 'true';
+            const isVisible = country['visible'].toString() === 'true';
             if (isActive && isVisible) {
                 await SeleniumUtility.setCheckboxValue(driver, 'configurenew:j_id1:blockNew:j_id7:visibleSectionItem:editVisible', isVisible);
             }
@@ -335,14 +335,14 @@ export default class StateCountryConfigure extends SfdxCommand {
             await SeleniumUtility.clearAndFillTextInput(driver, 'configurecountry:form:blockEditCountry:j_id33:j_id34:editName', country['label']);
             await SeleniumUtility.clearAndFillTextInput(driver, 'configurecountry:form:blockEditCountry:j_id33:j_id40:editIntVal', country['integrationValue']);
 
-            const isActive = country['active'] === 'true';
+            const isActive = country['active'].toString() === 'true';
             const activeChanged = await SeleniumUtility.setCheckboxValue(driver, 'configurecountry:form:blockEditCountry:j_id33:j_id43:editActive', isActive);
 
             if (activeChanged) {
                 await SeleniumUtility.waitToBeStaleness(driver, 'configurecountry:form:blockEditCountry:j_id33:j_id46:editVisible');
             }
 
-            const isVisible = country['visible'] === 'true';
+            const isVisible = country['visible'].toString() === 'true';
             if (isActive && isVisible) {
                 await SeleniumUtility.setCheckboxValue(driver, 'configurecountry:form:blockEditCountry:j_id33:j_id46:editVisible', isVisible);
             }
@@ -372,14 +372,14 @@ export default class StateCountryConfigure extends SfdxCommand {
             await SeleniumUtility.fillTextInput(driver, 'configurenew:j_id1:blockNew:j_id9:codeSectionItem:editIsoCode', state['isoCode']);
             await SeleniumUtility.clearAndFillTextInput(driver, 'configurenew:j_id1:blockNew:j_id9:intValSectionItem:editIntVal', state['integrationValue']);
 
-            const isActive = state['active'] === 'true';
+            const isActive = state['active'].toString() === 'true';
             const activeChanged = await SeleniumUtility.setCheckboxValue(driver, 'configurenew:j_id1:blockNew:j_id9:activeSectionItem:editActive', isActive);
 
             if (activeChanged) {
                 await SeleniumUtility.waitToBeStaleness(driver, 'configurenew:j_id1:blockNew:j_id9:visibleSectionItem:editVisible');
             }
 
-            const isVisible = state['visible'] === 'true';
+            const isVisible = state['visible'].toString() === 'true';
             if (isActive && isVisible) {
                 await SeleniumUtility.setCheckboxValue(driver, 'configurenew:j_id1:blockNew:j_id9:visibleSectionItem:editVisible', isVisible);
             }
@@ -409,14 +409,14 @@ export default class StateCountryConfigure extends SfdxCommand {
             await SeleniumUtility.clearAndFillTextInput(driver, 'configurecountry:form:blockEditCountry:j_id9:j_id40:editIsoCode', state['isoCode']);
             await SeleniumUtility.clearAndFillTextInput(driver, 'configurecountry:form:blockEditCountry:j_id9:j_id43:editIntVal', state['integrationValue']);
 
-            const isActive = state['active'] === 'true';
+            const isActive = state['active'].toString() === 'true';
             const activeChanged = await SeleniumUtility.setCheckboxValue(driver, 'configurecountry:form:blockEditCountry:j_id9:j_id46:editActive', isActive);
 
             if (activeChanged) {
                 await SeleniumUtility.waitToBeStaleness(driver, 'configurecountry:form:blockEditCountry:j_id9:j_id49:editVisible');
             }
 
-            const isVisible = state['visible'] === 'true';
+            const isVisible = state['visible'].toString() === 'true';
             if (isActive && isVisible) {
                 await SeleniumUtility.setCheckboxValue(driver, 'configurecountry:form:blockEditCountry:j_id9:j_id49:editVisible', isVisible);
             }
@@ -446,8 +446,8 @@ export default class StateCountryConfigure extends SfdxCommand {
             return acc &&
                 cIdx >= 0 && addressSettingsJson['AddressSettings']['countriesAndStates'][0]['countries'][cIdx]['label'][0] === this.countriesToCheck[countryIsoCode]['label'] &&
                 addressSettingsJson['AddressSettings']['countriesAndStates'][0]['countries'][cIdx]['integrationValue'][0] === this.countriesToCheck[countryIsoCode]['integrationValue'] &&
-                addressSettingsJson['AddressSettings']['countriesAndStates'][0]['countries'][cIdx]['active'][0] === this.countriesToCheck[countryIsoCode]['active'] &&
-                addressSettingsJson['AddressSettings']['countriesAndStates'][0]['countries'][cIdx]['visible'][0] === this.countriesToCheck[countryIsoCode]['visible'];
+                addressSettingsJson['AddressSettings']['countriesAndStates'][0]['countries'][cIdx]['active'][0] === this.countriesToCheck[countryIsoCode]['active'].toString() &&
+                addressSettingsJson['AddressSettings']['countriesAndStates'][0]['countries'][cIdx]['visible'][0] === this.countriesToCheck[countryIsoCode]['visible'].toString();
         }, true) : res;
 
 
@@ -460,8 +460,8 @@ export default class StateCountryConfigure extends SfdxCommand {
 
                 return sAcc && sIdx >= 0 && addressSettingsJson['AddressSettings']['countriesAndStates'][0]['countries'][cIdx]['states'][sIdx]['label'][0] === this.statesToCheck[countryIsoCode][stateIsoCode]['label'] &&
                     addressSettingsJson['AddressSettings']['countriesAndStates'][0]['countries'][cIdx]['states'][sIdx]['integrationValue'][0] === this.statesToCheck[countryIsoCode][stateIsoCode]['integrationValue'] &&
-                    addressSettingsJson['AddressSettings']['countriesAndStates'][0]['countries'][cIdx]['states'][sIdx]['active'][0] === this.statesToCheck[countryIsoCode][stateIsoCode]['active'] &&
-                    addressSettingsJson['AddressSettings']['countriesAndStates'][0]['countries'][cIdx]['states'][sIdx]['visible'][0] === this.statesToCheck[countryIsoCode][stateIsoCode]['visible'];
+                    addressSettingsJson['AddressSettings']['countriesAndStates'][0]['countries'][cIdx]['states'][sIdx]['active'][0] === this.statesToCheck[countryIsoCode][stateIsoCode]['active'].toString() &&
+                    addressSettingsJson['AddressSettings']['countriesAndStates'][0]['countries'][cIdx]['states'][sIdx]['visible'][0] === this.statesToCheck[countryIsoCode][stateIsoCode]['visible'].toString();
             }, true);
         }, true) : res;
 

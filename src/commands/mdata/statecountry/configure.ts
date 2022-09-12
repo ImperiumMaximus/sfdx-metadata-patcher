@@ -127,8 +127,7 @@ export default class StateCountryConfigure extends SfdxCommand {
         await driver.quit();
 
         if (this.flags.check) {
-            const r = await this.checkConfigurationStatus();
-            if (r) {
+            if (await this.checkConfigurationStatus()) {
                 Mdata.log(messages.getMessage('statecountry.configure.infos.checkOkMessage'), LoggerLevel.INFO);
             } else {
                 Mdata.log(messages.getMessage('statecountry.configure.errors.checkKoMessage'), LoggerLevel.ERROR);

@@ -163,7 +163,7 @@ export default class TestDependencies extends SfdxCommand {
         const frontier: Set<string> = new Set<string>();
         const closedList: Set<string> = new Set<string>();
         const apexTestClasses: Set<string> = new Set<string>();
-        let testLevel = 'RunLocalTests';
+        let testLevel = this.flags.prod ? 'RunLocalTests' : 'NoTestRun';
 
         const plugins = this.sfdxProjectJson.get('plugins');
         const pluginConfig = plugins['mdataDeltaTests'];
@@ -290,7 +290,13 @@ export default class TestDependencies extends SfdxCommand {
             });
         }
 
-        if (apexTestClasses.size === 0 || this._eqSet(allApexTestClasses, apexTestClasses)) {
+        if (apexTestClasses.size === 0) {
+            if (!this.flags.json) {
+                Mdata.log(`-l ${testLevel}`, LoggerLevel.INFO);
+            }
+            return this.flags.json ? { testLevel, classList: [] } : null;
+        } else if (this._eqSet(allApexTestClasses, apexTestClasses)) {
+            testLevel = 'RunLocalTests';
             if (!this.flags.json) {
                 Mdata.log(`-l ${testLevel}`, LoggerLevel.INFO);
             }

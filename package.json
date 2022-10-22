@@ -6,7 +6,7 @@
   "bugs": "https://github.com/ImperiumMaximus/sfdx-metadata-patcher/issues",
   "dependencies": {
     "@oclif/command": "^1.8.16",
-    "@oclif/config": "^1",
+    "@oclif/config": "^1.18.4",
     "@oclif/errors": "^1",
     "@salesforce/command": "^4",
     "@salesforce/core": "^2",

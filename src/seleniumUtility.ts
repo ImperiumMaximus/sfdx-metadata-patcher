@@ -10,7 +10,7 @@ export class SeleniumUtility {
         const cService = new chrome.ServiceBuilder(chromedriver.path).build();
 
         const cOpts = new chrome.Options();
-        cOpts.addArguments('--no-sandbox', '--headless', '--disable-dev-shm-usage');
+        cOpts.addArguments('--no-sandbox', '--headless', '--disable-dev-shm-usage', '--disable-gpu');
 
         const driver = chrome.Driver.createSession(cOpts, cService);
 

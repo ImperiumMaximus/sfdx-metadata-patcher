@@ -163,7 +163,8 @@
         "cannotEditExistingCountry": "Cannot edit existing Country %s",
         "cannotAddNewState": "Cannot add new State %s for Country %s",
         "cannotEditExistingState": "Cannot edit existing State %s for Country %s",
-        "cannotConfigStateCountryNotExists": "'Trying to configure State %s to non-existing Country %s"
+        "cannotConfigStateCountryNotExists": "'Trying to configure State %s to non-existing Country %s",
+        "cannotAddStatesCountryNotExists": "Cannot add new State %s for Non existing Country %s"
       }
     },
     "template": {

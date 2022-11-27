@@ -81,6 +81,7 @@ export default class StateCountryConfigure extends SfdxCommand {
 
     protected countriesToCheck = {};
     protected statesToCheck = {};
+    protected skippedCountries = new Set();
 
     public async run(): Promise<AnyJson> {
         Mdata.setLogLevel(this.flags.loglevel, this.flags.json);
@@ -175,14 +176,18 @@ export default class StateCountryConfigure extends SfdxCommand {
             if (this.flags.conflictspolicy === 'rename' && Object.prototype.hasOwnProperty.call(countriesByIntValue, country['integrationValue']) &&
                 countriesByIntValue[country['integrationValue']]['isoCode'][0] !== country['isoCode']) {
                 const countryToRename = countriesByIntValue[country['integrationValue']];
-                await this.editExistingCountry(driver, {
+                const countryToRenameNewConfig = {
                     isoCode: countryToRename['isoCode'][0],
                     integrationValue: `${countryToRename['integrationValue'][0]}_`,
                     label: `${countryToRename['label'][0]}_`,
-                    visible: false
-                });
+                    active: countryToRename['active'][0],
+                    visible: 'false'
+                };
+                await this.editExistingCountry(driver, countryToRenameNewConfig);
+                this.countriesToCheck[countryToRenameNewConfig['isoCode']] = countryToRenameNewConfig;
             } else if (Object.prototype.hasOwnProperty.call(countriesByIntValue, country['integrationValue']) &&
                 countriesByIntValue[country['integrationValue']]['isoCode'][0] !== country['isoCode']) {
+                this.skippedCountries.add(country['isoCode']);
                 if (bar) {
                     bar.increment(1, { countryIsoCode: country['isoCode'] });
                 }
@@ -192,6 +197,7 @@ export default class StateCountryConfigure extends SfdxCommand {
             if (!Object.prototype.hasOwnProperty.call(existingStatesByCountries, country['isoCode'])) {
                 if (await this.addNewCountry(driver, country)) {
                     this.countriesToCheck[country['isoCode']] = country;
+                    existingStatesByCountries[country['isoCode']] = new Set();
                 } else {
                     throw new SfdxError(messages.getMessage('statecountry.configure.errors.cannotAddNewCountry', [country['isoCode']]));
                 }
@@ -230,21 +236,28 @@ export default class StateCountryConfigure extends SfdxCommand {
                 bar.update({ countryIsoCode: state['countryIsoCode'], stateIsoCode: state['isoCode'] });
             }
 
+            if (this.skippedCountries.has(state['countryIsoCode'])) {
+                continue;
+            }
+
             if (!Object.prototype.hasOwnProperty.call(existingStatesByCountries, state['countryIsoCode'])) {
-                throw new SfdxError(messages.getMessage('statecountry.configure.erros.cannotAddStatesCountryNotExists', [state['isoCode'], state['countryIsoCode']]));
+                throw new SfdxError(messages.getMessage('statecountry.configure.errors.cannotAddStatesCountryNotExists', [state['isoCode'], state['countryIsoCode']]));
             }
 
             if (this.flags.conflictspolicy === 'rename' && Object.prototype.hasOwnProperty.call(statesByCountryByIntValue, state['countryIsoCode']) &&
                 Object.prototype.hasOwnProperty.call(statesByCountryByIntValue[state['countryIsoCode']], state['integrationValue']) &&
                 statesByCountryByIntValue[state['countryIsoCode']][state['integrationValue']]['isoCode'][0] !== state['isoCode']) {
                 const stateToRename = statesByCountryByIntValue[state['countryIsoCode']][state['integrationValue']];
-                await this.editExistingState(driver, {
+                const stateToRenameNewConfig = {
                     isoCode: stateToRename['isoCode'][0],
                     countryIsoCode: state['countryIsoCode'],
                     integrationValue: `${stateToRename['integrationValue'][0]}_`,
                     label: `${stateToRename['label'][0]}_`,
-                    visible: false
-                });
+                    active: stateToRename['active'][0],
+                    visible: 'false'
+                };
+                await this.editExistingState(driver, stateToRenameNewConfig);
+                this.statesToCheck[stateToRenameNewConfig['countryIsoCode']][stateToRename['isoCode']] = stateToRenameNewConfig;
             } else if (Object.prototype.hasOwnProperty.call(statesByCountryByIntValue, state['countryIsoCode']) &&
                 Object.prototype.hasOwnProperty.call(statesByCountryByIntValue[state['countryIsoCode']], state['integrationValue']) &&
                 statesByCountryByIntValue[state['countryIsoCode']][state['integrationValue']]['isoCode'][0] !== state['isoCode']) {
@@ -405,7 +418,9 @@ export default class StateCountryConfigure extends SfdxCommand {
             await SeleniumUtility.waitUntilPageLoad(driver);
 
             await SeleniumUtility.clearAndFillTextInput(driver, 'configurecountry:form:blockEditCountry:j_id9:j_id37:editName', state['label']);
-            await SeleniumUtility.clearAndFillTextInput(driver, 'configurecountry:form:blockEditCountry:j_id9:j_id40:editIsoCode', state['isoCode']);
+            if (await SeleniumUtility.elementExists(driver, 'configurecountry:form:blockEditCountry:j_id9:j_id40:editIsoCode')) {
+                await SeleniumUtility.clearAndFillTextInput(driver, 'configurecountry:form:blockEditCountry:j_id9:j_id40:editIsoCode', state['isoCode']);
+            }
             await SeleniumUtility.clearAndFillTextInput(driver, 'configurecountry:form:blockEditCountry:j_id9:j_id43:editIntVal', state['integrationValue']);
 
             const isActive = state['active'].toString() === 'true';
@@ -449,8 +464,7 @@ export default class StateCountryConfigure extends SfdxCommand {
                 addressSettingsJson['AddressSettings']['countriesAndStates'][0]['countries'][cIdx]['visible'][0] === this.countriesToCheck[countryIsoCode]['visible'].toString();
         }, true) : res;
 
-
-        res = Object.keys(this.statesToCheck).length ? Object.keys(this.statesToCheck).reduce((acc: boolean, countryIsoCode: string) => {
+        res = res && Object.keys(this.statesToCheck).length ? Object.keys(this.statesToCheck).reduce((acc: boolean, countryIsoCode: string) => {
             const cIdx = addressSettingsJson['AddressSettings']['countriesAndStates'][0]['countries'].findIndex((country: AnyJson) => country['isoCode'][0] === countryIsoCode);
 
             return acc && cIdx >= 0 && Object.keys(this.statesToCheck[countryIsoCode]).reduce((sAcc: boolean, stateIsoCode: string) => {

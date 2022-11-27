@@ -93,7 +93,7 @@ export class ExcelUtility {
                 let skipAddToDataTable = true;
                 for (let j = 1; j <= numCols; j++) {
                     const cell = ws.getRow(i).getCell(j);
-                    if (cell.value && cell.value.toString() !== '') {
+                    if (cell.value !== null && cell.value.toString() !== '') {
                         skipAddToDataTable = false;
                         extractedRow[extractedLines.columns[j - 1]] = cell.value;
                     }

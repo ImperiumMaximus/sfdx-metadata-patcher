@@ -3,16 +3,8 @@ import * as webdriver from 'selenium-webdriver';
 import * as chrome from 'selenium-webdriver/chrome';
 import * as chromedriver from 'chromedriver';
 import { stalenessOf } from 'selenium-webdriver/lib/until';
-import { AnyJson } from '@salesforce/ts-types';
 
 export class SeleniumUtility {
-
-    private static targetToFunc = {
-        class: webdriver.By.className,
-        css: webdriver.By.css,
-        name: webdriver.By.name,
-        id: webdriver.By.id
-    };
 
     public static async getDriver(startUrl: string): Promise<webdriver.WebDriver> {
         const cService = new chrome.ServiceBuilder(chromedriver.path).build();
@@ -44,14 +36,15 @@ export class SeleniumUtility {
     }
 
     public static async setCheckboxValue(driver: webdriver.WebDriver, name: string, value: boolean): Promise<boolean> {
-        const checkbox = await driver.findElement(webdriver.By.name(name));
-
-        if (!checkbox) {
+        if (!(await this.elementExists(driver, name))) {
             return false;
         }
 
+        const checkbox = await driver.findElement(webdriver.By.name(name));
+
         if ((await checkbox.isSelected()) !== value) {
-            await checkbox.click();
+            await driver.wait(() =>
+                driver.executeScript('arguments[0].click()', checkbox).then(() => true));
             return true;
         }
 
@@ -64,11 +57,11 @@ export class SeleniumUtility {
     }
 
     public static async clickButton(driver: webdriver.WebDriver, name: string) {
-        await driver.findElement(webdriver.By.name(name)).click();
+        await driver.wait(() =>
+            driver.executeScript('arguments[0].click()', driver.findElement(webdriver.By.name(name))).then(() => true));
     }
 
-    public static async waitUntilElementIsPresent(driver: webdriver.WebDriver, target: AnyJson) {
-        const element = await driver.findElement(this.targetToFunc[Object.keys(target)[0]].call(webdriver, target[Object.keys(target)[0]]));
-        await driver.wait(stalenessOf(element));
+    public static async elementExists(driver: webdriver.WebDriver, name: string) {
+        return driver.findElement(webdriver.By.name(name)).then(el => !!el).catch(() => false);
     }
 }

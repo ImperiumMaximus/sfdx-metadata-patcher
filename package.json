@@ -100,7 +100,7 @@
     "postpack": "rm -f oclif.manifest.json",
     "posttest": "eslint -c .eslintrc.js --ext .ts ./src",
     "prepack": "rm -rf lib && tsc -b && oclif-dev manifest",
-    "test": "nyc --extension .ts mocha --forbid-only \"test/**/*.test.ts\" --timeout 50000",
+    "test": "nyc --extension .ts mocha --forbid-only \"test/**/*.test.ts\" --timeout 120000",
     "coverage": "nyc report --reporter text-lcov --extension .ts > coverage.lcov",
     "version": "oclif-dev readme && git add README.md"
   }

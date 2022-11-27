@@ -11,7 +11,7 @@ export class SeleniumUtility {
 
         const cOpts = new chrome.Options();
         cOpts.excludeSwitches('enable-automation');
-        cOpts.addArguments('--no-sandbox', '--headless', '--disable-dev-shm-usage', '--disable-gpu');
+        cOpts.addArguments('--no-sandbox', '--headless', '--disable-dev-shm-usage');
 
         const driver = chrome.Driver.createSession(cOpts, cService);
 

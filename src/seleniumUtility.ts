@@ -5,8 +5,6 @@ import * as chrome from 'selenium-webdriver/chrome';
 import * as chromedriver from 'chromedriver';
 
 import { stalenessOf } from 'selenium-webdriver/lib/until';
-import { Capabilities } from 'selenium-webdriver';
-
 
 export class SeleniumUtility {
 

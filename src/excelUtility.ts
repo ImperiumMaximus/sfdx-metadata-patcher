@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { Messages } from '@salesforce/core';
+import { AnyJson } from '@salesforce/ts-types';
 import * as ExcelJS from 'exceljs';
 import { TranslationDataTable } from './typeDefs';
 
@@ -159,11 +160,19 @@ export class ExcelUtility {
         return '';
     }
 
-    private static formatCellForUpdate(rawValue: string) {
+    private static formatCellForUpdate(rawObjectOrValue: AnyJson | string) {
+        let rawValue: string;
+        let cellType: string = null;
+        if (typeof rawObjectOrValue === 'object' && rawObjectOrValue !== null) {
+            rawValue = rawObjectOrValue['value'].toString();
+            cellType = rawObjectOrValue['type'];
+        } else {
+            rawValue = rawObjectOrValue as string;
+        }
         if (rawValue && rawValue.length > 0 && (rawValue.startsWith('=') || rawValue.startsWith('+') ||
             rawValue.startsWith('-') || rawValue.startsWith('\'') || rawValue.includes('.') ||
-            (rawValue.startsWith('0') && this.isNumeric(rawValue) && rawValue !== '0'))) {
-            return '\'' + rawValue;
+            ((rawValue.startsWith('0') || (cellType && cellType === 'string')) && this.isNumeric(rawValue) && rawValue !== '0'))) {
+            return rawValue;
         }
         const maybeDate = new Date(rawValue);
         if (this.isValidDate(maybeDate)) {

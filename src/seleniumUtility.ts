@@ -13,17 +13,11 @@ export class SeleniumUtility {
 
         const cOpts = new chrome.Options();
         cOpts.excludeSwitches('enable-automation');
-        if (platform !== 'win32') {
-            cOpts.addArguments('--no-sandbox', '--headless', '--window-size=1920,1080', '--disable-timeouts-for-profiling');
-        } else {
-            cOpts.addArguments('--no-sandbox', '--headless', '--window-size=1920,1080', '--disable-timeouts-for-profiling');
-        }
-
-        cOpts.setPageLoadStrategy('eager');
+        cOpts.addArguments('--no-sandbox', '--headless', '--window-size=1920,1080', '--disable-timeouts-for-profiling');
 
         const driver = chrome.Driver.createSession(cOpts, cService);
 
-        await driver.manage().setTimeouts({ implicit: 5000, pageLoad: 120000, script: 40000 });
+        await driver.manage().setTimeouts({ implicit: 5000, pageLoad: 180000, script: 40000 });
         await driver.get(startUrl);
 
         return driver;

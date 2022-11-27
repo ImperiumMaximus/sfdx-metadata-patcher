@@ -1,5 +1,4 @@
 import * as os from 'os';
-import { platform } from 'process';
 import * as webdriver from 'selenium-webdriver';
 import * as chrome from 'selenium-webdriver/chrome';
 import * as chromedriver from 'chromedriver';

@@ -1,7 +1,7 @@
 {
   "name": "sfdx-metadata-patcher",
   "description": "A Salesforce DX Plugin to hotpatch metadata before deployments",
-  "version": "0.0.22",
+  "version": "0.0.23",
   "author": "Raffaele Fioratto",
   "bugs": "https://github.com/ImperiumMaximus/sfdx-metadata-patcher/issues",
   "dependencies": {
@@ -24,7 +24,7 @@
     "line-reader": "^0.4.0",
     "micromatch": "^4.0.2",
     "pino": "^6.11.1",
-    "pino-pretty": "^4.5.0",
+    "pino-pretty": "^9.1.1",
     "prompts": "^2.4.1",
     "salesforce-alm": "^54.8.2",
     "selenium-webdriver": "^4.4.0",
@@ -44,6 +44,8 @@
     "@types/mocha": "^5",
     "@types/node": "^10",
     "@types/pino": "^6.3.5",
+    "@types/pino-pretty": "^5.0.0",
+    "@types/pino-std-serializers": "^4.0.0",
     "@types/prompts": "^2.0.14",
     "@types/selenium-webdriver": "^4.1.5",
     "@types/sqlstring": "^2.3.0",

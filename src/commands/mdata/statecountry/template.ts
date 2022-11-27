@@ -89,18 +89,18 @@ export default class StateCountryTemplate extends SfdxCommand {
 
         addressSettingsJson['AddressSettings']['countriesAndStates'][0]['countries'].map((country: AnyJson) => {
             countryDataTable.rows.push(countryDataTable.columns.reduce((acc: object, c: string) => {
-                acc[c] = country[c][0];
-
-                if (Object.prototype.hasOwnProperty.call(country, 'states')) {
-                    country['states'].forEach((s: AnyJson) => {
-                        statesDataTable.rows.push(statesDataTable.columns.slice(1).reduce((sAcc: object, sc: string) => {
-                            sAcc[sc] = s[sc][0];
-                            return sAcc;
-                        }, { countryIsoCode: country['isoCode'][0] }));
-                    });
-                }
+                acc[c] = { value: country[c][0], type: 'string' };
                 return acc;
             }, {}));
+
+            if (Object.prototype.hasOwnProperty.call(country, 'states')) {
+                country['states'].forEach((s: AnyJson) => {
+                    statesDataTable.rows.push(statesDataTable.columns.slice(1).reduce((sAcc: object, sc: string) => {
+                        sAcc[sc] = { value: s[sc][0], type: 'string' };
+                        return sAcc;
+                    }, { countryIsoCode: country['isoCode'][0] }));
+                });
+            }
         });
 
         templateSheets.push(countryDataTable);

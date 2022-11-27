@@ -15,14 +15,14 @@ export class SeleniumUtility {
         const cOpts = new chrome.Options();
         cOpts.excludeSwitches('enable-automation');
         if (platform !== 'win32') {
-            cOpts.addArguments('--no-sandbox', '--headless', '--disable-dev-shm-usage', '--disable-gpu');
+            cOpts.addArguments('--no-sandbox', '--headless', '--window-size=1920,1080');
         } else {
-            cOpts.addArguments('--no-sandbox', '--headless', '--disable-dev-shm-usage');
+            cOpts.addArguments('--no-sandbox', '--headless', '--window-size=1920,1080');
         }
 
         const driver = chrome.Driver.createSession(cOpts, cService);
 
-        await driver.manage().setTimeouts({ implicit: 60000, pageLoad: 60000, script: 60000 });
+        await driver.manage().setTimeouts({ implicit: 5000, pageLoad: 40000, script: 40000 });
         await driver.get(startUrl);
 
         return driver;

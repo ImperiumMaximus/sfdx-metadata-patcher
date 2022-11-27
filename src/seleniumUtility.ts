@@ -22,7 +22,7 @@ export class SeleniumUtility {
 
         const driver = chrome.Driver.createSession(cOpts, cService);
 
-        await driver.manage().setTimeouts({ implicit: 30000, pageLoad: 30000, script: 30000 });
+        await driver.manage().setTimeouts({ implicit: 60000, pageLoad: 60000, script: 60000 });
         await driver.get(startUrl);
 
         return driver;

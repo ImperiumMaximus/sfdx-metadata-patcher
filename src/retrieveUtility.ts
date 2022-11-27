@@ -4,11 +4,13 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Messages } from '@salesforce/core';
 import { ComponentSet } from '@salesforce/source-deploy-retrieve';
+import { AnyJson } from '@salesforce/ts-types';
 import * as JSZip from 'jszip';
 import * as tmp from 'tmp';
 import { Mdata } from './mdata';
 import { sleep } from './miscUtility';
 import { LoggerLevel } from './typeDefs';
+import { parseXml, parseXmlFromStream } from './xmlUtility';
 
 // Initialize Messages with the current plugin directory
 Messages.importMessagesDirectory(__dirname);
@@ -57,4 +59,42 @@ export const retrieveMetadataButKeepSubset = async (username: string, componentS
         writeStream.close();
         return Promise.resolve(`${path.basename(f)}-meta.xml`);
     }));
+};
+
+export const getAddressSettingsJson = async (mdatafile: string, username: string): Promise<AnyJson> => {
+    if (mdatafile && fs.existsSync(mdatafile)) {
+        return parseXml(mdatafile);
+    }
+
+    const componentSet = new ComponentSet([
+        { fullName: 'Address', type: 'Settings' }
+    ]);
+
+    const tmpDir = tmp.dirSync({ postfix: `_${new Date().getTime().toString()}` });
+
+    const retrieveResult = await componentSet.retrieve({
+        usernameOrConnection: username,
+        output: tmpDir.name
+    });
+
+    let retrieveResultStatus = await retrieveResult.checkStatus();
+
+    Mdata.log(messages.getMessage('utility.retrieve.info.retrieveJobId', [retrieveResultStatus.id]), LoggerLevel.INFO);
+
+    while (!retrieveResultStatus.done) {
+        sleep(2);
+        retrieveResultStatus = await retrieveResult.checkStatus();
+        Mdata.log(messages.getMessage('utility.retrieve.info.retrieveStatus', [retrieveResultStatus.status]), LoggerLevel.INFO);
+    }
+
+    const metadataZip = await JSZip.loadAsync(Buffer.from(retrieveResultStatus.zipFile, 'base64'));
+    const fileProperties = Array.isArray(retrieveResultStatus.fileProperties) ? retrieveResultStatus.fileProperties : [retrieveResultStatus.fileProperties];
+
+    const metadataFiles = fileProperties.filter(p => (Object.keys(metadataZip.files).includes(p.fileName) || Object.keys(metadataZip.files).includes(decodeURI(p.fileName)))).map(p => p.fileName);
+
+    if (!metadataFiles.length) {
+        throw new Error(messages.getMessage('statecountry.configure.errors.cannotretrieveASMdata'));
+    }
+
+    return parseXmlFromStream(metadataZip.files[metadataFiles[0]].nodeStream());
 };

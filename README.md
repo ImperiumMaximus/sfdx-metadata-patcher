@@ -29,6 +29,8 @@ $ sfdx plugins:install sfdx-metadata-patcher
 * [`sfdx mdata:patch [-e <string>] [-r <string>] [-m <string>] [-s <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-mdatapatch--e-string--r-string--m-string--s-string---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
 * [`sfdx mdata:permset:retrieve [-r <string>] [-p <string>] [-x <string>] [-m <string>] [-d <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-mdatapermsetretrieve--r-string--p-string--x-string--m-string--d-string--u-string---apiversion-string---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
 * [`sfdx mdata:profile:retrieve [-r <string>] [-p <string>] [-x <string>] [-m <string>] [-d <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-mdataprofileretrieve--r-string--p-string--x-string--m-string--d-string--u-string---apiversion-string---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
+* [`sfdx mdata:statecountry:configure -f <string> [-c <string>] [-v] [-m <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-mdatastatecountryconfigure--f-string--c-string--v--m-string--u-string---apiversion-string---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
+* [`sfdx mdata:statecountry:template -o <string> [-m <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-mdatastatecountrytemplate--o-string--m-string--u-string---apiversion-string---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
 * [`sfdx mdata:translations:convert -f <string> -t <string> -i <string> -o <string> [-m <string>] [-s <string>] [-r <number>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-mdatatranslationsconvert--f-string--t-string--i-string--o-string--m-string--s-string--r-number---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
 
 ## `sfdx mdata:apex:testdependencies`
@@ -36,7 +38,6 @@ $ sfdx plugins:install sfdx-metadata-patcher
 computes the list of (statically) dependant Apex Test Classes to a list of Apex Classes supplied in input up to a certain depth
 
 ```
-
 USAGE
   $ sfdx mdata:apex:testdependencies
 
@@ -100,7 +101,7 @@ EXAMPLES
       $ sfdx mdata:apex:testdependencies -x package.xml -d destructiveChanges.xml --usecodecoverage
 ```
 
-_See code: [src/commands/mdata/apex/testdependencies.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.21/src/commands/mdata/apex/testdependencies.ts)_
+_See code: [src/commands/mdata/apex/testdependencies.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.24/src/commands/mdata/apex/testdependencies.ts)_
 
 ## `sfdx mdata:communities:publish [-n <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
@@ -140,7 +141,7 @@ EXAMPLES
       $ sfdx mdata:communities:publish -n Customer -u admin.user@uat.myorg.com
 ```
 
-_See code: [src/commands/mdata/communities/publish.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.21/src/commands/mdata/communities/publish.ts)_
+_See code: [src/commands/mdata/communities/publish.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.24/src/commands/mdata/communities/publish.ts)_
 
 ## `sfdx mdata:manifest:align [-r <string>] [-p <string>] [-x <string>] [-m <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
@@ -183,7 +184,7 @@ EXAMPLES
       $ sfdx mdata:manifest:align -m ApexClass,ApexTrigger,CustomObject -x manifest/package.xml
 ```
 
-_See code: [src/commands/mdata/manifest/align.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.21/src/commands/mdata/manifest/align.ts)_
+_See code: [src/commands/mdata/manifest/align.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.24/src/commands/mdata/manifest/align.ts)_
 
 ## `sfdx mdata:manifest:sort -x <string> [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
@@ -208,7 +209,7 @@ EXAMPLE
       $ sfdx mdata:manifest:sort -x manifest/package.xml
 ```
 
-_See code: [src/commands/mdata/manifest/sort.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.21/src/commands/mdata/manifest/sort.ts)_
+_See code: [src/commands/mdata/manifest/sort.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.24/src/commands/mdata/manifest/sort.ts)_
 
 ## `sfdx mdata:patch [-e <string>] [-r <string>] [-m <string>] [-s <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
@@ -245,7 +246,7 @@ OPTIONS
                                                                                     this command invocation
 ```
 
-_See code: [src/commands/mdata/patch.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.21/src/commands/mdata/patch.ts)_
+_See code: [src/commands/mdata/patch.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.24/src/commands/mdata/patch.ts)_
 
 ## `sfdx mdata:permset:retrieve [-r <string>] [-p <string>] [-x <string>] [-m <string>] [-d <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
@@ -304,7 +305,7 @@ EXAMPLES
       $ sfdx mdata:permsets:retrieve -m "MyCoolPermSet1,MyCoolPermSet2"
 ```
 
-_See code: [src/commands/mdata/permset/retrieve.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.21/src/commands/mdata/permset/retrieve.ts)_
+_See code: [src/commands/mdata/permset/retrieve.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.24/src/commands/mdata/permset/retrieve.ts)_
 
 ## `sfdx mdata:profile:retrieve [-r <string>] [-p <string>] [-x <string>] [-m <string>] [-d <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
@@ -363,7 +364,89 @@ EXAMPLES
       $ sfdx mdata:permsets:retrieve -m "Admin,Read Only,Custom: Sales Profile"
 ```
 
-_See code: [src/commands/mdata/profile/retrieve.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.21/src/commands/mdata/profile/retrieve.ts)_
+_See code: [src/commands/mdata/profile/retrieve.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.24/src/commands/mdata/profile/retrieve.ts)_
+
+## `sfdx mdata:statecountry:configure -f <string> [-c <string>] [-v] [-m <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
+
+configure new and/or existing Country and State Picklist values from an Excel file mapping using Selenium Webdriver
+
+```
+USAGE
+  $ sfdx mdata:statecountry:configure -f <string> [-c <string>] [-v] [-m <string>] [-u <string>] [--apiversion <string>]
+   [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
+
+OPTIONS
+  -c, --conflictspolicy=skip|rename
+      [default: skip] specify the policy to use in resolving conflicts with existing Country and / or State codes with
+      different labels. Use "skip" to ignore the change proposed in the Excel file and keep the value already in the Org
+      as it is. Use "rename" to edit the existing value in the Org with the label supplied in the Excel file
+
+  -f, --mappingpath=mappingpath
+      (required) Excel file containing the mappings of Countries and States to configure in the target Org
+
+  -m, --mdatafile=mdatafile
+      file path to an existing AddressSettings file to determine possible conflicts between the configuration in the
+      target Org and the mapping supplied in the Excel file. If not specified a fresh one is retrieved from the target Org
+
+  -u, --targetusername=targetusername
+      username or alias for the target org; overrides default target org
+
+  -v, --check
+      specify the policy to use in resolving conflicts with existing Country and / or State codes with different labels.
+      Use "skip" to ignore the change proposed in the Excel file and keep the value already in the Org as it is. Use
+      "rename" to edit the existing value in the Org with the label supplied in the Excel file
+
+  --apiversion=apiversion
+      override the api version used for api requests made by this command
+
+  --json
+      format output as json
+
+  --loglevel=(trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL)
+      [default: info] logging level for this command invocation
+
+EXAMPLE
+  To configure the State / Country Picklist from an Excel file in the current default org
+      $ sfdx mdata:statecountry:configure -f /path/to/state/country/to/configure.xlsx
+```
+
+_See code: [src/commands/mdata/statecountry/configure.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.24/src/commands/mdata/statecountry/configure.ts)_
+
+## `sfdx mdata:statecountry:template -o <string> [-m <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
+
+generate an Excel file template from the currently configured Country and State picklist in the target Org
+
+```
+USAGE
+  $ sfdx mdata:statecountry:template -o <string> [-m <string>] [-u <string>] [--apiversion <string>] [--json] 
+  [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
+
+OPTIONS
+  -m, --mdatafile=mdatafile
+      file path to an existing AddressSettings file to determine possible conflicts between the configuration in the
+      target Org and the mapping supplied in the Excel file. If not specified a fresh one is retrieved from the target Org
+
+  -o, --outputpath=outputpath
+      (required) File path where the resulting Excel file will be written to
+
+  -u, --targetusername=targetusername
+      username or alias for the target org; overrides default target org
+
+  --apiversion=apiversion
+      override the api version used for api requests made by this command
+
+  --json
+      format output as json
+
+  --loglevel=(trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL)
+      [default: info] logging level for this command invocation
+
+EXAMPLE
+  To generate an Excel template of the State / Country Picklist currently configured in the current default org
+      $ sfdx mdata:statecountry:template -o /path/to/template/to/generate.xlsx
+```
+
+_See code: [src/commands/mdata/statecountry/template.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.24/src/commands/mdata/statecountry/template.ts)_
 
 ## `sfdx mdata:translations:convert -f <string> -t <string> -i <string> -o <string> [-m <string>] [-s <string>] [-r <number>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
@@ -398,5 +481,5 @@ OPTIONS
                                                                                     this command invocation
 ```
 
-_See code: [src/commands/mdata/translations/convert.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.21/src/commands/mdata/translations/convert.ts)_
+_See code: [src/commands/mdata/translations/convert.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.0.24/src/commands/mdata/translations/convert.ts)_
 <!-- commandsstop -->

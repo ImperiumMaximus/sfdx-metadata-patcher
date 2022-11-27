@@ -1,8 +1,11 @@
 import * as os from 'os';
+import { platform } from 'node:process';
 import * as webdriver from 'selenium-webdriver';
 import * as chrome from 'selenium-webdriver/chrome';
 import * as chromedriver from 'chromedriver';
+
 import { stalenessOf } from 'selenium-webdriver/lib/until';
+
 
 export class SeleniumUtility {
 
@@ -11,7 +14,11 @@ export class SeleniumUtility {
 
         const cOpts = new chrome.Options();
         cOpts.excludeSwitches('enable-automation');
-        cOpts.addArguments('--no-sandbox', '--headless', '--disable-dev-shm-usage');
+        if (platform !== 'win32') {
+            cOpts.addArguments('--no-sandbox', '--headless', '--disable-dev-shm-usage', '--disable-gpu');
+        } else {
+            cOpts.addArguments('--no-sandbox', '--headless', '--disable-dev-shm-usage');
+        }
 
         const driver = chrome.Driver.createSession(cOpts, cService);
 

@@ -15,9 +15,9 @@ export class SeleniumUtility {
         const cOpts = new chrome.Options();
         cOpts.excludeSwitches('enable-automation');
         if (platform !== 'win32') {
-            cOpts.addArguments('--no-sandbox', '--headless', '--window-size=1920,1080');
+            cOpts.addArguments('--no-sandbox', '--headless', '--window-size=1920,1080', '--disable-timeouts-for-profiling');
         } else {
-            cOpts.addArguments('--no-sandbox', '--headless', '--window-size=1920,1080');
+            cOpts.addArguments('--no-sandbox', '--headless', '--window-size=1920,1080', '--disable-timeouts-for-profiling');
         }
 
         const driver = chrome.Driver.createSession(cOpts, cService);

@@ -5,6 +5,7 @@ import * as chrome from 'selenium-webdriver/chrome';
 import * as chromedriver from 'chromedriver';
 
 import { stalenessOf } from 'selenium-webdriver/lib/until';
+import { Capabilities } from 'selenium-webdriver';
 
 
 export class SeleniumUtility {
@@ -19,6 +20,8 @@ export class SeleniumUtility {
         } else {
             cOpts.addArguments('--no-sandbox', '--headless', '--window-size=1920,1080', '--disable-timeouts-for-profiling');
         }
+
+        cOpts.setPageLoadStrategy('eager');
 
         const driver = chrome.Driver.createSession(cOpts, cService);
 

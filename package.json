@@ -27,7 +27,7 @@
     "pino-pretty": "^9.1.1",
     "prompts": "^2.4.1",
     "salesforce-alm": "^54.8.2",
-    "selenium-webdriver": "^4.7.0",
+    "selenium-webdriver": "^4.8.0",
     "sqlstring": "^2.3.2",
     "tmp": "^0.2.1",
     "tslib": "^1"

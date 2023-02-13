@@ -5951,14 +5951,14 @@ secure-json-parse@^2.4.0:
   resolved "https://registry.yarnpkg.com/secure-json-parse/-/secure-json-parse-2.5.0.tgz#f929829df2adc7ccfb53703569894d051493a6ac"
   integrity sha512-ZQruFgZnIWH+WyO9t5rWt4ZEGqCKPwhiw+YbzTwpmT9elgLrLcfuyUiSnwwjUiVy9r4VM3urtbNF1xmEh9IL2w==
 
-selenium-webdriver@^4.7.0:
-  version "4.7.1"
-  resolved "https://registry.yarnpkg.com/selenium-webdriver/-/selenium-webdriver-4.7.1.tgz#29be9eaac1bd5aa37728c3e5cca352b1e98ec85d"
-  integrity sha512-IfTM9OE8HtCKjOJwyudbAVtAHQKOJK8mu2qrXXbKyj4lqgXF+2lYW4rSZXCV6SLQRWZ+DVGkomCmFzq5orD/ZA==
+selenium-webdriver@^4.8.0:
+  version "4.8.0"
+  resolved "https://registry.yarnpkg.com/selenium-webdriver/-/selenium-webdriver-4.8.0.tgz#386d57f23fe8edf5178f5bd06aae9ffaffbcb692"
+  integrity sha512-s/HL8WNwy1ggHR244+tAhjhyKMJnZLt1HKJ6Gn7nQgVjB/ybDF+46Uui0qI2J7AjPNJzlUmTncdC/jg/kKkn0A==
   dependencies:
     jszip "^3.10.0"
     tmp "^0.2.1"
-    ws ">=8.7.0"
+    ws ">=8.11.0"
 
 "semver@2 || 3 || 4 || 5", semver@^5.3.0, semver@^5.5.0, semver@^5.6.0:
   version "5.7.1"
@@ -7150,10 +7150,10 @@ write-json-file@^4.1.1:
     sort-keys "^4.0.0"
     write-file-atomic "^3.0.0"
 
-ws@>=8.7.0:
-  version "8.11.0"
-  resolved "https://registry.yarnpkg.com/ws/-/ws-8.11.0.tgz#6a0d36b8edfd9f96d8b25683db2f8d7de6e8e143"
-  integrity sha512-HPG3wQd9sNQoT9xHyNCXoDUa+Xw/VevmY9FoHyQ+g+rrMn4j6FB4np7Z0OhdTgjx6MgQLK7jwSy1YecU1+4Asg==
+ws@>=8.11.0:
+  version "8.12.1"
+  resolved "https://registry.yarnpkg.com/ws/-/ws-8.12.1.tgz#c51e583d79140b5e42e39be48c934131942d4a8f"
+  integrity sha512-1qo+M9Ba+xNhPB+YTWUlK6M17brTut5EXbcBaMRN5pH5dFrXz7lzz1ChFSUq3bOUl8yEvSenhHmYUNJxFzdJew==
 
 xml2js@0.4.19:
   version "0.4.19"

@@ -2,39 +2,39 @@ import { expect, test } from '@salesforce/command/lib/test';
 // import { testSetup } from '@salesforce/core/lib/testSetup';
 // import { stubMethod } from '@salesforce/ts-sinon';
 import { Messages } from '@salesforce/core';
-import { SeleniumUtility } from '../src/seleniumUtility';
 import { By, WebDriver } from 'selenium-webdriver';
+import { SeleniumUtility } from '../src/seleniumUtility';
 
 // Initialize Messages with the current plugin directory
 Messages.importMessagesDirectory(__dirname);
 
 // Load the specific messages for this file. Messages from @salesforce/command, @salesforce/core,
 // or any library that is using the messages framework can also be loaded this way.
-//const messages = Messages.loadMessages('sfdx-metadata-patcher', 'mdata');
+// const messages = Messages.loadMessages('sfdx-metadata-patcher', 'mdata');
 
 // const $$ = testSetup();
 
 describe('seleniumUtility', () => {
     let driver: WebDriver;
-    
+
     afterEach(async () => {
         await driver.quit();
     })
 
     test
-        .it('creates a new webdriver', async _ => {
+        .it('creates a new webdriver', async () => {
             driver = await SeleniumUtility.getDriver('https://www.google.com/');
             expect((await driver.getCurrentUrl())).to.equal('https://www.google.com/');
         })
 
     test
-        .it('waits until a page loads', async _ => {
+        .it('waits until a page loads', async () => {
             driver = await SeleniumUtility.getDriver('https://www.google.com/');
             expect((await SeleniumUtility.waitUntilPageLoad(driver))).to.equal(true);
         })
-    
+
     test
-        .it('fills text in an input', async _ => {
+        .it('fills text in an input', async () => {
             driver = await SeleniumUtility.getDriver('https://www.w3schools.com/tags/tryit.asp?filename=tryhtml5_input_type_text');
             await SeleniumUtility.waitUntilPageLoad(driver);
             await driver.switchTo().frame(driver.findElement(By.id('iframeResult')));
@@ -43,7 +43,7 @@ describe('seleniumUtility', () => {
         })
 
     test
-        .it('clears text and fills an input', async _ => {
+        .it('clears text and fills an input', async () => {
             driver = await SeleniumUtility.getDriver('https://www.w3schools.com/tags/tryit.asp?filename=tryhtml5_input_type_text');
             await SeleniumUtility.waitUntilPageLoad(driver);
             await driver.switchTo().frame(driver.findElement(By.id('iframeResult')));
@@ -53,7 +53,7 @@ describe('seleniumUtility', () => {
         })
 
     test
-        .it('controls checkboxes state', async _ => {
+        .it('controls checkboxes state', async () => {
             driver = await SeleniumUtility.getDriver('https://www.w3schools.com/tags/tryit.asp?filename=tryhtml5_input_type_checkbox');
             await SeleniumUtility.waitUntilPageLoad(driver);
             await driver.switchTo().frame(driver.findElement(By.id('iframeResult')));
@@ -66,15 +66,15 @@ describe('seleniumUtility', () => {
         })
 
     test
-        .it('clicks a button', async _ => {
+        .it('clicks a button', async () => {
             driver = await SeleniumUtility.getDriver('https://www.google.com');
             await SeleniumUtility.waitUntilPageLoad(driver);
             await SeleniumUtility.clickButton(driver, 'btnI');
             expect(await driver.getCurrentUrl()).to.equal('https://www.google.com/doodles');
         });
-    
+
     test
-        .it('checks if an element exists', async _ => {
+        .it('checks if an element exists', async () => {
             driver = await SeleniumUtility.getDriver('https://www.google.com');
             await SeleniumUtility.waitUntilPageLoad(driver);
             expect(await SeleniumUtility.elementExists(driver, 'q')).to.be.true;

@@ -1,15 +1,17 @@
+import * as fs from 'fs';
+import * as path from 'path';
 import { expect, test } from '@salesforce/command/lib/test';
 import { Messages } from '@salesforce/core';
 import { testSetup } from '@salesforce/core/lib/testSetup';
 import { stubMethod } from '@salesforce/ts-sinon';
 import * as sinon from 'sinon';
-import * as fs from 'fs';
-import * as path from 'path';
 import * as ExcelJS from 'exceljs';
 import * as lineReader from 'line-reader';
 import * as XLSX from 'exceljs/lib/xlsx/xlsx';
+import { Worksheet, Workbook } from 'exceljs';
 import { TranslationUtility } from '../../../../src/translationUtility';
-//import { ensureJsonMap, ensureString } from '@salesforce/ts-types';
+
+// import { ensureJsonMap, ensureString } from '@salesforce/ts-types';
 
 // Initialize Messages with the current plugin directory
 Messages.importMessagesDirectory(__dirname);
@@ -36,11 +38,11 @@ describe('mdata:translations:convert', () => {
         test
             .do(() => {
                 const existsSyncStub = stubMethod($$.SANDBOX, fs, 'existsSync')
-                existsSyncStub.callsFake((path: string) => {
-                    if (path === 'Outdated and untranslated_en_US.stf') {
+                existsSyncStub.callsFake((p: string) => {
+                    if (p === 'Outdated and untranslated_en_US.stf') {
                         return true;
                     }
-                    return existsSyncStub.wrappedMethod.call(this, path);
+                    return existsSyncStub.wrappedMethod.call(this, p) as boolean;
                 })
 
                 const lineReaderOpenStub = stubMethod($$.SANDBOX, lineReader, 'open')
@@ -48,20 +50,21 @@ describe('mdata:translations:convert', () => {
                     if(file !== 'Outdated and untranslated_en_US.stf') {
                         return
                     }
-                    return lineReaderOpenStub.wrappedMethod.call(this, path.join(__dirname, '..', '..', '..', 'data', 'translations', 'Outdated and untranslated_en_US.stf'), options, cb);
+                    // eslint-disable-next-line @typescript-eslint/ban-types
+                    return lineReaderOpenStub.wrappedMethod.call(this, path.join(__dirname, '..', '..', '..', 'data', 'translations', 'Outdated and untranslated_en_US.stf'), options, cb) as Function;
                 });
 
                 const addWorksheetStub = stubMethod($$.SANDBOX, ExcelJS.Workbook.prototype, 'addWorksheet');
                 addWorksheetStub.callsFake((name: string) => {
-                    workbook = addWorksheetStub.thisValues[0];
-                    return addWorksheetStub.wrappedMethod.call(addWorksheetStub.thisValues[0], name);
+                    workbook = addWorksheetStub.thisValues[0] as Workbook;
+                    return addWorksheetStub.wrappedMethod.call(addWorksheetStub.thisValues[0], name) as Worksheet;
                 });
 
                 xlsxWriteFileStub = stubMethod($$.SANDBOX, ExcelJS.Workbook.prototype.xlsx, 'writeFile');
             })
             .stdout()
             .command(['mdata:translations:convert', '-f', 'stf', '-t', 'xlsx', '-i', 'Outdated and untranslated_en_US.stf', '-o', 'out.xlsx'])
-            .it('should generate an xlsx file with one sheet', _ => {
+            .it('should generate an xlsx file with one sheet', () => {
                 expect(xlsxWriteFileStub.called).to.be.true;
                 expect(xlsxWriteFileStub.args[0][0]).to.equal('out.xlsx');
                 expect(workbook.getWorksheet(1).name).to.equal('en_US');
@@ -78,33 +81,33 @@ describe('mdata:translations:convert', () => {
         test
             .do(() => {
                 const existsSyncStub = stubMethod($$.SANDBOX, fs, 'existsSync')
-                existsSyncStub.callsFake((path: string) => {
-                    if (path === 'Outdated and untranslated.zip') {
+                existsSyncStub.callsFake((p: string) => {
+                    if (p === 'Outdated and untranslated.zip') {
                         return true;
                     }
-                    return existsSyncStub.wrappedMethod.call(this, path);
+                    return existsSyncStub.wrappedMethod.call(this, p) as boolean;
                 })
 
                 const readFileSyncStub = stubMethod($$.SANDBOX, fs, 'readFileSync')
-                readFileSyncStub.callsFake((_path: string) => {
-                    if (_path === 'Outdated and untranslated.zip') {
-                        return readFileSyncStub.wrappedMethod.call(this, path.join(__dirname, '..', '..', '..', 'data', 'translations', 'Outdated and untranslated.zip'));
-                    } else {
-                        return ''
+                readFileSyncStub.callsFake((p: string, options) => {
+                    if (p === 'Outdated and untranslated.zip') {
+                        return readFileSyncStub.wrappedMethod.call(this, path.join(__dirname, '..', '..', '..', 'data', 'translations', 'Outdated and untranslated.zip')) as string;
                     }
+
+                    return readFileSyncStub.wrappedMethod.call(this, p, options) as string;
                 })
 
                 const addWorksheetStub = stubMethod($$.SANDBOX, ExcelJS.Workbook.prototype, 'addWorksheet');
                 addWorksheetStub.callsFake((name: string) => {
-                    workbook = addWorksheetStub.thisValues[0];
-                    return addWorksheetStub.wrappedMethod.call(addWorksheetStub.thisValues[0], name);
+                    workbook = addWorksheetStub.thisValues[0] as Workbook;
+                    return addWorksheetStub.wrappedMethod.call(addWorksheetStub.thisValues[0], name) as Worksheet;
                 });
 
                 xlsxWriteFileStub = stubMethod($$.SANDBOX, ExcelJS.Workbook.prototype.xlsx, 'writeFile');
             })
             .stdout()
             .command(['mdata:translations:convert', '-f', 'stf', '-t', 'xlsx', '-i', 'Outdated and untranslated.zip', '-o', 'out.xlsx'])
-            .it('should generate an xlsx file with two sheets', _ => {
+            .it('should generate an xlsx file with two sheets', () => {
                 expect(xlsxWriteFileStub.called).to.be.true;
                 expect(xlsxWriteFileStub.args[0][0]).to.equal('out.xlsx');
                 expect(workbook.getWorksheet(1).name).to.equal('it');
@@ -127,11 +130,11 @@ describe('mdata:translations:convert', () => {
         test
             .do(() => {
                 const existsSyncStub = stubMethod($$.SANDBOX, fs, 'existsSync')
-                existsSyncStub.callsFake((path: string) => {
-                    if (path === 'Bilingual_it.stf') {
+                existsSyncStub.callsFake((_path: string) => {
+                    if (_path === 'Bilingual_it.stf') {
                         return true;
                     }
-                    return existsSyncStub.wrappedMethod.call(this, path);
+                    return existsSyncStub.wrappedMethod.call(this, _path) as boolean;
                 })
 
                 const lineReaderOpenStub = stubMethod($$.SANDBOX, lineReader, 'open')
@@ -139,20 +142,21 @@ describe('mdata:translations:convert', () => {
                     if (file !== 'Bilingual_it.stf') {
                         return
                     }
-                    return lineReaderOpenStub.wrappedMethod.call(this, path.join(__dirname, '..', '..', '..', 'data', 'translations', 'Bilingual_it.stf'), options, cb);
+                    // eslint-disable-next-line @typescript-eslint/ban-types
+                    return lineReaderOpenStub.wrappedMethod.call(this, path.join(__dirname, '..', '..', '..', 'data', 'translations', 'Bilingual_it.stf'), options, cb) as Function;
                 });
 
                 const addWorksheetStub = stubMethod($$.SANDBOX, ExcelJS.Workbook.prototype, 'addWorksheet');
                 addWorksheetStub.callsFake((name: string) => {
-                    workbook = addWorksheetStub.thisValues[0];
-                    return addWorksheetStub.wrappedMethod.call(addWorksheetStub.thisValues[0], name);
+                    workbook = addWorksheetStub.thisValues[0] as Workbook;
+                    return addWorksheetStub.wrappedMethod.call(addWorksheetStub.thisValues[0], name) as Worksheet;
                 });
 
                 xlsxWriteFileStub = stubMethod($$.SANDBOX, ExcelJS.Workbook.prototype.xlsx, 'writeFile');
             })
             .stdout()
             .command(['mdata:translations:convert', '-f', 'stf', '-t', 'xlsx', '-i', 'Bilingual_it.stf', '-o', 'out.xlsx'])
-            .it('should generate an xlsx file with one sheet and the translated string at the top', _ => {
+            .it('should generate an xlsx file with one sheet and the translated string at the top', () => {
                 expect(xlsxWriteFileStub.called).to.be.true;
                 expect(xlsxWriteFileStub.args[0][0]).to.equal('out.xlsx');
                 expect(workbook.getWorksheet(1).name).to.equal('it');
@@ -170,11 +174,11 @@ describe('mdata:translations:convert', () => {
         test
             .do(() => {
                 const existsSyncStub = stubMethod($$.SANDBOX, fs, 'existsSync')
-                existsSyncStub.callsFake((path: string) => {
-                    if (path === 'Source_en_US.stf') {
+                existsSyncStub.callsFake((_path: string) => {
+                    if (_path === 'Source_en_US.stf') {
                         return true;
                     }
-                    return existsSyncStub.wrappedMethod.call(this, path);
+                    return existsSyncStub.wrappedMethod.call(this, _path) as boolean;
                 })
 
                 const lineReaderOpenStub = stubMethod($$.SANDBOX, lineReader, 'open')
@@ -182,20 +186,21 @@ describe('mdata:translations:convert', () => {
                     if (file !== 'Source_en_US.stf') {
                         return
                     }
-                    return lineReaderOpenStub.wrappedMethod.call(this, path.join(__dirname, '..', '..', '..', 'data', 'translations', 'Source_en_US.stf'), options, cb);
+                    // eslint-disable-next-line @typescript-eslint/ban-types
+                    return lineReaderOpenStub.wrappedMethod.call(this, path.join(__dirname, '..', '..', '..', 'data', 'translations', 'Source_en_US.stf'), options, cb) as Function;
                 });
 
                 const addWorksheetStub = stubMethod($$.SANDBOX, ExcelJS.Workbook.prototype, 'addWorksheet');
                 addWorksheetStub.callsFake((name: string) => {
-                    workbook = addWorksheetStub.thisValues[0];
-                    return addWorksheetStub.wrappedMethod.call(addWorksheetStub.thisValues[0], name);
+                    workbook = addWorksheetStub.thisValues[0] as Workbook;
+                    return addWorksheetStub.wrappedMethod.call(addWorksheetStub.thisValues[0], name) as Worksheet;
                 });
 
                 xlsxWriteFileStub = stubMethod($$.SANDBOX, ExcelJS.Workbook.prototype.xlsx, 'writeFile');
             })
             .stdout()
             .command(['mdata:translations:convert', '-f', 'stf', '-t', 'xlsx', '-i', 'Source_en_US.stf', '-o', 'out.xlsx'])
-            .it('should generate an xlsx file with one sheet with Translation and Out of Date columns having unknown status', _ => {
+            .it('should generate an xlsx file with one sheet with Translation and Out of Date columns having unknown status', () => {
                 expect(xlsxWriteFileStub.called).to.be.true;
                 expect(xlsxWriteFileStub.args[0][0]).to.equal('out.xlsx');
                 expect(workbook.getWorksheet(1).name).to.equal('en_US');
@@ -218,16 +223,15 @@ describe('mdata:translations:convert', () => {
                 // its properties correctly populated, though this happens only during
                 // test execution.
                 const wb = new ExcelJS.Workbook();
-                $$.SANDBOX.replaceGetter(wb, 'xlsx', () => {
-                    return new XLSX(wb);
-                });
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return
+                $$.SANDBOX.replaceGetter(wb, 'xlsx', () => new XLSX(wb));
 
                 const existsSyncStub = stubMethod($$.SANDBOX, fs, 'existsSync')
                 existsSyncStub.callsFake((_path: string) => {
                     if (_path.includes('Bilingual_it.xlsx') || _path.includes('out')) {
                         return true;
                     }
-                    return existsSyncStub.wrappedMethod.call(this, _path);
+                    return existsSyncStub.wrappedMethod.call(this, _path) as boolean;
                 })
 
                 const xlsxReadStub = stubMethod($$.SANDBOX, ExcelJS.Workbook.prototype.xlsx, 'readFile');
@@ -242,19 +246,19 @@ describe('mdata:translations:convert', () => {
                 createWriteStreamStub.callsFake((_path: string) => {
                     if (_path.includes('out')) {
                         const s = {
-                            write: (_: string | Buffer) => { return true },
-                            close: () => { return }
+                            write: () => true,
+                            close: () => undefined
                         }
                         writeStreamStub = sinon.stub(s, 'write');
                         closeStreamStub = sinon.stub(s, 'close');
                         return s;
                     }
-                    return createWriteStreamStub.wrappedMethod.call(this, _path);
-                })   
+                    return createWriteStreamStub.wrappedMethod.call(this, _path) as fs.WriteStream;
+                })
             })
             .stdout()
             .command(['mdata:translations:convert', '-f', 'xlsx', '-t', 'stf', '-i', path.join(__dirname, '..', '..', '..', 'data', 'translations', 'Bilingual_it.xlsx'), '-o', 'outdir'])
-            .it('should generate a single STF file', _ => {
+            .it('should generate a single STF file', () => {
                 expect(writeStreamStub.called).to.be.true;
                 expect(writeStreamStub.args[0][0]).to.equal('# Use the Bilingual file to review translations, edit labels that have already been translated, and add translations for labels that haven\'t been translated.\n');
                 expect(writeStreamStub.args[14][0]).to.equal('# Language: it\n');
@@ -266,8 +270,8 @@ describe('mdata:translations:convert', () => {
     })
 
     describe('Import excel file with multiple sheet', () => {
-        let writeStreamStubs: sinon.SinonStub[] = [];
-        let closeStreamStubs: sinon.SinonStub[] = [];
+        const writeStreamStubs: sinon.SinonStub[] = [];
+        const closeStreamStubs: sinon.SinonStub[] = [];
         test
             .do(() => {
                 // Workaround in order to have a consistent instance of an ExcelJS.Workbook.
@@ -275,16 +279,15 @@ describe('mdata:translations:convert', () => {
                 // its properties correctly populated, though this happens only during
                 // test execution.
                 const wb = new ExcelJS.Workbook();
-                $$.SANDBOX.replaceGetter(wb, 'xlsx', () => {
-                    return new XLSX(wb);
-                });
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return
+                $$.SANDBOX.replaceGetter(wb, 'xlsx', () => new XLSX(wb));
 
                 const existsSyncStub = stubMethod($$.SANDBOX, fs, 'existsSync')
                 existsSyncStub.callsFake((_path: string) => {
                     if (_path.includes('Bilingual_en_US_it.xlsx') || _path.includes('out')) {
                         return true;
                     }
-                    return existsSyncStub.wrappedMethod.call(this, _path);
+                    return existsSyncStub.wrappedMethod.call(this, _path) as boolean;
                 })
 
                 const xlsxReadStub = stubMethod($$.SANDBOX, ExcelJS.Workbook.prototype.xlsx, 'readFile');
@@ -296,11 +299,11 @@ describe('mdata:translations:convert', () => {
                 });
 
                 const memWritableStreamStub = stubMethod($$.SANDBOX, TranslationUtility, 'getMemWritableStream')
-                memWritableStreamStub.callsFake((_: string) => {
+                memWritableStreamStub.callsFake(() => {
                     const s = {
-                        write: (_: string | Buffer) => { return true },
-                        toBuffer: () => { return Buffer.from('', 'utf8') },
-                        close: () => { return }
+                        write: () => true,
+                        toBuffer: () => Buffer.from('', 'utf8'),
+                        close: () => undefined
                     }
                     writeStreamStubs.push(sinon.stub(s, 'write'));
                     closeStreamStubs.push(sinon.stub(s, 'close'));
@@ -308,24 +311,24 @@ describe('mdata:translations:convert', () => {
                 })
 
                 const createWriteStreamStub = stubMethod($$.SANDBOX, fs, 'createWriteStream')
-                createWriteStreamStub.callsFake((_path: string, _: object) => {
+                createWriteStreamStub.callsFake((_path: string) => {
                     if (_path.endsWith('.zip')) {
                         const s = {
-                            write: (_: string | Buffer) => { return true },
-                            on: (_: string, ...__: any[]) => { return s },
-                            end: (_: any, __: string, ___: () => void) => { return },
-                            once: (_: string, ...__: any[]) => { return s },
-                            emit: (_: string | symbol, ...__: any[]) => { return true },
-                            close: () => { return }
+                            write: () => true,
+                            on: () => s,
+                            end: () => undefined,
+                            once: () => s,
+                            emit: () => true,
+                            close: () => undefined
                         }
                         return s;
                     }
-                    return createWriteStreamStub.wrappedMethod.call(this, _path);
+                    return createWriteStreamStub.wrappedMethod.call(this, _path) as fs.WriteStream;
                 })
             })
             .stdout()
             .command(['mdata:translations:convert', '-f', 'xlsx', '-t', 'stf', '-i', path.join(__dirname, '..', '..', '..', 'data', 'translations', 'Bilingual_en_US_it.xlsx'), '-o', 'outdir'])
-            .it('should generate a ZIP file with the same number of files', _ => {
+            .it('should generate a ZIP file with the same number of files', () => {
                 expect(writeStreamStubs[0].called).to.be.true;
                 expect(writeStreamStubs[0].args[0][0]).to.equal('# Use the Bilingual file to review translations, edit labels that have already been translated, and add translations for labels that haven\'t been translated.\n');
                 expect(writeStreamStubs[0].args[14][0]).to.equal('# Language: en_US\n');
@@ -350,16 +353,15 @@ describe('mdata:translations:convert', () => {
                 // its properties correctly populated, though this happens only during
                 // test execution.
                 const wb = new ExcelJS.Workbook();
-                $$.SANDBOX.replaceGetter(wb, 'xlsx', () => {
-                    return new XLSX(wb);
-                });
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return
+                $$.SANDBOX.replaceGetter(wb, 'xlsx', () => new XLSX(wb));
 
                 const existsSyncStub = stubMethod($$.SANDBOX, fs, 'existsSync')
                 existsSyncStub.callsFake((_path: string) => {
                     if (_path.includes('Bilingual_en_US_it.xlsx') || _path.includes('out')) {
                         return true;
                     }
-                    return existsSyncStub.wrappedMethod.call(this, _path);
+                    return existsSyncStub.wrappedMethod.call(this, _path) as boolean;
                 })
 
                 const xlsxReadStub = stubMethod($$.SANDBOX, ExcelJS.Workbook.prototype.xlsx, 'readFile');
@@ -374,19 +376,19 @@ describe('mdata:translations:convert', () => {
                 createWriteStreamStub.callsFake((_path: string) => {
                     if (_path.includes('out')) {
                         const s = {
-                            write: (_: string | Buffer) => { return true },
-                            close: () => { return }
+                            write: () => true,
+                            close: () => undefined
                         }
                         writeStreamStub = sinon.stub(s, 'write');
                         closeStreamStub = sinon.stub(s, 'close');
                         return s;
                     }
-                    return createWriteStreamStub.wrappedMethod.call(this, _path);
+                    return createWriteStreamStub.wrappedMethod.call(this, _path) as fs.WriteStream;
                 })
             })
             .stdout()
             .command(['mdata:translations:convert', '-f', 'xlsx', '-t', 'stf', '-i', path.join(__dirname, '..', '..', '..', 'data', 'translations', 'Bilingual_en_US_it.xlsx'), '-o', 'outdir', '-s', 'en_US'])
-            .it('should generate a single STF file', _ => {
+            .it('should generate a single STF file', () => {
                 expect(writeStreamStub.called).to.be.true;
                 expect(writeStreamStub.args[0][0]).to.equal('# Use the Bilingual file to review translations, edit labels that have already been translated, and add translations for labels that haven\'t been translated.\n');
                 expect(writeStreamStub.args[14][0]).to.equal('# Language: en_US\n');

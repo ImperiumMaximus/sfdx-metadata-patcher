@@ -4,12 +4,11 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Messages } from '@salesforce/core';
 import { ComponentSet } from '@salesforce/source-deploy-retrieve';
-import { AnyJson } from '@salesforce/ts-types';
 import * as JSZip from 'jszip';
 import * as tmp from 'tmp';
 import { Mdata } from './mdata';
 import { sleep } from './miscUtility';
-import { LoggerLevel } from './typeDefs';
+import { AddressSettingsMetadata, LoggerLevel } from './typeDefs';
 import { parseXml, parseXmlFromStream } from './xmlUtility';
 
 // Initialize Messages with the current plugin directory
@@ -39,6 +38,7 @@ export const retrieveMetadataButKeepSubset = async (username: string, componentS
 
     while (!retrieveResultStatus.done) {
         sleep(2);
+        // eslint-disable-next-line no-await-in-loop
         retrieveResultStatus = await retrieveResult.checkStatus();
         Mdata.log(messages.getMessage('utility.retrieve.info.retrieveStatus', [retrieveResultStatus.status]), LoggerLevel.INFO);
     }
@@ -61,9 +61,9 @@ export const retrieveMetadataButKeepSubset = async (username: string, componentS
     }));
 };
 
-export const getAddressSettingsJson = async (mdatafile: string, username: string): Promise<AnyJson> => {
+export const getAddressSettingsJson = async (mdatafile: string, username: string): Promise<AddressSettingsMetadata> => {
     if (mdatafile && fs.existsSync(mdatafile)) {
-        return parseXml(mdatafile);
+        return parseXml(mdatafile) as Promise<AddressSettingsMetadata>;
     }
 
     const componentSet = new ComponentSet([
@@ -83,6 +83,7 @@ export const getAddressSettingsJson = async (mdatafile: string, username: string
 
     while (!retrieveResultStatus.done) {
         sleep(2);
+        // eslint-disable-next-line no-await-in-loop
         retrieveResultStatus = await retrieveResult.checkStatus();
         Mdata.log(messages.getMessage('utility.retrieve.info.retrieveStatus', [retrieveResultStatus.status]), LoggerLevel.INFO);
     }
@@ -96,5 +97,5 @@ export const getAddressSettingsJson = async (mdatafile: string, username: string
         throw new Error(messages.getMessage('statecountry.configure.errors.cannotretrieveASMdata'));
     }
 
-    return parseXmlFromStream(metadataZip.files[metadataFiles[0]].nodeStream());
+    return parseXmlFromStream(metadataZip.files[metadataFiles[0]].nodeStream()) as Promise<AddressSettingsMetadata>;
 };

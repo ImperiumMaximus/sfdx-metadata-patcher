@@ -7,7 +7,7 @@ export class WritableMemoryStream extends stream.Writable {
 
     public constructor(encoding: BufferEncoding) {
         super();
-        this.encoding = this.encoding;
+        this.encoding = encoding;
         this.memStore = Buffer.from('', encoding);
     }
 
@@ -19,14 +19,14 @@ export class WritableMemoryStream extends stream.Writable {
 
             this.memStore = Buffer.concat([this.memStore, buffer]);
         } catch (e) {
-            cb(e);
+            cb(e as Error);
             return false;
         }
         cb(null);
         return true;
     }
 
-    public toBuffer() {
+    public toBuffer(): Buffer {
         return this.memStore;
     }
 }

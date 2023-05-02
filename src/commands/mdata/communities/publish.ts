@@ -1,4 +1,4 @@
-import { flags, SfdxCommand } from '@salesforce/command';
+import { SfCommand, Flags } from '@salesforce/sf-plugins-core';
 import { Messages, Org } from '@salesforce/core';
 import { AnyJson } from '@salesforce/ts-types';
 import * as cliProgress from 'cli-progress';
@@ -12,10 +12,10 @@ Messages.importMessagesDirectory(__dirname);
 // or any library that is using the messages framework can also be loaded this way.
 const messages = Messages.loadMessages('sfdx-metadata-patcher', 'mdata');
 
-export default class Publish extends SfdxCommand {
-    public static description = messages.getMessage('communities.publish.description');
+export default class Publish extends SfCommand<AnyJson> {
+    public static readonly summary = messages.getMessage('communities.publish.description');
 
-    public static examples = [
+    public static readonly examples = [
         `To publish all the communities in the org:
     $ sfdx mdata:communities:publish`,
 
@@ -33,13 +33,17 @@ export default class Publish extends SfdxCommand {
     $ sfdx mdata:communities:publish -n Customer -u admin.user@uat.myorg.com`
     ];
 
-    protected static flagsConfig = {
-        name: flags.string({
+    public static readonly flags = {
+        name: Flags.string({
             char: 'n',
-            description: messages.getMessage('communities.publish.flags.name')
+            summary: messages.getMessage('communities.publish.flags.name')
         }),
-        loglevel: flags.enum({
-            description: messages.getMessage('general.flags.loglevel'),
+        targetusername: Flags.string({
+          summary: messages.getMessage('general.flags.targetusername'),
+          char: 'u',
+        }),
+        loglevel: Flags.string({
+            summary: messages.getMessage('general.flags.loglevel'),
             default: 'info',
             required: false,
             options: [
@@ -65,21 +69,28 @@ export default class Publish extends SfdxCommand {
     // Comment this out if your command does not support a hub org username
     protected static supportsDevhubUsername = false;
 
-    // Set this to true if your command requires a project workspace; 'requiresProject' is false by default
-    protected static requiresProject = false;
+    protected actualFlags: {
+      name: string;
+      targetusername: string;
+      loglevel: string;
+    };
+
+    protected org: Org;
 
     public async run(): Promise<AnyJson> {
-        Mdata.setLogLevel(this.flags.loglevel, this.flags.json);
+        this.actualFlags = (await this.parse(Publish)).flags;
 
-        this.org = await Org.create({ aliasOrUsername: this.flags.targetusername });
-        const names = this.flags.name ? this.flags.name.split(',') : [];
+        Mdata.setLogLevel(this.actualFlags.loglevel, this.jsonEnabled());
 
-        const conn = this.org.getConnection();
+        this.org = await Org.create({ aliasOrUsername: this.actualFlags.targetusername });
+        const names = this.actualFlags.name ? this.actualFlags.name.split(',') : [];
 
-        const communitiesList = ((await conn.request(`${conn.baseUrl()}/connect/communities/`)) as unknown) as CommunitiesCAPIResponse;
+        const conn = this.org.getConnection(this.actualFlags['api-version'] as string);
+
+        const communitiesList = (await conn.request<CommunitiesCAPIResponse>(`${conn.baseUrl()}/connect/communities/`));
         let actualCommunitiesList: CommunityWRCAPI[];
 
-        if (names && names.length) {
+        if (names?.length) {
             actualCommunitiesList = communitiesList.communities.filter(c => c.siteAsContainerEnabled && names.includes(c.name));
         } else {
             actualCommunitiesList = Array.from(communitiesList.communities).filter(c => c.siteAsContainerEnabled);
@@ -87,13 +98,13 @@ export default class Publish extends SfdxCommand {
 
         if (!actualCommunitiesList.length) {
             Mdata.log(messages.getMessage('communities.publish.errors.noCommunitiesFound'), LoggerLevel.ERROR);
-            return this.flags.json ? messages.getMessage('communities.publish.errors.noCommunitiesFound') : '';
+            return messages.getMessage('communities.publish.errors.noCommunitiesFound');
         }
 
         let bar: cliProgress.SingleBar;
         const publishResults = [];
 
-        if (!this.flags.json) {
+        if (!this.jsonEnabled()) {
             bar = new cliProgress.SingleBar({
                 format: messages.getMessage('communities.publish.infos.progressBarFormat')
             }, cliProgress.Presets.shades_classic);
@@ -105,7 +116,7 @@ export default class Publish extends SfdxCommand {
             if (i) {
                 publishResults.push(r);
             }
-            if (!this.flags.json) {
+            if (!this.jsonEnabled()) {
                 bar.increment(1, { communityName: c.name });
             }
             return conn.request({
@@ -115,12 +126,12 @@ export default class Publish extends SfdxCommand {
             });
         }, Promise.resolve<CommunitiesPublishCAPIResponse>(null)));
 
-        if (!this.flags.json) {
+        if (!this.jsonEnabled()) {
             bar.update(actualCommunitiesList.length, { communityName: 'Completed' });
 
             bar.stop();
         }
 
-        return this.flags.json ? { publishedCommunities: publishResults } : '';
+        return { publishedCommunities: publishResults };
     }
 }

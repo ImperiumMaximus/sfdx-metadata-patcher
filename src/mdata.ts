@@ -1,4 +1,5 @@
-import * as pino from 'pino';
+import pino from 'pino';
+import pretty from 'pino-pretty';
 import { LoggerLevel } from './typeDefs';
 
 export class Mdata {
@@ -10,27 +11,29 @@ export class Mdata {
     /* private static ux: UX;
   private static sourceApiVersion: any;*/
 
-    public static setLogLevel(logLevel: string, isJsonFormatEnabled: boolean) {
+    public static setLogLevel(logLevel: string, isJsonFormatEnabled: boolean): void {
         logLevel = logLevel.toLowerCase();
         this.isJsonFormatEnabled = isJsonFormatEnabled;
 
         if (!isJsonFormatEnabled) {
             this.logger = pino({
-                name: 'mdata',
-                level: logLevel,
-                prettyPrint: {
+                    name: 'mdata',
+                    level: logLevel
+                },
+                pretty({
                     levelFirst: true, // --levelFirst
                     colorize: true,
                     translateTime: true,
-                    ignore: 'pid,hostname' // --ignore
-                }
-            });
+                    ignore: 'pid,hostname', // --ignore
+                    sync: true
+                })
+            );
         } else {
             // do nothing for now, need to put pino to move to file
         }
     }
 
-    public static log(message: string, logLevel: LoggerLevel) {
+    public static log(message: string, logLevel: LoggerLevel): void {
         if (this.logger === null || this.logger === undefined) return;
         if (this.isJsonFormatEnabled) return;
         switch (logLevel) {

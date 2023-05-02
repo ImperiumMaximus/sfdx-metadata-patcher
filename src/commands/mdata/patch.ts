@@ -9,15 +9,14 @@
  **/
 import * as fs from 'fs';
 import path = require('path');
-import { flags, SfdxCommand } from '@salesforce/command';
-import { Messages, SfdxProject } from '@salesforce/core';
-import { AnyJson, JsonMap } from '@salesforce/ts-types';
+import { Flags, SfCommand } from '@salesforce/sf-plugins-core';
+import { Messages, PackageDir, SfProject } from '@salesforce/core';
+import { AnyJson, JsonMap, JsonCollection } from '@salesforce/ts-types';
 import * as glob from 'glob';
 import * as jsonQuery from 'json-query';
 import * as _ from 'lodash';
-import * as micromatch from 'micromatch';
 import { Mdata } from '../../mdata';
-import { LoggerLevel, WorkspaceMdapiElement } from '../../typeDefs';
+import { LoggerLevel, PatchFix, PatchFixes } from '../../typeDefs';
 import { parseXml, writeXml } from '../../xmlUtility';
 
 // Initialize Messages with the current plugin directory
@@ -27,31 +26,31 @@ Messages.importMessagesDirectory(__dirname);
 // or any library that is using the messages framework can also be loaded this way.
 const messages = Messages.loadMessages('sfdx-metadata-patcher', 'mdata');
 
-export default class Patch extends SfdxCommand {
+export default class Patch extends SfCommand<AnyJson> {
 
-    public static description = messages.getMessage('metadata.patch.description');
+    public static readonly summary = messages.getMessage('metadata.patch.description');
 
-    protected static flagsConfig = {
-        env: flags.string({
+    public static readonly flags = {
+        env: Flags.string({
             char: 'e',
             default: 'default',
-            description: messages.getMessage('metadata.patch.flags.env')
+            summary: messages.getMessage('metadata.patch.flags.env')
         }),
-        rootdir: flags.string({
+        rootdir: Flags.string({
             char: 'r',
-            description: messages.getMessage('metadata.patch.flags.rootdir')
+            summary: messages.getMessage('metadata.patch.flags.rootdir')
         }),
-        mdapimapfile: flags.string({
+        mdapimapfile: Flags.string({
             char: 'm',
-            description: messages.getMessage('metadata.patch.flags.mdapimapfile')
+            summary: messages.getMessage('metadata.patch.flags.mdapimapfile')
         }),
-        subpath: flags.string({
+        subpath: Flags.string({
             char: 's',
             default: 'main/default',
-            description: messages.getMessage('metadata.patch.flags.subpath')
+            summary: messages.getMessage('metadata.patch.flags.subpath')
         }),
-        loglevel: flags.enum({
-            description: messages.getMessage('general.flags.loglevel'),
+        loglevel: Flags.string({
+            summary: messages.getMessage('general.flags.loglevel'),
             default: 'info',
             required: false,
             options: [
@@ -71,146 +70,42 @@ export default class Patch extends SfdxCommand {
         })
     };
 
+    // Set this to true if your command requires a project workspace; 'requiresProject' is false by default
+    public static readonly requiresProject = true;
+
     // Comment this out if your command does not require an org username
     protected static requiresUsername = false;
 
     // Comment this out if your command does not support a hub org username
     protected static supportsDevhubUsername = false;
 
-    // Set this to true if your command requires a project workspace; 'requiresProject' is false by default
-    protected static requiresProject = true;
-
     protected baseDir: string;
-    protected fixes: AnyJson;
+    protected fixes: PatchFixes;
     protected manifest;
 
-    public async run(): Promise<AnyJson> {
-        Mdata.setLogLevel(this.flags.loglevel, this.flags.json);
+    protected actualFlags: {
+        env: string;
+        rootdir: string;
+        mdapimapfile: string;
+        subpath: string;
+        loglevel: string;
+    };
 
-        const project = await SfdxProject.resolve();
-        const config: JsonMap = await project.resolveProjectConfig();
-
-        if (!config.plugins || !config.plugins['mdataPatches']) {
-            Mdata.log(messages.getMessage('metadata.patch.warns.missingConfiguration'), LoggerLevel.WARN);
-            return messages.getMessage('metadata.patch.warns.missingConfiguration');
-        }
-
-        this.fixes = Object.assign({}, config.plugins['mdataPatches'][this.flags.env] || {});
-        this.baseDir = path.join(this.flags.rootdir || config.packageDirectories[0].path, this.flags.subpath);
-
-        Mdata.log('Base Dir: ' + this.baseDir, LoggerLevel.INFO);
-
-        if (!this.flags.mdapimapfile || !fs.existsSync(this.flags.mdapimapfile)) {
-            Mdata.log(messages.getMessage('metadata.patch.infos.executingPreDeployFixes'), LoggerLevel.INFO);
-            await this.preDeployFixes();
-        } else {
-            Mdata.log(messages.getMessage('metadata.patch.infos.executingPreDeployFixesHook'), LoggerLevel.INFO);
-            await this.preDeployFixesHook();
-        }
-        Mdata.log(messages.getMessage('general.infos.done'), LoggerLevel.INFO);
-
-        return '';
-    }
-
-    public async preDeployFixes(): Promise<void> {
-        const self = this;
-        await _.reduce(_.keys(this.fixes), async (prevFixPromise, filePath) => {
-            const getGlobFiles = async (p: string): Promise<string[]> => new Promise((resolve, reject) => {
-                glob.glob(p, (err, files) => {
-                    if (!err) {
-                        resolve(files);
-                    } else {
-                        reject(err);
-                    }
-                });
-            });
-
-            const patchFile = async (f: string) => {
-                const xml = await parseXml(f);
-                let confs = self.fixes[filePath];
-                if (!_.isArray(confs)) confs = [confs];
-                _.each(confs, async conf => {
-                    await self.processConf(xml, conf);
-                });
-                await writeXml(f, xml);
-            };
-
-            await prevFixPromise;
-            const pathChunks = filePath.split('/');
-            const osAgnosticFilePath = path.join(...pathChunks);
-            if (glob.hasMagic(osAgnosticFilePath)) {
-                const files = await getGlobFiles(path.join(self.baseDir, osAgnosticFilePath));
-                return _.reduce(files, async (prevPatchPromise, f) => {
-                    await prevPatchPromise;
-                    return patchFile(f);
-                }, Promise.resolve());
-            } else if (fs.existsSync(path.join(self.baseDir, osAgnosticFilePath))) {
-                return patchFile(path.join(self.baseDir, osAgnosticFilePath));
-            } else {
-                Mdata.log(messages.getMessage('metadata.patch.warns.missingFile', [path.join(self.baseDir, osAgnosticFilePath)]), LoggerLevel.WARN);
-                return Promise.resolve();
-            }
-        }, Promise.resolve());
-    }
-
-    public async preDeployFixesHook(): Promise<void> {
-        const self = this;
-        const mdapiMapParsed = JSON.parse(fs.readFileSync(this.flags.mdapimapfile, 'utf-8').toString());
-        const mdapiMapFiles = Object.keys(mdapiMapParsed);
-        // nested reduce() to serialize Promises execution. NICE!
-        await _.reduce(_.keys(this.fixes), async (prevFixPromise, filePath) => {
-            const patchFile = async (f: string, fixes: AnyJson) => {
-                const xml = await parseXml(f);
-                let confs = fixes;
-                if (!_.isArray(confs)) confs = [confs];
-                _.each(confs, async conf => {
-                    await self.processConf(xml, conf);
-                });
-                await writeXml(f, xml);
-            };
-
-            await prevFixPromise;
-            const pathChunks = filePath.split('/');
-            const osAgnosticFilePath = path.join(...pathChunks);
-            const wrkSpcPaths: string[] = micromatch(mdapiMapFiles, path.join('**', osAgnosticFilePath).replace(/\\/g, '\\\\'), { windows: false });
-            if (wrkSpcPaths.length) {
-                return _.reduce(wrkSpcPaths, async (prevWrkSpcPromise, wrkSpcPath) => {
-                    await prevWrkSpcPromise;
-                    const wrkSpcFile: WorkspaceMdapiElement = mdapiMapParsed[wrkSpcPath];
-                    if (Object.prototype.hasOwnProperty.call(MDATANAME_TO_XMLTAG, wrkSpcFile.metadataName)) {
-                        const fixes = Object.assign({}, this.fixes[filePath]);
-                        if (fixes.where) {
-                            const fullName = wrkSpcFile.fullName.replace(`${wrkSpcFile.mdapiType}.`, '');
-                            fixes.where = `${MDATANAME_TO_XMLTAG[wrkSpcFile.metadataName]}[fullName=${fullName}]`;
-                        }
-                        Mdata.log(`Patching ${path.join(self.baseDir, wrkSpcFile.mdapiFilePath)} with fixes: ${JSON.stringify(fixes)}`,  LoggerLevel.INFO);
-                        return patchFile(path.join(self.baseDir, wrkSpcFile.mdapiFilePath), fixes);
-                    } else {
-                        Mdata.log(`Patching ${path.join(self.baseDir, wrkSpcFile.mdapiFilePath)} with fixes: ${JSON.stringify(this.fixes[filePath])}`,  LoggerLevel.INFO);
-                        return patchFile(path.join(self.baseDir, wrkSpcFile.mdapiFilePath), this.fixes[filePath]);
-                    }
-                }, Promise.resolve());
-            } else {
-                Mdata.log(messages.getMessage('metadata.patch.warns.missingFile', [path.join(self.baseDir, osAgnosticFilePath)]), LoggerLevel.WARN);
-            }
-
-
-        }, Promise.resolve());
-    }
-
-    public maybeCreateTag(xml, tag, value) {
+    public static maybeCreateTag(xml: JsonCollection, tag: string, value: []): void {
         if (!Object.prototype.hasOwnProperty.call(xml, tag)) {
             xml[tag] = value;
         }
     }
 
-    public async processConf(xml, conf): Promise<void> {
-        let token = xml;
-        if (conf.where) token = jsonQuery(conf.where, { data: xml });
+    public static processConf(xml: JsonMap, conf: PatchFix): void {
+        let token: JsonCollection[];
+        if (conf.where) {
+            const jsonqRes = jsonQuery(conf.where, { data: xml }).value as JsonMap;
+            if (!_.isArray(jsonqRes)) token = [jsonqRes];
+        } else if (!_.isArray(xml)) token = [xml];
+        else token = xml;
 
-        if (!token.value) return xml;
-        token = token.value;
-        if (!_.isArray(token)) token = [token];
+        if (!token) return;
 
         if (conf.replace) {
             _.each(_.keys(conf.replace), t => {
@@ -235,19 +130,19 @@ export default class Patch extends SfdxCommand {
 
         if (conf.deletePermissionBlocks) {
             _.each(conf.deletePermissionBlocks, perm => {
-                if (_.findIndex(token[0].userPermissions, (p: GenericEntity) => p.name[0] === perm) !== -1) {
-                    _.remove(token[0].userPermissions, (p: GenericEntity) => p.name[0] === perm);
+                if (_.findIndex(token[0]['userPermissions'] as GenericEntity[], (p: GenericEntity) => p.name[0] === perm) !== -1) {
+                    _.remove(token[0]['userPermissions'] as GenericEntity[], (p: GenericEntity) => p.name[0] === perm);
                 }
             });
         }
 
-        if (conf.disablePermissions && token[0].userPermissions) {
+        if (conf.disablePermissions && token[0]['userPermissions'] as GenericEntity[]) {
             _.each(conf.disablePermissions, perm => {
-                if (_.findIndex(token[0].userPermissions, (p: GenericEntity) => p.name[0] === perm) === -1) {
-                    this.maybeCreateTag(token[0], 'userPermissions', []);
-                    token[0].userPermissions.push({
-                        enabled: false,
-                        name: perm
+                if (_.findIndex(token[0]['userPermissions'] as GenericEntity[], (p: GenericEntity) => p.name[0] === perm) === -1) {
+                    Patch.maybeCreateTag(token[0], 'userPermissions', []);
+                    (token[0]['userPermissions'] as UserPermission[]).push({
+                        enabled: [false],
+                        name: [perm]
                     });
                 }
             });
@@ -255,27 +150,27 @@ export default class Patch extends SfdxCommand {
 
         if (conf.deleteListView) {
             _.each(conf.deleteListView, perm => {
-                if (_.findIndex(token[0].listViews, (p: GenericEntity) => p.fullName[0] === perm) !== -1) {
-                    _.remove(token[0].listViews, (p: GenericEntity) => p.fullName[0] === perm);
+                if (_.findIndex(token[0]['listViews'] as GenericEntity[], (p: GenericEntity) => p.fullName[0] === perm) !== -1) {
+                    _.remove(token[0]['listViews'] as GenericEntity[], (p: GenericEntity) => p.fullName[0] === perm);
                 }
             });
         }
 
-        if (conf.deleteFieldPermissions && token[0].fieldPermissions) {
+        if (conf.deleteFieldPermissions && token[0]['fieldPermissions'] as CustomField[]) {
             _.each(conf.deleteFieldPermissions, perm => {
-                if (_.findIndex(token[0].fieldPermissions, (p: CustomField) => p.field[0] === perm) !== -1) {
-                    _.remove(token[0].fieldPermissions, (p: CustomField) => p.field[0] === perm);
+                if (_.findIndex( token[0]['fieldPermissions'] as CustomField[], (p: CustomField) => p.field[0] === perm) !== -1) {
+                    _.remove( token[0]['fieldPermissions'] as CustomField[], (p: CustomField) => p.field[0] === perm);
                 }
             });
         }
 
         if (conf.disableTabs) {
             _.each(conf.disableTabs, perm => {
-                if (_.findIndex(token[0].tabVisibilities, (t: CustomTab) => t.tab[0] === perm) === -1) {
-                    this.maybeCreateTag(token[0], 'tabVisibilities', []);
-                    token[0].tabVisibilities.push({
-                        tab: perm,
-                        visibility: 'Hidden'
+                if (_.findIndex(token[0]['tabVisibilities'] as CustomTab[], (t: CustomTab) => t.tab[0] === perm) === -1) {
+                    Patch.maybeCreateTag(token[0], 'tabVisibilities', []);
+                    (token[0]['tabVisibilities'] as CustomTab[]).push({
+                        tab: [perm],
+                        visibility: ['Hidden']
                     });
                 }
             });
@@ -283,12 +178,12 @@ export default class Patch extends SfdxCommand {
 
         if (conf.disableApplications) {
             _.each(conf.disableApplications, app => {
-                if (_.findIndex(token[0].applicationVisibilities, (t: CustomApplication) => t.application[0] === app) === -1) {
-                    this.maybeCreateTag(token[0], 'applicationVisibilities', []);
-                    token[0].applicationVisibilities.push({
-                        application: app,
-                        default: 'false',
-                        visible: 'false'
+                if (_.findIndex(token[0]['applicationVisibilities'] as CustomApplication[], (t: CustomApplication) => t.application[0] === app) === -1) {
+                    Patch.maybeCreateTag(token[0], 'applicationVisibilities', []);
+                    (token[0]['applicationVisibilities'] as CustomApplication[]).push({
+                        application: [app],
+                        default: ['false'],
+                        visible: ['false']
                     });
                 }
             });
@@ -296,11 +191,11 @@ export default class Patch extends SfdxCommand {
 
         if (conf.enableTabs) {
             _.each(conf.enableTabs, perm => {
-                if (_.findIndex(token[0].tabVisibilities, (t: CustomTab) => t.tab[0] === perm) === -1) {
-                    this.maybeCreateTag(token[0], 'tabVisibilities', []);
-                    token[0].tabVisibilities.push({
-                        tab: perm,
-                        visibility: 'DefaultOn'
+                if (_.findIndex(token[0]['tabVisibilities'] as CustomTab[], (t: CustomTab) => t.tab[0] === perm) === -1) {
+                    Patch.maybeCreateTag(token[0], 'tabVisibilities', []);
+                    (token[0]['tabVisibilities'] as CustomTab[]).push({
+                        tab: [perm],
+                        visibility: ['DefaultOn']
                     });
                 }
             });
@@ -308,33 +203,111 @@ export default class Patch extends SfdxCommand {
 
         if (conf.disableObjects) {
             _.each(conf.disableObjects, obj => {
-                if (_.findIndex(token[0].objectPermissions, (o: ObjectPermission) => o.object[0] === obj) === -1) {
-                    this.maybeCreateTag(token[0], 'objectPermissions', []);
-                    token[0].objectPermissions.push({
-                        allowCreate: false,
-                        allowDelete: false,
-                        allowEdit: false,
-                        allowRead: false,
-                        modifyAllRecords: false,
-                        object: obj,
-                        viewAllRecords: false
+                if (_.findIndex((token[0]['objectPermissions'] as ObjectPermission[]), (o: ObjectPermission) => o.object[0] === obj) === -1) {
+                    Patch.maybeCreateTag(token[0], 'objectPermissions', []);
+                    (token[0]['objectPermissions'] as ObjectPermission[]).push({
+                        allowCreate: [false],
+                        allowDelete: [false],
+                        allowEdit: [false],
+                        allowRead: [false],
+                        modifyAllRecords: [false],
+                        object: [obj],
+                        viewAllRecords: [false]
                     });
                 }
             });
         }
     }
+
+    public async run(): Promise<AnyJson> {
+        this.actualFlags = (await this.parse(Patch)).flags;
+
+        Mdata.setLogLevel(this.actualFlags.loglevel, this.jsonEnabled());
+
+        const project = await SfProject.resolve();
+        const config: JsonMap = await project.resolveProjectConfig();
+
+        if (!config.plugins?.['mdataPatches']) {
+            Mdata.log(messages.getMessage('metadata.patch.warns.missingConfiguration'), LoggerLevel.WARN);
+            return messages.getMessage('metadata.patch.warns.missingConfiguration');
+        }
+
+        this.fixes = Object.assign({}, (config.plugins['mdataPatches'] as { [key: string]: PatchFixes })[this.actualFlags.env] || {});
+        this.baseDir = path.join(this.actualFlags.rootdir || (config.packageDirectories[0] as PackageDir).path, this.actualFlags.subpath);
+
+        Mdata.log('Base Dir: ' + this.baseDir, LoggerLevel.INFO);
+
+        if (!this.actualFlags.mdapimapfile || !fs.existsSync(this.actualFlags.mdapimapfile)) {
+            Mdata.log(messages.getMessage('metadata.patch.infos.executingPreDeployFixes'), LoggerLevel.INFO);
+            await this.preDeployFixes();
+        }
+        Mdata.log(messages.getMessage('general.infos.done'), LoggerLevel.INFO);
+
+        return '';
+    }
+
+    public async preDeployFixes(): Promise<void> {
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
+        const self = this;
+        await _.reduce(_.keys(this.fixes), async (prevFixPromise, filePath) => {
+            const getGlobFiles = async (p: string): Promise<string[]> => new Promise((resolve, reject) => {
+                glob.glob(p, (err, files) => {
+                    if (!err) {
+                        resolve(files);
+                    } else {
+                        reject(err);
+                    }
+                });
+            });
+
+            const patchFile = async (f: string): Promise<void> => {
+                const xml = await parseXml(f);
+                let confs = self.fixes[filePath];
+                if (!_.isArray(confs)) confs = [confs];
+                _.each(confs, conf => {
+                    Patch.processConf(xml, conf);
+                });
+                writeXml(f, xml);
+            };
+
+            await prevFixPromise;
+            const pathChunks = filePath.split('/');
+            const osAgnosticFilePath = path.join(...pathChunks);
+            if (glob.hasMagic(osAgnosticFilePath)) {
+                const files = await getGlobFiles(path.join(self.baseDir, osAgnosticFilePath));
+                return _.reduce(files, async (prevPatchPromise, f) => {
+                    await prevPatchPromise;
+                    return patchFile(f);
+                }, Promise.resolve());
+            } else if (fs.existsSync(path.join(self.baseDir, osAgnosticFilePath))) {
+                return patchFile(path.join(self.baseDir, osAgnosticFilePath));
+            } else {
+                Mdata.log(messages.getMessage('metadata.patch.warns.missingFile', [path.join(self.baseDir, osAgnosticFilePath)]), LoggerLevel.WARN);
+                return Promise.resolve();
+            }
+        }, Promise.resolve());
+    }
 }
 
 interface ObjectPermission {
+    allowCreate: boolean[];
+    allowDelete: boolean[];
+    allowEdit: boolean[];
+    allowRead: boolean[];
+    modifyAllRecords: boolean[];
     object: string[];
+    viewAllRecords: boolean[];
 }
 
 interface CustomTab {
     tab: string[];
+    visibility: string[];
 }
 
 interface CustomApplication {
     application: string[];
+    default: string[];
+    visible: string[];
 }
 
 interface CustomField {
@@ -346,16 +319,6 @@ interface GenericEntity {
     fullName?: string[];
 }
 
-/* eslint-disable @typescript-eslint/naming-convention */
-const MDATANAME_TO_XMLTAG = {
-    BusinessProcess: 'CustomObject.businessProcesses',
-    CompactLayout: 'CustomObject.compactLayouts',
-    CustomField: 'CustomObject.fields',
-    FieldSet: 'CustomObject.fieldSets',
-    ListView: 'CustomObject.listViews',
-    RecordType: 'CustomObject.recordTypes',
-    SharingReason: 'CustomObject.sharingReasons',
-    ValidationRule: 'CustomObject.validationRules',
-    WebLink: 'CustomObject.webLinks'
-};
-/* eslint-enable @typescript-eslint/naming-convention */
+interface UserPermission extends GenericEntity {
+    enabled?: boolean[];
+}

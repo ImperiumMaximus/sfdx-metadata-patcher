@@ -1,6 +1,7 @@
 /* eslint-disable no-shadow, @typescript-eslint/naming-convention */
 
 import { Command, Hook } from '@oclif/config';
+import { JsonMap } from '@salesforce/ts-types';
 
 export type HookFunction = (this: Hook.Context, options: HookOptions) => void;
 
@@ -45,7 +46,7 @@ export type CommunitiesCAPIResponse = {
 export type CommunityWRCAPI = {
     allowChatterAccessWithoutLogin: boolean;
     allowMembersToFlag: boolean;
-    description: string;
+    description: string | null;
     guestMemberVisibilityEnabled: boolean;
     id: string;
     invitationsEnabled: boolean;
@@ -72,11 +73,15 @@ export type CommunitiesPublishCAPIResponse = {
     url: string;
 };
 
-export type TranslationDataTable = {
+export type ExcelDataTableRow<C extends string | number | symbol> = { [key in C]: string | undefined; };
+
+export type ExcelDataTable<C extends string | number | symbol> = {
     name: string;
-    columns: string[];
-    rows: object[];
+    columns: C[];
+    rows: Array<ExcelDataTableRow<C>>;
 };
+
+export type TranslationDataTable = ExcelDataTable<'Metadata Component' | 'Object/Type' | 'Sub Type 1' | 'Sub Type 2' | 'Label' | 'Translation' | 'Out of Date'>;
 
 export enum StfType {
     Bilingual = 'Bilingual',
@@ -97,4 +102,56 @@ export type PackageXml = {
 export type PackageType = {
     members: string[];
     name: string[];
+};
+
+export type AddressSettingsMetadata = {
+  AddressSettings: {
+    countriesAndStates: Array<{
+      countries: AddressSettingsMetadataCountry[];
+    }>;
+  };
+};
+
+export type AddressSettingsMetadataCountry = {
+  isoCode: string[];
+  integrationValue: string[];
+  label: string[];
+  states: AddressSettingsMetadataState[];
+  active: boolean[];
+  visible: boolean[];
+};
+
+export type AddressSettingsMetadataState = {
+  integrationValue: string[];
+  isoCode: string[];
+  label: string[];
+  active: boolean[];
+  visible: boolean[];
+};
+
+export type CountryDataTable = ExcelDataTable<'label' | 'isoCode' | 'integrationValue' | 'active' | 'visible'>;
+export type CountryDataTableRow = ExcelDataTableRow<'label' | 'isoCode' | 'integrationValue' | 'active' | 'visible'>;
+
+export type StatesDataTable = ExcelDataTable<'countryIsoCode' | 'label' | 'isoCode' | 'integrationValue' | 'active' | 'visible'>;
+export type StateDataTableRow = ExcelDataTableRow<'countryIsoCode' | 'label' | 'isoCode' | 'integrationValue' | 'active' | 'visible'>;
+
+export type PatchFixes = {
+  [key: string]: PatchFix[];
+};
+
+export type PatchFix = {
+  where: string;
+  deletePermissionBlocks?: string[];
+  replace?: { [key: string]: string };
+  concat?: Array<{
+    [key: string]: JsonMap;
+  }>;
+  filter?: string[];
+  disablePermissions?: string[];
+  deleteListView?: string[];
+  deleteFieldPermissions?: string[];
+  disableTabs?: string[];
+  disableApplications?: string[];
+  enableTabs?: string[];
+  disableObjects?: string[];
 };

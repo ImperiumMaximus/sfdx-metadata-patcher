@@ -1,8 +1,9 @@
+/* eslint-disable no-console */
+/* eslint-disable complexity */
 import * as fs from 'fs';
 import * as path from 'path';
-import { flags, SfdxCommand } from '@salesforce/command';
-import { Messages, SfdxProject } from '@salesforce/core';
-import { SfdxProjectJson } from '@salesforce/core/lib/sfdxProject';
+import { SfCommand, Flags } from '@salesforce/sf-plugins-core';
+import { Messages, Org, SfProject, SfProjectJson } from '@salesforce/core';
 import { AnyJson } from '@salesforce/ts-types';
 import * as fastFuzzy from 'fast-fuzzy';
 import * as glob from 'glob';
@@ -13,16 +14,38 @@ import { Mdata } from '../../../mdata';
 import { MetadataTypeInfos } from '../../../metadataTypeInfos';
 import { LoggerLevel } from '../../../typeDefs';
 import { parseXml } from '../../../xmlUtility';
+import { MetadataType } from '../../../metadataTypeInfos';
 
 // Initialize Messages with the current plugin directory
 Messages.importMessagesDirectory(__dirname);
 
 const messages = Messages.loadMessages('sfdx-metadata-patcher', 'mdata');
 
-export default class TestDependencies extends SfdxCommand {
-    public static description = messages.getMessage('apex.testdependencies.description');
+type TestDependenciesFlags = {
+  config: boolean;
+  nameconv: string;
+  depth: number;
+  manifest: string;
+  destructivemanifest: string;
+  fuzzythreshold: string;
+  usecodecoverage: boolean;
+  prod: boolean;
+  loglevel: string;
+};
 
-    public static examples = [
+type PluginConfig = {
+  [metadataType: string]: 's' | 'f' | 'd' | MetadataSpecificAction;
+}
+
+type MetadataSpecificAction = {
+  onDeploy: 's' | 'f' | 'd';
+  onDestroy: 's' | 'f' | 'd';
+}
+
+export default class TestDependencies extends SfCommand<AnyJson> {
+    public static readonly summary = messages.getMessage('apex.testdependencies.description');
+
+    public static readonly examples = [
         `To configure the plugin:
     $ sfdx mdata:apex:testdependencies --config`,
 
@@ -42,45 +65,49 @@ export default class TestDependencies extends SfdxCommand {
     $ sfdx mdata:apex:testdependencies -x package.xml -d destructiveChanges.xml --usecodecoverage`
     ];
 
-    protected static flagsConfig = {
-        config: flags.boolean({
-            description: messages.getMessage('apex.testdependencies.flags.config'),
-            exclusive: ['metadata', 'nameconv', 'depth', 'manifest', 'destructivemanifest', 'fuzzythreshold', 'usecodecoverage', 'usedependencyapi']
+    public static readonly flags = {
+        config: Flags.boolean({
+            summary: messages.getMessage('apex.testdependencies.flags.config'),
+            exclusive: ['nameconv', 'depth', 'manifest', 'destructivemanifest', 'fuzzythreshold', 'usecodecoverage']
         }),
-        nameconv: flags.string({
+        nameconv: Flags.string({
             char: 'n',
-            description: messages.getMessage('apex.testdependencies.flags.nameconv'),
+            summary: messages.getMessage('apex.testdependencies.flags.nameconv'),
             default: 'Test'
         }),
-        depth: flags.number({
+        depth: Flags.integer({
             char: 'l',
-            description: messages.getMessage('apex.testdependencies.flags.depth'),
+            summary: messages.getMessage('apex.testdependencies.flags.depth'),
             default: -1
         }),
-        manifest: flags.string({
+        manifest: Flags.string({
             char: 'x',
-            description: messages.getMessage('apex.testdependencies.flags.manifest'),
+            summary: messages.getMessage('apex.testdependencies.flags.manifest'),
             required: false
         }),
-        destructivemanifest: flags.string({
+        destructivemanifest: Flags.string({
             char: 'd',
-            description: messages.getMessage('apex.testdependencies.flags.destructivemanifest'),
+            summary: messages.getMessage('apex.testdependencies.flags.destructivemanifest'),
             required: false
         }),
-        fuzzythreshold: flags.number({
-            description: messages.getMessage('apex.testdependencies.flags.fuzzythreshold'),
-            default: .6
+        fuzzythreshold: Flags.string({
+            summary: messages.getMessage('apex.testdependencies.flags.fuzzythreshold'),
+            default: '.6',
         }),
-        usecodecoverage: flags.boolean({
-            description: messages.getMessage('apex.testdependencies.flags.usecodecoverage'),
+        usecodecoverage: Flags.boolean({
+            summary: messages.getMessage('apex.testdependencies.flags.usecodecoverage'),
             default: false
         }),
-        prod: flags.boolean({
-            description: messages.getMessage('apex.testdependencies.flags.prod'),
+        prod: Flags.boolean({
+            summary: messages.getMessage('apex.testdependencies.flags.prod'),
             default: false
         }),
-        loglevel: flags.enum({
-            description: messages.getMessage('general.flags.loglevel'),
+        'target-org': Flags.optionalOrg({
+          summary: messages.getMessage('general.flags.targetorg'),
+          char: 'o',
+        }),
+        loglevel: Flags.string({
+            summary: messages.getMessage('general.flags.loglevel'),
             default: 'info',
             required: false,
             options: [
@@ -100,30 +127,41 @@ export default class TestDependencies extends SfdxCommand {
         })
     };
 
+    // Set this to true if your command requires a project workspace; 'requiresProject' is false by default
+    public static readonly requiresProject = true;
+
     // Comment this out if your command does not require an org username
     protected static requiresUsername = false;
 
     // Comment this out if your command does not support a hub org username
     protected static supportsDevhubUsername = false;
 
-    // Set this to true if your command requires a project workspace; 'requiresProject' is false by default
-    protected static requiresProject = true;
-
     protected static supportsUsername = true;
+
+    public project: SfProject;
 
     protected metadataTypeInfos: MetadataTypeInfos;
 
-    protected project: SfdxProject;
-    protected sfdxProjectJson: SfdxProjectJson;
+    protected sfdxProjectJson: SfProjectJson;
+
+    protected actualFlags: TestDependenciesFlags;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private static eqSet(as: Set<any>, bs: Set<any>): boolean {
+        if (as.size !== bs.size) return false;
+        for (const a of as) if (!bs.has(a)) return false;
+        return true;
+    }
 
     public async run(): Promise<AnyJson> {
-        Mdata.setLogLevel(this.flags.loglevel, this.flags.json);
+        this.actualFlags = ((await this.parse(TestDependencies)).flags as unknown) as TestDependenciesFlags;
+        Mdata.setLogLevel(this.actualFlags.loglevel, this.jsonEnabled());
 
-        this.metadataTypeInfos = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', '..', '..', 'cfg', 'metadata', 'metadataTypeInfos.json')).toString());
-        this.project = await SfdxProject.resolve();
-        this.sfdxProjectJson = this.project.getSfdxProjectJson();
+        this.metadataTypeInfos = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', '..', '..', 'cfg', 'metadata', 'metadataTypeInfos.json')).toString()) as MetadataTypeInfos;
+        this.project = await SfProject.resolve();
+        this.sfdxProjectJson = this.project.getSfProjectJson();
 
-        if (this.flags.config) {
+        if (this.actualFlags.config) {
             return this.configurePlugin();
         }
 
@@ -132,15 +170,17 @@ export default class TestDependencies extends SfdxCommand {
 
     private async computeDeltaTestClassesList(): Promise<AnyJson> {
         const allApexClasses = glob.sync(`${this.project.getPackageDirectories()[0].fullPath}main/default/classes/*.cls`);
-        const apexClassesContentsByName = allApexClasses.filter(c => !path.basename(c, '.cls').endsWith(this.flags.nameconv)).reduce((acc, f) => {
+        const apexClassesContentsByName: {
+          [key: string]: string;
+        } = allApexClasses.filter(c => !path.basename(c, '.cls').endsWith(this.actualFlags.nameconv)).reduce((acc, f) => {
             acc[path.basename(f, '.cls')] = fs.readFileSync(f).toString();
             return acc;
         }, {});
-        const allApexTestClasses = new Set(allApexClasses.filter(c => path.basename(c, '.cls').endsWith(this.flags.nameconv)).map(c => path.basename(c, '.cls')));
+        const allApexTestClasses = new Set(allApexClasses.filter(c => path.basename(c, '.cls').endsWith(this.actualFlags.nameconv)).map(c => path.basename(c, '.cls')));
         const deltaApexCodeClasses: Set<string> = new Set<string>();
 
-        const deltaPackageXml = await parseXml(this.flags.manifest);
-        const destructivePackageXml = await parseXml(this.flags.destructivemanifest);
+        const deltaPackageXml = await parseXml(this.actualFlags.manifest);
+        const destructivePackageXml = await parseXml(this.actualFlags.destructivemanifest);
 
         let strategy = 'full';
         const frontier: Set<string> = new Set<string>();
@@ -149,7 +189,7 @@ export default class TestDependencies extends SfdxCommand {
         let testLevel = 'RunLocalTests';
 
         const plugins = this.sfdxProjectJson.get('plugins');
-        const pluginConfig = plugins['mdataDeltaTests'];
+        const pluginConfig = plugins['mdataDeltaTests'] as PluginConfig;
 
         if (pluginConfig) {
             const metataTypesToCheck: string[] = Object.keys(pluginConfig);
@@ -159,11 +199,11 @@ export default class TestDependencies extends SfdxCommand {
                 }
 
                 const metadataTypePc: string = metadataType[0].toUpperCase() + metadataType.substring(1);
-                const deployMembers = jsonQuery(`Package.types[name=${metadataTypePc}].members`, { data: deltaPackageXml }).value || [];
-                const destroyMembers = jsonQuery(`Package.types[name=${metadataTypePc}].members`, { data: destructivePackageXml }).value || [];
+                const deployMembers: string[] = (jsonQuery(`Package.types[name=${metadataTypePc}].members`, { data: deltaPackageXml }).value as string[]) || [];
+                const destroyMembers: string[] = (jsonQuery(`Package.types[name=${metadataTypePc}].members`, { data: destructivePackageXml }).value as string[]) || [];
 
-                if ((deployMembers.length > 0 && (pluginConfig[metadataType] === 'f' || pluginConfig[metadataType].onDeploy === 'f')) ||
-                    destroyMembers.length > 0 && (pluginConfig[metadataType] === 'f' || pluginConfig[metadataType].onDestroy === 'f')) {
+                if ((deployMembers.length > 0 && (pluginConfig[metadataType] === 'f' || (pluginConfig[metadataType] as MetadataSpecificAction).onDeploy === 'f')) ||
+                    destroyMembers.length > 0 && (pluginConfig[metadataType] === 'f' || (pluginConfig[metadataType] as MetadataSpecificAction).onDestroy === 'f')) {
                     strategy = 'full';
                     break;
                 }
@@ -171,11 +211,11 @@ export default class TestDependencies extends SfdxCommand {
                 strategy = 'delta';
 
                 deployMembers.forEach((member: string) => {
-                    if (metadataTypePc === 'ApexClass' && !member.endsWith(this.flags.nameconv)) {
+                    if (metadataTypePc === 'ApexClass' && !member.endsWith(this.actualFlags.nameconv)) {
                         deltaApexCodeClasses.add(member);
                     }
 
-                    if (metadataTypePc === 'ApexClass' && member.endsWith(this.flags.nameconv)) {
+                    if (metadataTypePc === 'ApexClass' && member.endsWith(this.actualFlags.nameconv)) {
                         apexTestClasses.add(member);
                     } else {
                         frontier.add(member);
@@ -197,24 +237,24 @@ export default class TestDependencies extends SfdxCommand {
         }
 
         if (strategy === 'full') {
-            if (!this.flags.json) {
-                Mdata.log(`-l ${testLevel}`, LoggerLevel.INFO);
+            if (!this.jsonEnabled()) {
+                console.log(`-l ${testLevel}`);
             }
-            return this.flags.json ? { testLevel, classList: [] } : null;
+            return { testLevel, classList: [] };
         }
 
         if (!frontier.size) {
-            testLevel = this.flags.prod ? 'RunLocalTests' : 'NoTestRun';
-            if (!this.flags.json) {
-                Mdata.log(`-l ${testLevel}`, LoggerLevel.INFO);
+            testLevel = this.actualFlags.prod ? 'RunLocalTests' : 'NoTestRun';
+            if (!this.jsonEnabled()) {
+                console.log(`-l ${testLevel}`);
             }
-            return this.flags.json ? { testLevel, classList: [] } : null;
+            return { testLevel, classList: [] };
         }
 
         if (strategy === 'delta') {
             const curFrontier = new Set<string>(frontier);
             let curDepth = 0;
-            while ((this.flags.depth < 0 || curDepth < this.flags.depth) && curFrontier.size) {
+            while ((this.actualFlags.depth < 0 || curDepth < this.actualFlags.depth) && curFrontier.size) {
                 const frontierQueue = Array.from(curFrontier);
                 curFrontier.clear();
                 while (frontierQueue.length) {
@@ -222,23 +262,23 @@ export default class TestDependencies extends SfdxCommand {
                     closedList.add(curMember);
                     Object.keys(apexClassesContentsByName).forEach(apexClass => {
                         let fuzzyRes: fastFuzzy.MatchData<string>;
-                        const potentialTestClass = `${apexClass}${this.flags.nameconv}`;
+                        const potentialTestClass = `${apexClass}${this.actualFlags.nameconv}`;
                         if (allApexTestClasses.has(potentialTestClass) && !apexTestClasses.has(potentialTestClass) && apexClassesContentsByName[apexClass].includes(curMember)) {
-                            Mdata.log(`Adding Test Class ${potentialTestClass} (exact match) since it depends on ${curMember}`, LoggerLevel.INFO);
+                            Mdata.log(`Adding Test Class ${potentialTestClass} (exact match) since it depends on ${curMember}`, LoggerLevel.TRACE);
                             if (!curFrontier.has(apexClass) && !closedList.has(apexClass)) {
                                 curFrontier.add(apexClass);
                             }
                             deltaApexCodeClasses.add(apexClass);
                             apexTestClasses.add(potentialTestClass);
                         } else if (allApexTestClasses.has(potentialTestClass) && !apexTestClasses.has(potentialTestClass) && apexClassesContentsByName[apexClass].match(new RegExp(curMember, 'ig'))) {
-                            Mdata.log(`Adding Test Class ${potentialTestClass} (regex match) since it depends on ${curMember}`, LoggerLevel.INFO);
+                            Mdata.log(`Adding Test Class ${potentialTestClass} (regex match) since it depends on ${curMember}`, LoggerLevel.TRACE);
                             if (!curFrontier.has(apexClass) && !closedList.has(apexClass)) {
                                 curFrontier.add(apexClass);
                             }
                             deltaApexCodeClasses.add(apexClass);
                             apexTestClasses.add(potentialTestClass);
-                        } else if (allApexTestClasses.has(potentialTestClass) && !apexTestClasses.has(potentialTestClass) && ((fuzzyRes = fastFuzzy.fuzzy(curMember, apexClassesContentsByName[apexClass], { useSellers: false, returnMatchData: true })).score >= this.flags.fuzzythreshold)) {
-                            Mdata.log(`Adding Test Class ${potentialTestClass} (fuzzy match, score: ${fuzzyRes.score}) since it depends on ${curMember}`, LoggerLevel.INFO);
+                        } else if (allApexTestClasses.has(potentialTestClass) && !apexTestClasses.has(potentialTestClass) && ((fuzzyRes = fastFuzzy.fuzzy(curMember, apexClassesContentsByName[apexClass], { useSellers: false, returnMatchData: true })).score >= Number(this.actualFlags.fuzzythreshold))) {
+                            Mdata.log(`Adding Test Class ${potentialTestClass} (fuzzy match, score: ${fuzzyRes.score}) since it depends on ${curMember}`, LoggerLevel.TRACE);
                             if (!frontier.has(apexClass) && !closedList.has(apexClass)) {
                                 curFrontier.add(apexClass);
                             }
@@ -251,11 +291,23 @@ export default class TestDependencies extends SfdxCommand {
             }
         }
 
-        if (this.flags.usecodecoverage && deltaApexCodeClasses.size > 0) {
-            const coverageRecords: AnyJson[] = await (new Promise((resolve, reject) => {
-                const records: AnyJson[] = [];
-                void this.org.getConnection().tooling.query(`SELECT ApexTestClass.Name, ApexClassOrTrigger.Name FROM ApexCodeCoverage WHERE ApexClassOrTrigger.Name IN (${sqlstring.escape(Array.from(deltaApexCodeClasses))})`)
-                    .on('record', record => {
+        if (this.actualFlags.usecodecoverage && deltaApexCodeClasses.size > 0) {
+            const coverageRecords: Array<{
+              [key: string]: {
+                Name: string;
+              };
+            }> = await (new Promise((resolve, reject) => {
+                const records: Array<{
+                  [key: string]: {
+                    Name: string;
+                  };
+                }> = [];
+                void (this.actualFlags['target-org'] as Org).getConnection(this.actualFlags['api-version'] as string).tooling.query(`SELECT ApexTestClass.Name, ApexClassOrTrigger.Name FROM ApexCodeCoverage WHERE ApexClassOrTrigger.Name IN (${sqlstring.escape(Array.from(deltaApexCodeClasses))})`)
+                    .on('record', (record: {
+                      [key: string]: {
+                        Name: string;
+                      };
+                    }) => {
                         records.push(record);
                     })
                     .on('error', err => {
@@ -268,34 +320,34 @@ export default class TestDependencies extends SfdxCommand {
             }));
 
             coverageRecords.filter(coverageRecord => !apexTestClasses.has(coverageRecord['ApexTestClass'].Name) && allApexTestClasses.has(coverageRecord['ApexTestClass'].Name)).forEach(coverageRecord => {
-                Mdata.log(`Adding Test Class ${coverageRecord['ApexTestClass'].Name} (ApexCodeCoverage) since it covers ${coverageRecord['ApexClassOrTrigger'].Name}`, LoggerLevel.INFO);
+                Mdata.log(`Adding Test Class ${coverageRecord['ApexTestClass'].Name} (ApexCodeCoverage) since it covers ${coverageRecord['ApexClassOrTrigger'].Name}`, LoggerLevel.TRACE);
                 apexTestClasses.add(coverageRecord['ApexTestClass'].Name);
             });
         }
 
-        if (apexTestClasses.size === 0 || this.eqSet(allApexTestClasses, apexTestClasses)) {
-            if (!this.flags.json) {
-                Mdata.log(`-l ${testLevel}`, LoggerLevel.INFO);
+        if (apexTestClasses.size === 0 || TestDependencies.eqSet(allApexTestClasses, apexTestClasses)) {
+            if (!this.jsonEnabled()) {
+                console.log(`-l ${testLevel}`);
             }
-            return this.flags.json ? { testLevel, classList: [] } : null;
+            return { testLevel, classList: [] };
         } else {
             testLevel = 'RunSpecifiedTests';
-            if (!this.flags.json) {
-                Mdata.log(`-l ${testLevel} -r ${Array.from(apexTestClasses).join(',')}`, LoggerLevel.INFO);
+            if (!this.jsonEnabled()) {
+                console.log(`-l ${testLevel} -r ${Array.from(apexTestClasses).join(',')}`);
             }
-            return this.flags.json ? { testLevel, classList: Array.from(apexTestClasses) } : null;
+            return { testLevel, classList: Array.from(apexTestClasses) };
         }
     }
 
     private async configurePlugin(): Promise<AnyJson> {
-        const pluginConfig: AnyJson = this.sfdxProjectJson.get('plugins') && this.sfdxProjectJson.get('plugins')['mdataDeltaTests'] || {};
+        const pluginConfig = (this.sfdxProjectJson.get('plugins') && this.sfdxProjectJson.get('plugins')['mdataDeltaTests'] || {}) as PluginConfig;
 
         const baseDir = this.project.getPackageDirectories()[0].fullPath;
 
         for (const metadataTypeName of Object.keys(this.metadataTypeInfos.typeDefs).sort()) {
             const metadataType = this.metadataTypeInfos.typeDefs[metadataTypeName];
             const folderChunks: string[] = [];
-            let curMetadataType = metadataType;
+            let curMetadataType: MetadataType | undefined = metadataType;
             do {
                 folderChunks.unshift(`**/${curMetadataType.defaultDirectory}`);
                 curMetadataType = curMetadataType.parent;
@@ -308,8 +360,9 @@ export default class TestDependencies extends SfdxCommand {
                     { title: 'Delta', value: 'd' },
                     { title: 'Skip', value: 's' }
                 ];
-                const initial = Object.prototype.hasOwnProperty.call(pluginConfig, sfdxKeyName) ? choices.findIndex(c => c.value === pluginConfig[sfdxKeyName] || c.value === pluginConfig[sfdxKeyName].onDeploy) : 0;
+                const initial = Object.prototype.hasOwnProperty.call(pluginConfig, sfdxKeyName) ? choices.findIndex(c => c.value === pluginConfig[sfdxKeyName] || c.value === (pluginConfig[sfdxKeyName] as MetadataSpecificAction).onDeploy) : 0;
 
+                // eslint-disable-next-line no-await-in-loop
                 const testResponse = await prompts({
                     type: 'select',
                     name: 'strat',
@@ -319,16 +372,18 @@ export default class TestDependencies extends SfdxCommand {
                 });
 
                 if (testResponse.strat !== 's' && metadataType.deleteSupported) {
+                    // eslint-disable-next-line no-await-in-loop
                     const sepDeleteResponse = await prompts({
                         type: 'toggle',
                         name: 'strat',
                         message: `Do you want to specify a different strategy when a component of MetadataType "${metadataType.metadataName}" gets deleted?`,
-                        initial: (Object.prototype.hasOwnProperty.call(pluginConfig, sfdxKeyName) && Object.prototype.hasOwnProperty.call(pluginConfig[sfdxKeyName], 'onDestroy')),
+                        initial: (Object.prototype.hasOwnProperty.call(pluginConfig, sfdxKeyName) && Object.prototype.hasOwnProperty.call(pluginConfig[sfdxKeyName] as MetadataSpecificAction, 'onDestroy')) as boolean,
                         active: 'yes',
                         inactive: 'no'
                     });
                     if (sepDeleteResponse.strat) {
-                        const deleteInitial = (Object.prototype.hasOwnProperty.call(pluginConfig, sfdxKeyName) && Object.prototype.hasOwnProperty.call(pluginConfig[sfdxKeyName], 'onDestroy')) ? choices.findIndex(c => c.value === pluginConfig[sfdxKeyName].onDestroy) : 0;
+                        const deleteInitial = (Object.prototype.hasOwnProperty.call(pluginConfig, sfdxKeyName) && Object.prototype.hasOwnProperty.call(pluginConfig[sfdxKeyName], 'onDestroy')) ? choices.findIndex(c => c.value === (pluginConfig[sfdxKeyName] as MetadataSpecificAction).onDestroy) : 0;
+                        // eslint-disable-next-line no-await-in-loop
                         const deleteResponse = await prompts({
                             type: 'select',
                             name: 'strat',
@@ -338,14 +393,14 @@ export default class TestDependencies extends SfdxCommand {
                         });
 
                         pluginConfig[sfdxKeyName] = {
-                            onDeploy: testResponse.strat,
-                            onDestroy: deleteResponse.strat
+                            onDeploy: testResponse.strat as 's' | 'd' | 'f',
+                            onDestroy: deleteResponse.strat as  's' | 'd' | 'f'
                         };
                     } else {
-                        pluginConfig[sfdxKeyName] = testResponse.strat;
+                        pluginConfig[sfdxKeyName] = testResponse.strat as 's' | 'd' | 'f';
                     }
                 } else {
-                    pluginConfig[sfdxKeyName] = testResponse.strat;
+                    pluginConfig[sfdxKeyName] = testResponse.strat as 's' | 'd' | 'f';
                 }
             }
         }
@@ -354,6 +409,7 @@ export default class TestDependencies extends SfdxCommand {
             this.sfdxProjectJson.set('plugins', {});
         }
         const plugins = this.sfdxProjectJson.get('plugins');
+        // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
         plugins['mdataDeltaTests'] = pluginConfig;
 
         this.sfdxProjectJson.set('plugins', plugins);
@@ -362,13 +418,6 @@ export default class TestDependencies extends SfdxCommand {
 
         Mdata.log('Configuration written to sfdx-project.json', LoggerLevel.INFO);
 
-        return this.flags.json ? pluginConfig : null;
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private eqSet(as: Set<any>, bs: Set<any>) {
-        if (as.size !== bs.size) return false;
-        for (const a of as) if (!bs.has(a)) return false;
-        return true;
+        return pluginConfig;
     }
 }

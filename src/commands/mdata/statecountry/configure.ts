@@ -1,12 +1,12 @@
 import * as cliProgress from 'cli-progress';
 import { WebDriver } from 'selenium-webdriver';
-import { flags, SfdxCommand } from '@salesforce/command';
-import { Messages, Org, SfdxError } from '@salesforce/core';
+import { Flags, SfCommand } from '@salesforce/sf-plugins-core';
+import { Messages, Org, SfError } from '@salesforce/core';
 import { AnyJson } from '@salesforce/ts-types';
 import { Mdata } from '../../../mdata';
 import { getAddressSettingsJson } from '../../../retrieveUtility';
 import { ExcelUtility } from '../../../excelUtility';
-import { LoggerLevel, TranslationDataTable } from '../../../typeDefs';
+import { AddressSettingsMetadata, AddressSettingsMetadataCountry, AddressSettingsMetadataState, CountryDataTable, CountryDataTableRow, LoggerLevel, StateDataTableRow, StatesDataTable } from '../../../typeDefs';
 import { SeleniumUtility } from '../../../seleniumUtility';
 
 // Initialize Messages with the current plugin directory
@@ -16,41 +16,45 @@ Messages.importMessagesDirectory(__dirname);
 // or any library that is using the messages framework can also be loaded this way.
 const messages = Messages.loadMessages('sfdx-metadata-patcher', 'mdata');
 
-export default class StateCountryConfigure extends SfdxCommand {
-    public static description = messages.getMessage('statecountry.configure.description');
+export default class StateCountryConfigure extends SfCommand<AnyJson> {
+    public static readonly summary = messages.getMessage('statecountry.configure.description');
 
-    public static examples = [
+    public static readonly examples = [
         `To configure the State / Country Picklist from an Excel file in the current default org
     $ sfdx mdata:statecountry:configure -f /path/to/state/country/to/configure.xlsx`
 
     ];
 
-    protected static flagsConfig = {
-        mappingpath: flags.string({
+    public static readonly flags = {
+        mappingpath: Flags.string({
             char: 'f',
-            description: messages.getMessage('statecountry.configure.flags.mappingpath'),
+            summary: messages.getMessage('statecountry.configure.flags.mappingpath'),
             required: true
         }),
-        conflictspolicy: flags.string({
+        conflictspolicy: Flags.string({
             char: 'c',
             default: 'skip',
-            description: messages.getMessage('statecountry.configure.flags.conflicts'),
+            summary: messages.getMessage('statecountry.configure.flags.conflicts'),
             options: [
                 'skip',
                 'rename'
             ]
         }),
-        check: flags.boolean({
+        check: Flags.boolean({
             char: 'v',
             default: true,
-            description: messages.getMessage('statecountry.configure.flags.conflicts')
+            summary: messages.getMessage('statecountry.configure.flags.conflicts')
         }),
-        mdatafile: flags.string({
+        mdatafile: Flags.string({
             char: 'm',
-            description: messages.getMessage('statecountry.configure.flags.mdatafile')
+            summary: messages.getMessage('statecountry.configure.flags.mdatafile')
         }),
-        loglevel: flags.enum({
-            description: messages.getMessage('general.flags.loglevel'),
+        targetusername: Flags.string({
+          summary: messages.getMessage('general.flags.targetusername'),
+          char: 'u',
+        }),
+        loglevel: Flags.string({
+            summary: messages.getMessage('general.flags.loglevel'),
             default: 'info',
             required: false,
             options: [
@@ -76,58 +80,71 @@ export default class StateCountryConfigure extends SfdxCommand {
     // Comment this out if your command does not support a hub org username
     protected static supportsDevhubUsername = false;
 
-    // Set this to true if your command requires a project workspace; 'requiresProject' is false by default
-    protected static requiresProject = false;
+    protected actualFlags: {
+      mappingpath: string;
+      conflictspolicy: string;
+      check: boolean;
+      mdatafile: string;
+      targetusername: string;
+      loglevel: string;
+      'api-version'?: string;
+    };
 
-    protected countriesToCheck = {};
-    protected statesToCheck = {};
+    protected org: Org;
+
+    protected countriesToCheck: { [key: string]: CountryDataTableRow } = {};
+    protected statesToCheck: { [key: string]: { [key: string]: StateDataTableRow } } = {};
     protected skippedCountries = new Set();
 
     public async run(): Promise<AnyJson> {
-        Mdata.setLogLevel(this.flags.loglevel, this.flags.json);
+        this.actualFlags = (await this.parse(StateCountryConfigure)).flags;
 
-        this.org = await Org.create({ aliasOrUsername: this.flags.targetusername });
+        Mdata.setLogLevel(this.actualFlags.loglevel, this.jsonEnabled());
+
+        this.org = await Org.create({ aliasOrUsername: this.actualFlags.targetusername });
 
         Mdata.log(messages.getMessage('general.infos.usingUsername', [this.org.getUsername()]), LoggerLevel.INFO);
 
-        const addressSettingsJson = await getAddressSettingsJson(this.flags.mdatafile, this.org.getUsername());
+        const addressSettingsJson: AddressSettingsMetadata = await getAddressSettingsJson(this.actualFlags.mdatafile, this.org.getUsername());
 
-        const statesByCountries: AnyJson = addressSettingsJson['AddressSettings']['countriesAndStates'][0]['countries'].reduce((acc: AnyJson, country: AnyJson) => {
+        const statesByCountries: { [key: string]: Set<string> } = addressSettingsJson['AddressSettings']['countriesAndStates'][0]['countries'].reduce((acc, country) => {
             acc[country['isoCode'][0]] = new Set();
             if (Object.prototype.hasOwnProperty.call(country, 'states')) {
-                acc[country['isoCode'][0]] = new Set(country['states'].map((state: AnyJson) => state['isoCode'][0]));
+                acc[country['isoCode'][0]] = new Set(country['states'].map((state: AddressSettingsMetadataState) => state['isoCode'][0]));
             }
             return acc;
         }, {});
 
-        const countriesByIntValue: AnyJson = addressSettingsJson['AddressSettings']['countriesAndStates'][0]['countries'].reduce((acc: AnyJson, country: AnyJson) => {
+        const countriesByIntValue: { [key: string]: AddressSettingsMetadataCountry } = addressSettingsJson['AddressSettings']['countriesAndStates'][0]['countries'].reduce((acc, country) => {
             acc[country['integrationValue'][0]] = country;
             return acc;
         }, {});
 
-        const statesByCountryByIntValue: AnyJson = addressSettingsJson['AddressSettings']['countriesAndStates'][0]['countries']
+        const statesByCountryByIntValue: { [key: string]: { [key: string]: AddressSettingsMetadataState } } = addressSettingsJson['AddressSettings']['countriesAndStates'][0]['countries']
             .filter((country: AnyJson) => Object.prototype.hasOwnProperty.call(country, 'states'))
-            .reduce((acc: AnyJson, country: AnyJson) => {
-                acc[country['isoCode'][0]] = country['states'].reduce((sAcc: AnyJson, state: AnyJson) => {
-                    sAcc[state['integrationValue']] = state;
+            .reduce((acc: { [key: string]: {
+              [key: string]: AddressSettingsMetadataState;
+            }; }, country: AddressSettingsMetadataCountry) => {
+                acc[country['isoCode'][0]] = country['states'].reduce((sAcc: { [key: string]: AddressSettingsMetadataState }, state: AddressSettingsMetadataState) => {
+                    sAcc[state['integrationValue'][0]] = state;
                     return sAcc;
                 }, {});
                 return acc;
             }, {});
 
-        const mappings = await ExcelUtility.importFromExcel(this.flags.mappingpath, ['Countries', 'States'], 1);
+        const mappings = await ExcelUtility.importFromExcel<['label' | 'isoCode' | 'integrationValue' | 'active' | 'visible', 'countryIsoCode' | 'label' | 'isoCode' | 'integrationValue' | 'active' | 'visible']>(this.actualFlags.mappingpath, ['Countries', 'States'], 1);
 
         const driver = await SeleniumUtility.getDriver(this.getStartUrl());
         if (!(await SeleniumUtility.waitUntilPageLoad(driver))) {
-            throw new SfdxError(messages.getMessage('statecountry.configure.errors.cannotretrieveASMdata'));
+            throw new SfError(messages.getMessage('statecountry.configure.errors.cannotretrieveASMdata'));
         }
 
-        await this.processCountries(mappings[0], statesByCountries, countriesByIntValue, driver);
-        await this.processStates(mappings[1], statesByCountries, statesByCountryByIntValue, driver);
+        await this.processCountries(mappings[0] as CountryDataTable, statesByCountries, countriesByIntValue, driver);
+        await this.processStates(mappings[1] as StatesDataTable, statesByCountries, statesByCountryByIntValue, driver);
 
         await driver.quit();
 
-        if (this.flags.check) {
+        if (this.actualFlags.check) {
             if (await this.checkConfigurationStatus()) {
                 Mdata.log(messages.getMessage('statecountry.configure.infos.checkOkMessage'), LoggerLevel.INFO);
             } else {
@@ -139,50 +156,51 @@ export default class StateCountryConfigure extends SfdxCommand {
     }
 
     private getStartUrl(): string {
-        return `${this.org.getConnection().instanceUrl}/secur/frontdoor.jsp?sid=${this.org.getConnection().accessToken}&retURL=/i18n/ConfigStateCountry.apexp?setupid=AddressCleanerOverview`;
+        return `${this.org.getConnection(this.actualFlags['api-version']).instanceUrl}/secur/frontdoor.jsp?sid=${this.org.getConnection(this.actualFlags['api-version']).accessToken}&retURL=/i18n/ConfigStateCountry.apexp?setupid=AddressCleanerOverview`;
     }
 
     private getNewCountryUrl(): string {
-        return `${this.org.getConnection().instanceUrl}/i18n/ConfigureNewCountry.apexp?setupid=AddressCleanerOverview`;
+        return `${this.org.getConnection(this.actualFlags['api-version']).instanceUrl}/i18n/ConfigureNewCountry.apexp?setupid=AddressCleanerOverview`;
     }
 
     private getEditExistingCountryUrl(countryIsoCode: string): string {
-        return `${this.org.getConnection().instanceUrl}/i18n/ConfigureCountry.apexp?countryIso=${countryIsoCode}&setupid=AddressCleanerOverview`;
+        return `${this.org.getConnection(this.actualFlags['api-version']).instanceUrl}/i18n/ConfigureCountry.apexp?countryIso=${countryIsoCode}&setupid=AddressCleanerOverview`;
     }
 
     private getNewStateUrl(countryIsoCode: string): string {
-        return `${this.org.getConnection().instanceUrl}/i18n/ConfigureNewState.apexp?countryIso=${countryIsoCode}&setupid=AddressCleanerOverview`;
+        return `${this.org.getConnection(this.actualFlags['api-version']).instanceUrl}/i18n/ConfigureNewState.apexp?countryIso=${countryIsoCode}&setupid=AddressCleanerOverview`;
     }
 
     private getEditExistingStateUrl(countryIsoCode: string, stateIsoCode: string): string {
-        return `${this.org.getConnection().instanceUrl}/i18n/ConfigureState.apexp?countryIso=${countryIsoCode}&setupid=AddressCleanerOverview&stateIso=${stateIsoCode}`;
+        return `${this.org.getConnection(this.actualFlags['api-version']).instanceUrl}/i18n/ConfigureState.apexp?countryIso=${countryIsoCode}&setupid=AddressCleanerOverview&stateIso=${stateIsoCode}`;
     }
 
-    private async processCountries(countriesDataTable: TranslationDataTable, existingStatesByCountries: AnyJson, countriesByIntValue: AnyJson, driver: WebDriver): Promise<boolean> {
+    private async processCountries(countriesDataTable: CountryDataTable, existingStatesByCountries:  { [key: string]: Set<string> }, countriesByIntValue:  { [key: string]: AddressSettingsMetadataCountry }, driver: WebDriver): Promise<boolean> {
         let bar: cliProgress.SingleBar;
 
-        if (!this.flags.json && countriesDataTable.rows.length) {
+        if (!this.jsonEnabled() && countriesDataTable.rows.length) {
             bar = new cliProgress.SingleBar({
                 format: messages.getMessage('statecountry.configure.infos.countryProgressBarFormat')
             }, cliProgress.Presets.shades_classic);
-            bar.start(countriesDataTable.rows.length, 0, { countryIsoCode: countriesDataTable.rows[0]['isoCode'] });
+            bar.start(countriesDataTable.rows.length, 0, { countryIsoCode: countriesDataTable.rows[0].isoCode });
         }
 
         for (const country of countriesDataTable.rows) {
             if (bar) {
-                bar.update({ countryIsoCode: country['isoCode'] });
+                bar.update({ countryIsoCode: country.isoCode });
             }
 
-            if (this.flags.conflictspolicy === 'rename' && Object.prototype.hasOwnProperty.call(countriesByIntValue, country['integrationValue']) &&
-                countriesByIntValue[country['integrationValue']]['isoCode'][0] !== country['isoCode']) {
+            if (this.actualFlags.conflictspolicy === 'rename' && Object.prototype.hasOwnProperty.call(countriesByIntValue, country['integrationValue']) &&
+                countriesByIntValue[country.integrationValue]['isoCode'][0] !== country.isoCode) {
                 const countryToRename = countriesByIntValue[country['integrationValue']];
                 const countryToRenameNewConfig = {
                     isoCode: countryToRename['isoCode'][0],
                     integrationValue: `${countryToRename['integrationValue'][0]}_`,
                     label: `${countryToRename['label'][0]}_`,
-                    active: countryToRename['active'][0],
+                    active: `${countryToRename['active'][0]}`,
                     visible: 'false'
                 };
+                // eslint-disable-next-line no-await-in-loop
                 await this.editExistingCountry(driver, countryToRenameNewConfig);
                 this.countriesToCheck[countryToRenameNewConfig['isoCode']] = countryToRenameNewConfig;
             } else if (Object.prototype.hasOwnProperty.call(countriesByIntValue, country['integrationValue']) &&
@@ -195,17 +213,19 @@ export default class StateCountryConfigure extends SfdxCommand {
             }
 
             if (!Object.prototype.hasOwnProperty.call(existingStatesByCountries, country['isoCode'])) {
+                // eslint-disable-next-line no-await-in-loop
                 if (await this.addNewCountry(driver, country)) {
                     this.countriesToCheck[country['isoCode']] = country;
                     existingStatesByCountries[country['isoCode']] = new Set();
                 } else {
-                    throw new SfdxError(messages.getMessage('statecountry.configure.errors.cannotAddNewCountry', [country['isoCode']]));
+                    throw new SfError(messages.getMessage('statecountry.configure.errors.cannotAddNewCountry', [country['isoCode']]));
                 }
-            } else if (this.flags.conflictspolicy === 'rename') {
+            } else if (this.actualFlags.conflictspolicy === 'rename') {
+                // eslint-disable-next-line no-await-in-loop
                 if (await this.editExistingCountry(driver, country)) {
                     this.countriesToCheck[country['isoCode']] = country;
                 } else {
-                    throw new SfdxError(messages.getMessage('statecountry.configure.errors.cannotEditExistingCountry', [country['isoCode']]));
+                    throw new SfError(messages.getMessage('statecountry.configure.errors.cannotEditExistingCountry', [country['isoCode']]));
                 }
             }
             if (bar) {
@@ -221,10 +241,11 @@ export default class StateCountryConfigure extends SfdxCommand {
         return true;
     }
 
-    private async processStates(statesDataTable: TranslationDataTable, existingStatesByCountries: AnyJson, statesByCountryByIntValue: AnyJson, driver: WebDriver): Promise<boolean> {
+    // eslint-disable-next-line complexity
+    private async processStates(statesDataTable: StatesDataTable, existingStatesByCountries: { [key: string]: Set<string> }, statesByCountryByIntValue: { [key: string]: { [key: string]: AddressSettingsMetadataState } }, driver: WebDriver): Promise<boolean> {
         let bar: cliProgress.SingleBar;
 
-        if (!this.flags.json && statesDataTable.rows.length) {
+        if (!this.jsonEnabled() && statesDataTable.rows.length) {
             bar = new cliProgress.SingleBar({
                 format: messages.getMessage('statecountry.configure.infos.stateProgressBarFormat')
             }, cliProgress.Presets.shades_classic);
@@ -241,23 +262,24 @@ export default class StateCountryConfigure extends SfdxCommand {
             }
 
             if (!Object.prototype.hasOwnProperty.call(existingStatesByCountries, state['countryIsoCode'])) {
-                throw new SfdxError(messages.getMessage('statecountry.configure.errors.cannotAddStatesCountryNotExists', [state['isoCode'], state['countryIsoCode']]));
+                throw new SfError(messages.getMessage('statecountry.configure.errors.cannotAddStatesCountryNotExists', [state['isoCode'], state['countryIsoCode']]));
             }
 
-            if (this.flags.conflictspolicy === 'rename' && Object.prototype.hasOwnProperty.call(statesByCountryByIntValue, state['countryIsoCode']) &&
+            if (this.actualFlags.conflictspolicy === 'rename' && Object.prototype.hasOwnProperty.call(statesByCountryByIntValue, state['countryIsoCode']) &&
                 Object.prototype.hasOwnProperty.call(statesByCountryByIntValue[state['countryIsoCode']], state['integrationValue']) &&
                 statesByCountryByIntValue[state['countryIsoCode']][state['integrationValue']]['isoCode'][0] !== state['isoCode']) {
                 const stateToRename = statesByCountryByIntValue[state['countryIsoCode']][state['integrationValue']];
-                const stateToRenameNewConfig = {
+                const stateToRenameNewConfig: StateDataTableRow = {
                     isoCode: stateToRename['isoCode'][0],
                     countryIsoCode: state['countryIsoCode'],
                     integrationValue: `${stateToRename['integrationValue'][0]}_`,
                     label: `${stateToRename['label'][0]}_`,
-                    active: stateToRename['active'][0],
+                    active: `${stateToRename['active'][0]}`,
                     visible: 'false'
                 };
+                // eslint-disable-next-line no-await-in-loop
                 await this.editExistingState(driver, stateToRenameNewConfig);
-                this.statesToCheck[stateToRenameNewConfig['countryIsoCode']][stateToRename['isoCode']] = stateToRenameNewConfig;
+                this.statesToCheck[stateToRenameNewConfig['countryIsoCode']][stateToRename['isoCode'][0]] = stateToRenameNewConfig;
             } else if (Object.prototype.hasOwnProperty.call(statesByCountryByIntValue, state['countryIsoCode']) &&
                 Object.prototype.hasOwnProperty.call(statesByCountryByIntValue[state['countryIsoCode']], state['integrationValue']) &&
                 statesByCountryByIntValue[state['countryIsoCode']][state['integrationValue']]['isoCode'][0] !== state['isoCode']) {
@@ -268,6 +290,7 @@ export default class StateCountryConfigure extends SfdxCommand {
             }
 
             if (!existingStatesByCountries[state['countryIsoCode']].has(state['isoCode'])) {
+                // eslint-disable-next-line no-await-in-loop
                 if (await this.addNewState(driver, state)) {
                     if (!Object.prototype.hasOwnProperty.call(this.statesToCheck, state['countryIsoCode'])) {
                         this.statesToCheck[state['countryIsoCode']] = {};
@@ -275,9 +298,10 @@ export default class StateCountryConfigure extends SfdxCommand {
 
                     this.statesToCheck[state['countryIsoCode']][state['isoCode']] = state;
                 } else {
-                    throw new SfdxError(messages.getMessage('statecountry.configure.errors.cannotAddNewState', [state['isoCode'], state['countryIsoCode']]));
+                    throw new SfError(messages.getMessage('statecountry.configure.errors.cannotAddNewState', [state['isoCode'], state['countryIsoCode']]));
                 }
-            } else if (this.flags.conflictspolicy === 'rename') {
+            } else if (this.actualFlags.conflictspolicy === 'rename') {
+                // eslint-disable-next-line no-await-in-loop
                 if(await this.editExistingState(driver, state)) {
                     if (!Object.prototype.hasOwnProperty.call(this.statesToCheck, state['countryIsoCode'])) {
                         this.statesToCheck[state['countryIsoCode']] = {};
@@ -285,7 +309,7 @@ export default class StateCountryConfigure extends SfdxCommand {
 
                     this.statesToCheck[state['countryIsoCode']][state['isoCode']] = state;
                 } else {
-                    throw new SfdxError(messages.getMessage('statecountry.configure.errors.cannotEditExistingState', [state['isoCode'], state['countryIsoCode']]));
+                    throw new SfError(messages.getMessage('statecountry.configure.errors.cannotEditExistingState', [state['isoCode'], state['countryIsoCode']]));
                 }
             }
 
@@ -302,7 +326,7 @@ export default class StateCountryConfigure extends SfdxCommand {
         return true;
     }
 
-    private async addNewCountry(driver: WebDriver, country: object): Promise<boolean> {
+    private async addNewCountry(driver: WebDriver, country: CountryDataTableRow): Promise<boolean> {
         try {
             await driver.get(this.getNewCountryUrl());
             await SeleniumUtility.waitUntilPageLoad(driver);
@@ -330,7 +354,7 @@ export default class StateCountryConfigure extends SfdxCommand {
             const currentUrl = await driver.getCurrentUrl();
 
             if (!currentUrl.endsWith('success=true')) {
-                throw new SfdxError(messages.getMessage('statecountry.configure.errors.cannotAddNewCountry', [country['isoCode']]));
+                throw new SfError(messages.getMessage('statecountry.configure.errors.cannotAddNewCountry', [country['isoCode']]));
             }
         } catch (err) {
             return false;
@@ -339,7 +363,7 @@ export default class StateCountryConfigure extends SfdxCommand {
         return true;
     }
 
-    private async editExistingCountry(driver: WebDriver, country: object): Promise<boolean> {
+    private async editExistingCountry(driver: WebDriver, country: CountryDataTableRow): Promise<boolean> {
         try {
             await driver.get(this.getEditExistingCountryUrl(country['isoCode']));
             await SeleniumUtility.waitUntilPageLoad(driver);
@@ -366,7 +390,7 @@ export default class StateCountryConfigure extends SfdxCommand {
             const currentUrl = await driver.getCurrentUrl();
 
             if (!currentUrl.endsWith('success=true')) {
-                throw new SfdxError(messages.getMessage('statecountry.configure.errors.cannotEditExistingCountry', [country['isoCode']]));
+                throw new SfError(messages.getMessage('statecountry.configure.errors.cannotEditExistingCountry', [country['isoCode']]));
             }
         } catch (err) {
             return false;
@@ -375,7 +399,7 @@ export default class StateCountryConfigure extends SfdxCommand {
         return true;
     }
 
-    private async addNewState(driver: WebDriver, state: object): Promise<boolean> {
+    private async addNewState(driver: WebDriver, state: StateDataTableRow): Promise<boolean> {
         try {
             await driver.get(this.getNewStateUrl(state['countryIsoCode']));
             await SeleniumUtility.waitUntilPageLoad(driver);
@@ -403,7 +427,7 @@ export default class StateCountryConfigure extends SfdxCommand {
             const currentUrl = await driver.getCurrentUrl();
 
             if (!currentUrl.endsWith('success=true')) {
-                throw new SfdxError(messages.getMessage('statecountry.configure.errors.cannotAddNewState', [state['isoCode'], state['countryIsoCode']]));
+                throw new SfError(messages.getMessage('statecountry.configure.errors.cannotAddNewState', [state['isoCode'], state['countryIsoCode']]));
             }
         } catch (err) {
             return false;
@@ -412,7 +436,7 @@ export default class StateCountryConfigure extends SfdxCommand {
         return true;
     }
 
-    private async editExistingState(driver: WebDriver, state: object): Promise<boolean> {
+    private async editExistingState(driver: WebDriver, state: StateDataTableRow): Promise<boolean> {
         try {
             await driver.get(this.getEditExistingStateUrl(state['countryIsoCode'], state['isoCode']));
             await SeleniumUtility.waitUntilPageLoad(driver);
@@ -442,7 +466,7 @@ export default class StateCountryConfigure extends SfdxCommand {
             const currentUrl = await driver.getCurrentUrl();
 
             if (!currentUrl.endsWith('success=true')) {
-                throw new SfdxError(messages.getMessage('statecountry.configure.errors.cannotEditExistingState', [state['isoCode'], state['countryIsoCode']]));
+                throw new SfError(messages.getMessage('statecountry.configure.errors.cannotEditExistingState', [state['isoCode'], state['countryIsoCode']]));
             }
         } catch (err) {
             return false;
@@ -453,28 +477,28 @@ export default class StateCountryConfigure extends SfdxCommand {
 
     private async checkConfigurationStatus(): Promise<boolean> {
         let res = false;
-        const addressSettingsJson = await getAddressSettingsJson(null, this.org.getUsername());
+        const addressSettingsJson: AddressSettingsMetadata = await getAddressSettingsJson(null, this.org.getUsername());
 
         res = Object.keys(this.countriesToCheck).length ? Object.keys(this.countriesToCheck).reduce((acc: boolean, countryIsoCode: string) => {
-            const cIdx = addressSettingsJson['AddressSettings']['countriesAndStates'][0]['countries'].findIndex((country: AnyJson) => country['isoCode'][0] === countryIsoCode);
+            const cIdx = addressSettingsJson['AddressSettings']['countriesAndStates'][0]['countries'].findIndex((country) => country['isoCode'][0] === countryIsoCode);
             return acc &&
                 cIdx >= 0 && addressSettingsJson['AddressSettings']['countriesAndStates'][0]['countries'][cIdx]['label'][0] === this.countriesToCheck[countryIsoCode]['label'] &&
                 addressSettingsJson['AddressSettings']['countriesAndStates'][0]['countries'][cIdx]['integrationValue'][0] === this.countriesToCheck[countryIsoCode]['integrationValue'] &&
-                addressSettingsJson['AddressSettings']['countriesAndStates'][0]['countries'][cIdx]['active'][0] === this.countriesToCheck[countryIsoCode]['active'].toString() &&
-                addressSettingsJson['AddressSettings']['countriesAndStates'][0]['countries'][cIdx]['visible'][0] === this.countriesToCheck[countryIsoCode]['visible'].toString();
+                addressSettingsJson['AddressSettings']['countriesAndStates'][0]['countries'][cIdx]['active'][0].toString() === this.countriesToCheck[countryIsoCode]['active'].toString() &&
+                addressSettingsJson['AddressSettings']['countriesAndStates'][0]['countries'][cIdx]['visible'][0].toString() === this.countriesToCheck[countryIsoCode]['visible'].toString();
         }, true) : res;
 
         res = res && Object.keys(this.statesToCheck).length ? Object.keys(this.statesToCheck).reduce((acc: boolean, countryIsoCode: string) => {
-            const cIdx = addressSettingsJson['AddressSettings']['countriesAndStates'][0]['countries'].findIndex((country: AnyJson) => country['isoCode'][0] === countryIsoCode);
+            const cIdx = addressSettingsJson['AddressSettings']['countriesAndStates'][0]['countries'].findIndex((country) => country['isoCode'][0] === countryIsoCode);
 
             return acc && cIdx >= 0 && Object.keys(this.statesToCheck[countryIsoCode]).reduce((sAcc: boolean, stateIsoCode: string) => {
                 const sIdx = Object.prototype.hasOwnProperty.call(addressSettingsJson['AddressSettings']['countriesAndStates'][0]['countries'][cIdx], 'states') ?
-                    addressSettingsJson['AddressSettings']['countriesAndStates'][0]['countries'][cIdx]['states'].findIndex((state: AnyJson) => state['isoCode'][0] === stateIsoCode) : -1;
+                    addressSettingsJson['AddressSettings']['countriesAndStates'][0]['countries'][cIdx]['states'].findIndex((state) => state['isoCode'][0] === stateIsoCode) : -1;
 
                 return sAcc && sIdx >= 0 && addressSettingsJson['AddressSettings']['countriesAndStates'][0]['countries'][cIdx]['states'][sIdx]['label'][0] === this.statesToCheck[countryIsoCode][stateIsoCode]['label'] &&
                     addressSettingsJson['AddressSettings']['countriesAndStates'][0]['countries'][cIdx]['states'][sIdx]['integrationValue'][0] === this.statesToCheck[countryIsoCode][stateIsoCode]['integrationValue'] &&
-                    addressSettingsJson['AddressSettings']['countriesAndStates'][0]['countries'][cIdx]['states'][sIdx]['active'][0] === this.statesToCheck[countryIsoCode][stateIsoCode]['active'].toString() &&
-                    addressSettingsJson['AddressSettings']['countriesAndStates'][0]['countries'][cIdx]['states'][sIdx]['visible'][0] === this.statesToCheck[countryIsoCode][stateIsoCode]['visible'].toString();
+                    addressSettingsJson['AddressSettings']['countriesAndStates'][0]['countries'][cIdx]['states'][sIdx]['active'][0].toString() === this.statesToCheck[countryIsoCode][stateIsoCode]['active'].toString() &&
+                    addressSettingsJson['AddressSettings']['countriesAndStates'][0]['countries'][cIdx]['states'][sIdx]['visible'][0].toString() === this.statesToCheck[countryIsoCode][stateIsoCode]['visible'].toString();
             }, true);
         }, true) : res;
 

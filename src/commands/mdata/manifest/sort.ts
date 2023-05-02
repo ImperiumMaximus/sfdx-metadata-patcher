@@ -1,7 +1,7 @@
 import * as fs from 'fs';
-import { flags, SfdxCommand } from '@salesforce/command';
 import { Messages } from '@salesforce/core';
 import { AnyJson } from '@salesforce/ts-types';
+import { Flags, SfCommand } from '@salesforce/sf-plugins-core';
 import { Mdata } from '../../../mdata';
 import { LoggerLevel, PackageXml } from '../../../typeDefs';
 import { parseXml, writeXml } from '../../../xmlUtility';
@@ -13,24 +13,24 @@ Messages.importMessagesDirectory(__dirname);
 // or any library that is using the messages framework can also be loaded this way.
 const messages = Messages.loadMessages('sfdx-metadata-patcher', 'mdata');
 
-export default class ManifestSort extends SfdxCommand {
+export default class ManifestSort extends SfCommand<AnyJson> {
 
-    public static description = messages.getMessage('manifest.sort.description');
+    public static readonly summary = messages.getMessage('manifest.sort.description');
 
-    public static examples = [
+    public static readonly examples = [
         `To sort the components of a manifest file
     $ sfdx mdata:manifest:sort -x manifest/package.xml`
 
     ];
 
-    protected static flagsConfig = {
-        manifest: flags.string({
+    public static readonly flags = {
+        manifest: Flags.string({
             char: 'x',
-            description: messages.getMessage('manifest.sort.flags.manifest'),
+            summary: messages.getMessage('manifest.sort.flags.manifest'),
             required: true
         }),
-        loglevel: flags.enum({
-            description: messages.getMessage('general.flags.loglevel'),
+        loglevel: Flags.string({
+            summary: messages.getMessage('general.flags.loglevel'),
             default: 'info',
             required: false,
             options: [
@@ -56,24 +56,29 @@ export default class ManifestSort extends SfdxCommand {
     // Comment this out if your command does not support a hub org username
     protected static supportsDevhubUsername = false;
 
-    // Set this to true if your command requires a project workspace; 'requiresProject' is false by default
-    protected static requiresProject = false;
+    protected actualFlags: {
+      manifest: string;
+      loglevel: string;
+    };
 
     public async run(): Promise<AnyJson> {
-        Mdata.setLogLevel(this.flags.loglevel, this.flags.json);
+        this.actualFlags = (await this.parse(ManifestSort)).flags;
 
-        console.error(this.flags.manifest);
+        Mdata.setLogLevel(this.actualFlags.loglevel, this.jsonEnabled());
 
-        if (!fs.existsSync(this.flags.manifest)) {
+        // eslint-disable-next-line no-console
+        console.error(this.actualFlags.manifest);
+
+        if (!fs.existsSync(this.actualFlags.manifest)) {
             Mdata.log(messages.getMessage('manifest.sort.errors.noInputFileFound'), LoggerLevel.FATAL);
             return null;
         }
 
         let manifestXml: PackageXml;
         try {
-            manifestXml = (await parseXml(this.flags.manifest)) as unknown as PackageXml;
+            manifestXml = (await parseXml(this.actualFlags.manifest)) as unknown as PackageXml;
         } catch (e) {
-            Mdata.log(messages.getMessage('manifest.sort.errors.badXml', e.message), LoggerLevel.FATAL);
+            Mdata.log(messages.getMessage('manifest.sort.errors.badXml', [(e as Error).message]), LoggerLevel.FATAL);
             return null;
         }
 
@@ -81,15 +86,12 @@ export default class ManifestSort extends SfdxCommand {
         manifestXml.Package.types.forEach(t => t.members.sort((a, b) => a.localeCompare(b)));
 
         try {
-            await writeXml(this.flags.manifest, manifestXml);
+            writeXml(this.actualFlags.manifest, manifestXml);
         } catch (e) {
-            Mdata.log(messages.getMessage('manifest.sort.errors.writeXml', e.message), LoggerLevel.FATAL);
+            Mdata.log(messages.getMessage('manifest.sort.errors.writeXml', [(e as Error).message]), LoggerLevel.FATAL);
             return null;
         }
 
-        if (this.flags.json) {
-            return manifestXml;
-        }
-        return null;
+        return manifestXml;
     }
 }

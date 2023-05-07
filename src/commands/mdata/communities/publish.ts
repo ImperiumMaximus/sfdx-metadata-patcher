@@ -2,8 +2,7 @@ import { SfCommand, Flags } from '@salesforce/sf-plugins-core';
 import { Messages, Org } from '@salesforce/core';
 import { AnyJson } from '@salesforce/ts-types';
 import * as cliProgress from 'cli-progress';
-import { Mdata } from '../../../mdata';
-import { CommunitiesCAPIResponse, CommunitiesPublishCAPIResponse, CommunityWRCAPI, LoggerLevel } from './../../../typeDefs';
+import { CommunitiesCAPIResponse, CommunitiesPublishCAPIResponse, CommunityWRCAPI } from './../../../typeDefs';
 
 // Initialize Messages with the current plugin directory
 Messages.importMessagesDirectory(__dirname);
@@ -80,8 +79,6 @@ export default class Publish extends SfCommand<AnyJson> {
     public async run(): Promise<AnyJson> {
         this.actualFlags = (await this.parse(Publish)).flags;
 
-        Mdata.setLogLevel(this.actualFlags.loglevel, this.jsonEnabled());
-
         this.org = await Org.create({ aliasOrUsername: this.actualFlags.targetusername });
         const names = this.actualFlags.name ? this.actualFlags.name.split(',') : [];
 
@@ -97,7 +94,7 @@ export default class Publish extends SfCommand<AnyJson> {
         }
 
         if (!actualCommunitiesList.length) {
-            Mdata.log(messages.getMessage('communities.publish.errors.noCommunitiesFound'), LoggerLevel.ERROR);
+            this.logToStderr(messages.getMessage('communities.publish.errors.noCommunitiesFound'));
             return messages.getMessage('communities.publish.errors.noCommunitiesFound');
         }
 

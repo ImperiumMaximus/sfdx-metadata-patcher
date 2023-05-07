@@ -1,9 +1,8 @@
 import { Flags, SfCommand } from '@salesforce/sf-plugins-core';
 import { Messages, Org } from '@salesforce/core';
 import { AnyJson } from '@salesforce/ts-types';
-import { Mdata } from '../../../mdata';
 import { ExcelUtility } from '../../../excelUtility';
-import { AddressSettingsMetadataCountry, AddressSettingsMetadataState, LoggerLevel, CountryDataTable, StatesDataTable } from '../../../typeDefs';
+import { AddressSettingsMetadataCountry, AddressSettingsMetadataState, CountryDataTable, StatesDataTable } from '../../../typeDefs';
 import { getAddressSettingsJson } from '../../../retrieveUtility';
 
 // Initialize Messages with the current plugin directory
@@ -78,11 +77,9 @@ export default class StateCountryTemplate extends SfCommand<AnyJson> {
     public async run(): Promise<AnyJson> {
         this.actualFlags = (await this.parse(StateCountryTemplate)).flags;
 
-        Mdata.setLogLevel(this.actualFlags.loglevel, this.jsonEnabled());
-
         this.org = await Org.create({ aliasOrUsername: this.actualFlags.targetusername });
 
-        Mdata.log(messages.getMessage('general.infos.usingUsername', [this.org.getUsername()]), LoggerLevel.INFO);
+        this.log(messages.getMessage('general.infos.usingUsername', [this.org.getUsername()]));
 
         const addressSettingsJson = await getAddressSettingsJson(this.actualFlags.mdatafile, this.org.getUsername());
 

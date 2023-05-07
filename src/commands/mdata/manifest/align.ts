@@ -4,7 +4,6 @@ import { ComponentSet } from '@salesforce/source-deploy-retrieve';
 import { AnyJson } from '@salesforce/ts-types';
 import * as xml2js from 'xml2js';
 import { Flags, SfCommand } from '@salesforce/sf-plugins-core';
-import { Mdata } from '../../../mdata';
 
 // Initialize Messages with the current plugin directory
 Messages.importMessagesDirectory(__dirname);
@@ -90,8 +89,6 @@ export default class ManifestSort extends SfCommand<AnyJson> {
 
     public async run(): Promise<AnyJson> {
         this.actualFlags = (await this.parse(ManifestSort)).flags;
-
-        Mdata.setLogLevel(this.actualFlags.loglevel, this.jsonEnabled());
 
         const project = await SfdxProject.resolve();
 

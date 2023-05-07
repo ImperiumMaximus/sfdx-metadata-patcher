@@ -9,6 +9,8 @@ import * as ExcelJS from 'exceljs';
 import * as lineReader from 'line-reader';
 import * as XLSX from 'exceljs/lib/xlsx/xlsx';
 import { Worksheet, Workbook } from 'exceljs';
+import { AnyJson } from '@salesforce/ts-types';
+import { execCmd  } from '@salesforce/cli-plugins-testkit';
 import { TranslationUtility } from '../../../../src/translationUtility';
 
 // import { ensureJsonMap, ensureString } from '@salesforce/ts-types';
@@ -20,16 +22,14 @@ Messages.importMessagesDirectory(__dirname);
 // or any library that is using the messages framework can also be loaded this way.
 const messages = Messages.loadMessages('sfdx-metadata-patcher', 'mdata');
 
-const $$ = testSetup()
+const $$ = testSetup();
 
 describe('mdata:translations:convert', () => {
     describe('Invalid "from" & "to" combo', () => {
-        test
-            .stderr()
-            .command(['mdata:translations:convert', '-f', 'xlsx', '-t', 'xlsx', '-i', 'invalid.zip', '-o', 'invalid.xlsx'])
-            .it('should return an error message', ctx => {
-                expect(ctx.stderr).to.contain(messages.getMessage('translations.convert.errors.invalidFromToCombo'));
-            });
+        it('should return an error message', () => {
+          const output = execCmd<AnyJson>('mdata:translations:convert -f xlsx -t xlsx -i invalid.zip -d invalid.xlsx').shellOutput;
+          expect(output.stderr).to.contain(messages.getMessage('translations.convert.errors.invalidFromToCombo'));
+        });
     });
 
     describe('Import single stf file', () => {
@@ -63,7 +63,7 @@ describe('mdata:translations:convert', () => {
                 xlsxWriteFileStub = stubMethod($$.SANDBOX, ExcelJS.Workbook.prototype.xlsx, 'writeFile');
             })
             .stdout()
-            .command(['mdata:translations:convert', '-f', 'stf', '-t', 'xlsx', '-i', 'Outdated and untranslated_en_US.stf', '-o', 'out.xlsx'])
+            .command(['mdata:translations:convert', '-f', 'stf', '-t', 'xlsx', '-i', 'Outdated and untranslated_en_US.stf', '-d', 'out.xlsx'])
             .it('should generate an xlsx file with one sheet', () => {
                 expect(xlsxWriteFileStub.called).to.be.true;
                 expect(xlsxWriteFileStub.args[0][0]).to.equal('out.xlsx');
@@ -106,7 +106,7 @@ describe('mdata:translations:convert', () => {
                 xlsxWriteFileStub = stubMethod($$.SANDBOX, ExcelJS.Workbook.prototype.xlsx, 'writeFile');
             })
             .stdout()
-            .command(['mdata:translations:convert', '-f', 'stf', '-t', 'xlsx', '-i', 'Outdated and untranslated.zip', '-o', 'out.xlsx'])
+            .command(['mdata:translations:convert', '-f', 'stf', '-t', 'xlsx', '-i', 'Outdated and untranslated.zip', '-d', 'out.xlsx'])
             .it('should generate an xlsx file with two sheets', () => {
                 expect(xlsxWriteFileStub.called).to.be.true;
                 expect(xlsxWriteFileStub.args[0][0]).to.equal('out.xlsx');
@@ -155,7 +155,7 @@ describe('mdata:translations:convert', () => {
                 xlsxWriteFileStub = stubMethod($$.SANDBOX, ExcelJS.Workbook.prototype.xlsx, 'writeFile');
             })
             .stdout()
-            .command(['mdata:translations:convert', '-f', 'stf', '-t', 'xlsx', '-i', 'Bilingual_it.stf', '-o', 'out.xlsx'])
+            .command(['mdata:translations:convert', '-f', 'stf', '-t', 'xlsx', '-i', 'Bilingual_it.stf', '-d', 'out.xlsx'])
             .it('should generate an xlsx file with one sheet and the translated string at the top', () => {
                 expect(xlsxWriteFileStub.called).to.be.true;
                 expect(xlsxWriteFileStub.args[0][0]).to.equal('out.xlsx');
@@ -199,7 +199,7 @@ describe('mdata:translations:convert', () => {
                 xlsxWriteFileStub = stubMethod($$.SANDBOX, ExcelJS.Workbook.prototype.xlsx, 'writeFile');
             })
             .stdout()
-            .command(['mdata:translations:convert', '-f', 'stf', '-t', 'xlsx', '-i', 'Source_en_US.stf', '-o', 'out.xlsx'])
+            .command(['mdata:translations:convert', '-f', 'stf', '-t', 'xlsx', '-i', 'Source_en_US.stf', '-d', 'out.xlsx'])
             .it('should generate an xlsx file with one sheet with Translation and Out of Date columns having unknown status', () => {
                 expect(xlsxWriteFileStub.called).to.be.true;
                 expect(xlsxWriteFileStub.args[0][0]).to.equal('out.xlsx');
@@ -257,7 +257,7 @@ describe('mdata:translations:convert', () => {
                 })
             })
             .stdout()
-            .command(['mdata:translations:convert', '-f', 'xlsx', '-t', 'stf', '-i', path.join(__dirname, '..', '..', '..', 'data', 'translations', 'Bilingual_it.xlsx'), '-o', 'outdir'])
+            .command(['mdata:translations:convert', '-f', 'xlsx', '-t', 'stf', '-i', path.join(__dirname, '..', '..', '..', 'data', 'translations', 'Bilingual_it.xlsx'), '-d', 'outdir'])
             .it('should generate a single STF file', () => {
                 expect(writeStreamStub.called).to.be.true;
                 expect(writeStreamStub.args[0][0]).to.equal('# Use the Bilingual file to review translations, edit labels that have already been translated, and add translations for labels that haven\'t been translated.\n');
@@ -327,7 +327,7 @@ describe('mdata:translations:convert', () => {
                 })
             })
             .stdout()
-            .command(['mdata:translations:convert', '-f', 'xlsx', '-t', 'stf', '-i', path.join(__dirname, '..', '..', '..', 'data', 'translations', 'Bilingual_en_US_it.xlsx'), '-o', 'outdir'])
+            .command(['mdata:translations:convert', '-f', 'xlsx', '-t', 'stf', '-i', path.join(__dirname, '..', '..', '..', 'data', 'translations', 'Bilingual_en_US_it.xlsx'), '-d', 'outdir'])
             .it('should generate a ZIP file with the same number of files', () => {
                 expect(writeStreamStubs[0].called).to.be.true;
                 expect(writeStreamStubs[0].args[0][0]).to.equal('# Use the Bilingual file to review translations, edit labels that have already been translated, and add translations for labels that haven\'t been translated.\n');
@@ -387,7 +387,7 @@ describe('mdata:translations:convert', () => {
                 })
             })
             .stdout()
-            .command(['mdata:translations:convert', '-f', 'xlsx', '-t', 'stf', '-i', path.join(__dirname, '..', '..', '..', 'data', 'translations', 'Bilingual_en_US_it.xlsx'), '-o', 'outdir', '-s', 'en_US'])
+            .command(['mdata:translations:convert', '-f', 'xlsx', '-t', 'stf', '-i', path.join(__dirname, '..', '..', '..', 'data', 'translations', 'Bilingual_en_US_it.xlsx'), '-d', 'outdir', '-s', 'en_US'])
             .it('should generate a single STF file', () => {
                 expect(writeStreamStub.called).to.be.true;
                 expect(writeStreamStub.args[0][0]).to.equal('# Use the Bilingual file to review translations, edit labels that have already been translated, and add translations for labels that haven\'t been translated.\n');

@@ -2,8 +2,7 @@ import * as fs from 'fs';
 import { Messages } from '@salesforce/core';
 import { AnyJson } from '@salesforce/ts-types';
 import { Flags, SfCommand } from '@salesforce/sf-plugins-core';
-import { Mdata } from '../../../mdata';
-import { LoggerLevel, PackageXml } from '../../../typeDefs';
+import { PackageXml } from '../../../typeDefs';
 import { parseXml, writeXml } from '../../../xmlUtility';
 
 // Initialize Messages with the current plugin directory
@@ -64,13 +63,11 @@ export default class ManifestSort extends SfCommand<AnyJson> {
     public async run(): Promise<AnyJson> {
         this.actualFlags = (await this.parse(ManifestSort)).flags;
 
-        Mdata.setLogLevel(this.actualFlags.loglevel, this.jsonEnabled());
-
         // eslint-disable-next-line no-console
         console.error(this.actualFlags.manifest);
 
         if (!fs.existsSync(this.actualFlags.manifest)) {
-            Mdata.log(messages.getMessage('manifest.sort.errors.noInputFileFound'), LoggerLevel.FATAL);
+            this.logToStderr(messages.getMessage('manifest.sort.errors.noInputFileFound'));
             return null;
         }
 
@@ -78,7 +75,7 @@ export default class ManifestSort extends SfCommand<AnyJson> {
         try {
             manifestXml = (await parseXml(this.actualFlags.manifest)) as unknown as PackageXml;
         } catch (e) {
-            Mdata.log(messages.getMessage('manifest.sort.errors.badXml', [(e as Error).message]), LoggerLevel.FATAL);
+            this.logToStderr(messages.getMessage('manifest.sort.errors.badXml', [(e as Error).message]));
             return null;
         }
 
@@ -88,7 +85,7 @@ export default class ManifestSort extends SfCommand<AnyJson> {
         try {
             writeXml(this.actualFlags.manifest, manifestXml);
         } catch (e) {
-            Mdata.log(messages.getMessage('manifest.sort.errors.writeXml', [(e as Error).message]), LoggerLevel.FATAL);
+            this.logToStderr(messages.getMessage('manifest.sort.errors.writeXml', [(e as Error).message]));
             return null;
         }
 

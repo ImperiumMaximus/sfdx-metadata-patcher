@@ -1,9 +1,8 @@
 import * as path from 'path';
 import { Flags, SfCommand } from '@salesforce/sf-plugins-core';
-import { Messages } from '@salesforce/core';
+import { Messages, SfError } from '@salesforce/core';
 import { AnyJson } from '@salesforce/ts-types';
 import { ExcelUtility } from '../../../excelUtility';
-import { Mdata } from '../../../mdata';
 import { TranslationUtility } from '../../../translationUtility';
 import { TranslationDataTable } from '../../../typeDefs';
 
@@ -121,11 +120,9 @@ export default class Convert extends SfCommand<AnyJson> {
     public async run(): Promise<AnyJson> {
         this.actualFlags = (await this.parse(Convert)).flags;
 
-        Mdata.setLogLevel(this.actualFlags.loglevel, this.jsonEnabled());
-
         if (!Object.prototype.hasOwnProperty.call(ALLOWED_FROM_TO_COMBO, this.actualFlags.from) ||
             !(ALLOWED_FROM_TO_COMBO[this.actualFlags.from] as string[]).includes(this.actualFlags.to)) {
-            throw new Error(messages.getMessage('translations.convert.errors.invalidFromToCombo'));
+            throw new SfError(messages.getMessage('translations.convert.errors.invalidFromToCombo'));
         }
 
         let dataTableList: TranslationDataTable[] = [];

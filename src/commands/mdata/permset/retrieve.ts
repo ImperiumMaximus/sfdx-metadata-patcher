@@ -3,9 +3,7 @@ import { Flags, SfCommand } from '@salesforce/sf-plugins-core';
 import { Messages, Org, SfProject } from '@salesforce/core';
 import { ComponentSet } from '@salesforce/source-deploy-retrieve';
 import { AnyJson } from '@salesforce/ts-types';
-import { Mdata } from '../../../mdata';
 import { retrieveMetadataButKeepSubset } from '../../../retrieveUtility';
-import { LoggerLevel } from '../../../typeDefs';
 
 // Initialize Messages with the current plugin directory
 Messages.importMessagesDirectory(__dirname);
@@ -110,11 +108,9 @@ export default class PermSetRetrieve extends SfCommand<AnyJson> {
     public async run(): Promise<AnyJson> {
         this.actualFlags = (await this.parse(PermSetRetrieve)).flags;
 
-        Mdata.setLogLevel(this.actualFlags.loglevel, this.jsonEnabled());
-
         this.org = await Org.create({ aliasOrUsername: this.actualFlags.targetusername });
 
-        Mdata.log(messages.getMessage('general.infos.usingUsername', [this.org.getUsername()]), LoggerLevel.INFO);
+        this.log(messages.getMessage('general.infos.usingUsername', [this.org.getUsername()]));
 
         const project = await SfProject.resolve();
 
@@ -141,7 +137,7 @@ export default class PermSetRetrieve extends SfCommand<AnyJson> {
 
         const retrievedFiles = await retrieveMetadataButKeepSubset(this.org.getUsername(), componentSet, 'PermissionSet', 'permissionsets', outDir, this.actualFlags.permsets);
 
-        Mdata.log(messages.getMessage('general.infos.done'), LoggerLevel.INFO);
+        this.log(messages.getMessage('general.infos.done'));
 
         return retrievedFiles;
     }

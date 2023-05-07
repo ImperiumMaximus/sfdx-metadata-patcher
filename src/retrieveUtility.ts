@@ -6,9 +6,8 @@ import { Messages } from '@salesforce/core';
 import { ComponentSet } from '@salesforce/source-deploy-retrieve';
 import * as JSZip from 'jszip';
 import * as tmp from 'tmp';
-import { Mdata } from './mdata';
 import { sleep } from './miscUtility';
-import { AddressSettingsMetadata, LoggerLevel } from './typeDefs';
+import { AddressSettingsMetadata } from './typeDefs';
 import { parseXml, parseXmlFromStream } from './xmlUtility';
 
 // Initialize Messages with the current plugin directory
@@ -34,13 +33,13 @@ export const retrieveMetadataButKeepSubset = async (username: string, componentS
 
     let retrieveResultStatus = await retrieveResult.checkStatus();
 
-    Mdata.log(messages.getMessage('utility.retrieve.info.retrieveJobId', [retrieveResultStatus.id]), LoggerLevel.INFO);
+    // Mdata.log(messages.getMessage('utility.retrieve.info.retrieveJobId', [retrieveResultStatus.id]), LoggerLevel.INFO);
 
     while (!retrieveResultStatus.done) {
         sleep(2);
         // eslint-disable-next-line no-await-in-loop
         retrieveResultStatus = await retrieveResult.checkStatus();
-        Mdata.log(messages.getMessage('utility.retrieve.info.retrieveStatus', [retrieveResultStatus.status]), LoggerLevel.INFO);
+        // Mdata.log(messages.getMessage('utility.retrieve.info.retrieveStatus', [retrieveResultStatus.status]), LoggerLevel.INFO);
     }
 
     const metadataZip = await JSZip.loadAsync(Buffer.from(retrieveResultStatus.zipFile, 'base64'));
@@ -52,7 +51,7 @@ export const retrieveMetadataButKeepSubset = async (username: string, componentS
 
     return Promise.all(metadataFiles.map(async f => {
         const finalPath = path.join(outDir, metadataFolderName, `${path.basename(f)}-meta.xml`);
-        Mdata.log(messages.getMessage('utility.retrieve.info.writingFile', [finalPath]), LoggerLevel.INFO);
+        // Mdata.log(messages.getMessage('utility.retrieve.info.writingFile', [finalPath]), LoggerLevel.INFO);
         const writeStream = fs.createWriteStream(finalPath, { encoding: 'utf-8' });
         metadataZip.files[f].nodeStream().pipe(writeStream);
         await once(writeStream, 'finish');
@@ -79,13 +78,13 @@ export const getAddressSettingsJson = async (mdatafile: string, username: string
 
     let retrieveResultStatus = await retrieveResult.checkStatus();
 
-    Mdata.log(messages.getMessage('utility.retrieve.info.retrieveJobId', [retrieveResultStatus.id]), LoggerLevel.INFO);
+    // Mdata.log(messages.getMessage('utility.retrieve.info.retrieveJobId', [retrieveResultStatus.id]), LoggerLevel.INFO);
 
     while (!retrieveResultStatus.done) {
         sleep(2);
         // eslint-disable-next-line no-await-in-loop
         retrieveResultStatus = await retrieveResult.checkStatus();
-        Mdata.log(messages.getMessage('utility.retrieve.info.retrieveStatus', [retrieveResultStatus.status]), LoggerLevel.INFO);
+        // Mdata.log(messages.getMessage('utility.retrieve.info.retrieveStatus', [retrieveResultStatus.status]), LoggerLevel.INFO);
     }
 
     const metadataZip = await JSZip.loadAsync(Buffer.from(retrieveResultStatus.zipFile, 'base64'));

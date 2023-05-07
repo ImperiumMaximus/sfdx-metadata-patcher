@@ -11,18 +11,22 @@ export class WritableMemoryStream extends stream.Writable {
         this.memStore = Buffer.from('', encoding);
     }
 
-    public _write(chunk: string | Buffer, encoding?: BufferEncoding, cb?: (error: Error | null | undefined) => void): boolean {
+    public _write(chunk, encoding?: string, cb?: (error: Error | null) => void): boolean {
         try {
             const buffer = (Buffer.isBuffer(chunk)) ?
                 chunk :
-                Buffer.from(chunk, encoding ? encoding : this.encoding);
+                Buffer.from(chunk as string, encoding ? encoding : this.encoding);
 
             this.memStore = Buffer.concat([this.memStore, buffer]);
         } catch (e) {
-            cb(e as Error);
+            if (cb) {
+              cb(e as Error);
+            }
             return false;
         }
-        cb(null);
+        if (cb) {
+          cb(null);
+        }
         return true;
     }
 

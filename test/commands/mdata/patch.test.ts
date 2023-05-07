@@ -21,10 +21,10 @@ const $$ = testSetup()
 describe('mdata:patch', () => {
   describe('empty config', () => {
     test
-      .stdout()
+      .stderr()
       .command(['mdata:patch', '-e', 'default'])
       .it('should return a warning message', ctx => {
-        expect(ctx.stdout).to.contain(messages.getMessage('metadata.patch.warns.missingConfiguration'));
+        expect(ctx.stderr).to.contain(messages.getMessage('metadata.patch.warns.missingConfiguration'));
       });
   });
 
@@ -79,10 +79,10 @@ describe('mdata:patch', () => {
           }));
         commonStubs();
       })
-      .stdout()
+      .stderr()
       .command(['mdata:patch', '-e', 'default'])
       .it('runs mdata:patch on a non-existent file with the default environment name', ctx => {
-        expect(ctx.stdout).to.contain(messages.getMessage('metadata.patch.warns.missingFile', [path.join('force-app', 'main', 'default', 'profiles', 'NonExistent.profile-meta.xml')]));
+        expect(ctx.stderr).to.contain(messages.getMessage('metadata.patch.warns.missingFile', [path.join('force-app', 'main', 'default', 'profiles', 'NonExistent.profile-meta.xml')]));
       });
 
     test

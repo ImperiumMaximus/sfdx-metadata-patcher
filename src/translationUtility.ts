@@ -88,27 +88,27 @@ export class TranslationUtility {
                 if (header === '# KEY\tLABEL\tTRANSLATION\tOUT OF DATE') {
                     const { csvText, lastLine } = await this.readCSVInfo('# KEY\tLABEL\tTRANSLATION\tOUT OF DATE', reader);
                     translatedChunk = csvText;
-                    lastReadLine = lastLine;
+                    lastReadLine = lastLine ?? '';
                 }
                 if (header === '# KEY\tLABEL' || lastReadLine === '# KEY\tLABEL') {
                     const { csvText, lastLine } = await this.readCSVInfo('# KEY\tLABEL', reader);
                     untranslatedChunk = csvText;
-                    lastReadLine = lastLine;
+                    lastReadLine = lastLine ?? '';
                 } else {
                     header = await this.readLinesTill('# KEY\tLABEL', reader);
                     if (header) {
                         const { csvText, lastLine } = await this.readCSVInfo(header, reader);
                         untranslatedChunk = csvText;
-                        lastReadLine = lastLine;
+                        lastReadLine = lastLine ?? '';
                     }
                 }
 
-                let translatedChunkCsv: AnyJson[] = null;
+                let translatedChunkCsv: AnyJson[] | null = null;
                 if (translatedChunk) {
                     translatedChunkCsv = await this.parseCSV(translatedChunk);
                 }
 
-                let untranslatedChunkCsv: AnyJson[] = null;
+                let untranslatedChunkCsv: AnyJson[] | null = null;
                 if (untranslatedChunk) {
                     untranslatedChunkCsv = await this.parseCSV(untranslatedChunk);
                 }
@@ -135,7 +135,7 @@ export class TranslationUtility {
         return dataTable;
     }
 
-    private static async readLinesTill(textToSearch: string, reader: Reader): Promise<string> {
+    private static async readLinesTill(textToSearch: string, reader: Reader): Promise<string | null | undefined> {
         let line = await this.readLine(reader);
 
         while (line != null && !line.startsWith(textToSearch)) {
@@ -145,7 +145,7 @@ export class TranslationUtility {
         return line;
     }
 
-    private static readLine(reader: Reader): Promise<string> {
+    private static readLine(reader: Reader): Promise<string | null | undefined> {
         return new Promise((res, rej) => {
             if (!reader.hasNextLine()) {
                 res(null);
@@ -184,8 +184,8 @@ export class TranslationUtility {
         return keyFind.substring(key.length + 1);
     }
 
-    private static async readCSVInfo(header: string, reader: Reader): Promise<{ csvText: string; lastLine: string }> {
-        let lastLine: string | null = null;
+    private static async readCSVInfo(header: string, reader: Reader): Promise<{ csvText: string; lastLine: string | null | undefined }> {
+        let lastLine: string | null | undefined = null;
         let csvText = '"' + header.replace(/\t/g, '"\t"').replace(/\t/g, ',') + '"';
 
         let line = await this.readLine(reader);
@@ -210,8 +210,8 @@ export class TranslationUtility {
     }
 
     private static generateRowsFromSTFDataTable(resultTable: TranslationDataTable, csvTable: AnyJson[], stfFileType: StfType, filters?: string[]): void {
-        (filters?.length ? csvTable.filter(csvRow => filters.includes((csvRow['# KEY'] as string)) || filters.some(f => (csvRow['# KEY'] as string).startsWith(f))) : csvTable).forEach(csvRow => {
-            const keyChunks = (csvRow['# KEY'] as string).split('.');
+        (filters?.length ? csvTable.filter(csvRow => filters.includes((csvRow?.['# KEY'] as string)) || filters.some(f => (csvRow?.['# KEY'] as string).startsWith(f))) : csvTable).forEach(csvRow => {
+            const keyChunks = (csvRow?.['# KEY'] as string).split('.');
             if (keyChunks.length < 2) {
                 throw new Error(messages.getMessage('translations.convert.errors.invalidStfFormat'));
             }
@@ -228,15 +228,15 @@ export class TranslationUtility {
             const resultRow = {'Metadata Component': '', 'Object/Type': '', Label: '', Translation: '', 'Out of Date': '', 'Sub Type 1': '', 'Sub Type 2': ''};
             resultRow['Metadata Component'] = keyChunks[0];
             resultRow['Object/Type'] = keyChunks[1];
-            resultRow['Label'] = csvRow['LABEL'] as string;
+            resultRow['Label'] = csvRow?.['LABEL'] as string;
             if (Object.prototype.hasOwnProperty.call(csvRow, 'TRANSLATION')) {
-                resultRow['Translation'] = csvRow['TRANSLATION'] as string;
+                resultRow['Translation'] = csvRow?.['TRANSLATION'] as string;
             } else if (stfFileType === StfType.Source) {
                 resultRow['Translation'] = '{!--Unknown--}';
             }
 
             if (Object.prototype.hasOwnProperty.call(csvRow, 'OUT OF DATE')) {
-                if (csvRow['OUT OF DATE'] === '*') {
+                if (csvRow?.['OUT OF DATE'] === '*') {
                     resultRow['Out of Date'] = 'Yes';
                 } else {
                     resultRow['Out of Date'] = 'No';

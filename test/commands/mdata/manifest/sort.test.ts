@@ -65,20 +65,20 @@ describe('manifest:sort', () => {
     .do(() => {
         commonStubs();
     })
-    .stdout()
+    .stderr()
     .command(['mdata:manifest:sort', '-x', 'manifest/package_notfound.xml'])
     .it('generates an error if the manifest file is not found', (ctx) => {
-        expect(ctx.stdout).to.include(messages.getMessage('manifest.sort.errors.noInputFileFound'));
+        expect(ctx.stderr).to.include(messages.getMessage('manifest.sort.errors.noInputFileFound'));
     });
 
     test
     .do(() => {
         commonStubs();
     })
-    .stdout()
+    .stderr()
     .command(['mdata:manifest:sort', '-x', 'manifest/package_bad.xml'])
     .it('generates an error if the manifest file is malformed', (ctx) => {
-        expect(ctx.stdout).to.include(messages.getMessage('manifest.sort.errors.badXml', ['']).replace('%s', ''));
+        expect(ctx.stderr).to.include(messages.getMessage('manifest.sort.errors.badXml', ['']).replace('%s', ''));
     });
 
     test

@@ -10,9 +10,7 @@ import * as glob from 'glob';
 import * as jsonQuery from 'json-query';
 import * as prompts from 'prompts';
 import * as sqlstring from 'sqlstring';
-import { Mdata } from '../../../mdata';
 import { MetadataTypeInfos } from '../../../metadataTypeInfos';
-import { LoggerLevel } from '../../../typeDefs';
 import { parseXml } from '../../../xmlUtility';
 import { MetadataType } from '../../../metadataTypeInfos';
 
@@ -155,7 +153,6 @@ export default class TestDependencies extends SfCommand<AnyJson> {
 
     public async run(): Promise<AnyJson> {
         this.actualFlags = ((await this.parse(TestDependencies)).flags as unknown) as TestDependenciesFlags;
-        Mdata.setLogLevel(this.actualFlags.loglevel, this.jsonEnabled());
 
         this.metadataTypeInfos = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', '..', '..', 'cfg', 'metadata', 'metadataTypeInfos.json')).toString()) as MetadataTypeInfos;
         this.project = await SfProject.resolve();
@@ -264,21 +261,21 @@ export default class TestDependencies extends SfCommand<AnyJson> {
                         let fuzzyRes: fastFuzzy.MatchData<string>;
                         const potentialTestClass = `${apexClass}${this.actualFlags.nameconv}`;
                         if (allApexTestClasses.has(potentialTestClass) && !apexTestClasses.has(potentialTestClass) && apexClassesContentsByName[apexClass].includes(curMember)) {
-                            Mdata.log(`Adding Test Class ${potentialTestClass} (exact match) since it depends on ${curMember}`, LoggerLevel.TRACE);
+                            this.log(`Adding Test Class ${potentialTestClass} (exact match) since it depends on ${curMember}`);
                             if (!curFrontier.has(apexClass) && !closedList.has(apexClass)) {
                                 curFrontier.add(apexClass);
                             }
                             deltaApexCodeClasses.add(apexClass);
                             apexTestClasses.add(potentialTestClass);
                         } else if (allApexTestClasses.has(potentialTestClass) && !apexTestClasses.has(potentialTestClass) && apexClassesContentsByName[apexClass].match(new RegExp(curMember, 'ig'))) {
-                            Mdata.log(`Adding Test Class ${potentialTestClass} (regex match) since it depends on ${curMember}`, LoggerLevel.TRACE);
+                            this.log(`Adding Test Class ${potentialTestClass} (regex match) since it depends on ${curMember}`);
                             if (!curFrontier.has(apexClass) && !closedList.has(apexClass)) {
                                 curFrontier.add(apexClass);
                             }
                             deltaApexCodeClasses.add(apexClass);
                             apexTestClasses.add(potentialTestClass);
                         } else if (allApexTestClasses.has(potentialTestClass) && !apexTestClasses.has(potentialTestClass) && ((fuzzyRes = fastFuzzy.fuzzy(curMember, apexClassesContentsByName[apexClass], { useSellers: false, returnMatchData: true })).score >= Number(this.actualFlags.fuzzythreshold))) {
-                            Mdata.log(`Adding Test Class ${potentialTestClass} (fuzzy match, score: ${fuzzyRes.score}) since it depends on ${curMember}`, LoggerLevel.TRACE);
+                            this.log(`Adding Test Class ${potentialTestClass} (fuzzy match, score: ${fuzzyRes.score}) since it depends on ${curMember}`);
                             if (!frontier.has(apexClass) && !closedList.has(apexClass)) {
                                 curFrontier.add(apexClass);
                             }
@@ -320,7 +317,7 @@ export default class TestDependencies extends SfCommand<AnyJson> {
             }));
 
             coverageRecords.filter(coverageRecord => !apexTestClasses.has(coverageRecord['ApexTestClass'].Name) && allApexTestClasses.has(coverageRecord['ApexTestClass'].Name)).forEach(coverageRecord => {
-                Mdata.log(`Adding Test Class ${coverageRecord['ApexTestClass'].Name} (ApexCodeCoverage) since it covers ${coverageRecord['ApexClassOrTrigger'].Name}`, LoggerLevel.TRACE);
+                this.log(`Adding Test Class ${coverageRecord['ApexTestClass'].Name} (ApexCodeCoverage) since it covers ${coverageRecord['ApexClassOrTrigger'].Name}`);
                 apexTestClasses.add(coverageRecord['ApexTestClass'].Name);
             });
         }
@@ -416,7 +413,7 @@ export default class TestDependencies extends SfCommand<AnyJson> {
 
         await this.sfdxProjectJson.write(this.sfdxProjectJson.getContents());
 
-        Mdata.log('Configuration written to sfdx-project.json', LoggerLevel.INFO);
+        this.log('Configuration written to sfdx-project.json');
 
         return pluginConfig;
     }

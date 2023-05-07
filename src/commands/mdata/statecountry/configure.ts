@@ -3,10 +3,9 @@ import { WebDriver } from 'selenium-webdriver';
 import { Flags, SfCommand } from '@salesforce/sf-plugins-core';
 import { Messages, Org, SfError } from '@salesforce/core';
 import { AnyJson } from '@salesforce/ts-types';
-import { Mdata } from '../../../mdata';
 import { getAddressSettingsJson } from '../../../retrieveUtility';
 import { ExcelUtility } from '../../../excelUtility';
-import { AddressSettingsMetadata, AddressSettingsMetadataCountry, AddressSettingsMetadataState, CountryDataTable, CountryDataTableRow, LoggerLevel, StateDataTableRow, StatesDataTable } from '../../../typeDefs';
+import { AddressSettingsMetadata, AddressSettingsMetadataCountry, AddressSettingsMetadataState, CountryDataTable, CountryDataTableRow, StateDataTableRow, StatesDataTable } from '../../../typeDefs';
 import { SeleniumUtility } from '../../../seleniumUtility';
 
 // Initialize Messages with the current plugin directory
@@ -99,11 +98,9 @@ export default class StateCountryConfigure extends SfCommand<AnyJson> {
     public async run(): Promise<AnyJson> {
         this.actualFlags = (await this.parse(StateCountryConfigure)).flags;
 
-        Mdata.setLogLevel(this.actualFlags.loglevel, this.jsonEnabled());
-
         this.org = await Org.create({ aliasOrUsername: this.actualFlags.targetusername });
 
-        Mdata.log(messages.getMessage('general.infos.usingUsername', [this.org.getUsername()]), LoggerLevel.INFO);
+        this.log(messages.getMessage('general.infos.usingUsername', [this.org.getUsername()]));
 
         const addressSettingsJson: AddressSettingsMetadata = await getAddressSettingsJson(this.actualFlags.mdatafile, this.org.getUsername());
 
@@ -146,9 +143,9 @@ export default class StateCountryConfigure extends SfCommand<AnyJson> {
 
         if (this.actualFlags.check) {
             if (await this.checkConfigurationStatus()) {
-                Mdata.log(messages.getMessage('statecountry.configure.infos.checkOkMessage'), LoggerLevel.INFO);
+                this.log(messages.getMessage('statecountry.configure.infos.checkOkMessage'));
             } else {
-                Mdata.log(messages.getMessage('statecountry.configure.errors.checkKoMessage'), LoggerLevel.ERROR);
+                this.logToStderr(messages.getMessage('statecountry.configure.errors.checkKoMessage'));
             }
         }
 

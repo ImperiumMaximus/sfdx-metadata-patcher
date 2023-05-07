@@ -59,7 +59,7 @@ describe('statecountry:template', () => {
     });
 
     test
-    .command(['mdata:statecountry:template', '-o', 'out.xlsx', '-u', 'testusername'])
+    .command(['mdata:statecountry:template', '-p', 'out.xlsx', '-u', 'testusername'])
     .it('generates an Excel file with the AddressSettings metadata XML contents retrieved from the target Org', () => {
         expect(xlsxWriteFileStub.called).to.be.true;
         expect(xlsxWriteFileStub.args[0][0]).to.equal('out.xlsx');

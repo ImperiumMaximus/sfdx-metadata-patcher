@@ -15,8 +15,7 @@ import { AnyJson, JsonMap, JsonCollection } from '@salesforce/ts-types';
 import * as glob from 'glob';
 import * as jsonQuery from 'json-query';
 import * as _ from 'lodash';
-import { Mdata } from '../../mdata';
-import { LoggerLevel, PatchFix, PatchFixes } from '../../typeDefs';
+import { PatchFix, PatchFixes } from '../../typeDefs';
 import { parseXml, writeXml } from '../../xmlUtility';
 
 // Initialize Messages with the current plugin directory
@@ -222,26 +221,24 @@ export default class Patch extends SfCommand<AnyJson> {
     public async run(): Promise<AnyJson> {
         this.actualFlags = (await this.parse(Patch)).flags;
 
-        Mdata.setLogLevel(this.actualFlags.loglevel, this.jsonEnabled());
-
         const project = await SfProject.resolve();
         const config: JsonMap = await project.resolveProjectConfig();
 
         if (!config.plugins?.['mdataPatches']) {
-            Mdata.log(messages.getMessage('metadata.patch.warns.missingConfiguration'), LoggerLevel.WARN);
+            this.warn(messages.getMessage('metadata.patch.warns.missingConfiguration'));
             return messages.getMessage('metadata.patch.warns.missingConfiguration');
         }
 
         this.fixes = Object.assign({}, (config.plugins['mdataPatches'] as { [key: string]: PatchFixes })[this.actualFlags.env] || {});
         this.baseDir = path.join(this.actualFlags.rootdir || (config.packageDirectories[0] as PackageDir).path, this.actualFlags.subpath);
 
-        Mdata.log('Base Dir: ' + this.baseDir, LoggerLevel.INFO);
+        this.log('Base Dir: ' + this.baseDir);
 
         if (!this.actualFlags.mdapimapfile || !fs.existsSync(this.actualFlags.mdapimapfile)) {
-            Mdata.log(messages.getMessage('metadata.patch.infos.executingPreDeployFixes'), LoggerLevel.INFO);
+            this.log(messages.getMessage('metadata.patch.infos.executingPreDeployFixes'));
             await this.preDeployFixes();
         }
-        Mdata.log(messages.getMessage('general.infos.done'), LoggerLevel.INFO);
+        this.log(messages.getMessage('general.infos.done'));
 
         return '';
     }
@@ -282,7 +279,7 @@ export default class Patch extends SfCommand<AnyJson> {
             } else if (fs.existsSync(path.join(self.baseDir, osAgnosticFilePath))) {
                 return patchFile(path.join(self.baseDir, osAgnosticFilePath));
             } else {
-                Mdata.log(messages.getMessage('metadata.patch.warns.missingFile', [path.join(self.baseDir, osAgnosticFilePath)]), LoggerLevel.WARN);
+                this.warn(messages.getMessage('metadata.patch.warns.missingFile', [path.join(self.baseDir, osAgnosticFilePath)]));
                 return Promise.resolve();
             }
         }, Promise.resolve());

@@ -1,9 +1,8 @@
 import * as path from 'path';
-import { flags, SfdxCommand } from '@salesforce/command';
-import { Messages } from '@salesforce/core';
+import { Flags, SfCommand } from '@salesforce/sf-plugins-core';
+import { Messages, SfError } from '@salesforce/core';
 import { AnyJson } from '@salesforce/ts-types';
 import { ExcelUtility } from '../../../excelUtility';
-import { Mdata } from '../../../mdata';
 import { TranslationUtility } from '../../../translationUtility';
 import { TranslationDataTable } from '../../../typeDefs';
 
@@ -23,8 +22,8 @@ const ALLOWED_FROM_TO_COMBO = {
     ]
 };
 
-export default class Publish extends SfdxCommand {
-    public static description = messages.getMessage('translations.convert.description');
+export default class Convert extends SfCommand<AnyJson> {
+    public static readonly summary = messages.getMessage('translations.convert.description');
 
     /* public static examples = [
         `To publish all the communities in the org:
@@ -44,44 +43,44 @@ export default class Publish extends SfdxCommand {
     $ sfdx mdata:communities:publish -n Customer -u admin.user@uat.myorg.com`
     ];*/
 
-    protected static flagsConfig = {
-        from: flags.string({
+    public static readonly flags = {
+        from: Flags.string({
             char: 'f',
-            description: messages.getMessage('translations.convert.flags.from'),
+            summary: messages.getMessage('translations.convert.flags.from'),
             options: ['stf', 'xlsx'],
             required: true
         }),
-        to: flags.string({
+        to: Flags.string({
             char: 't',
-            description: messages.getMessage('translations.convert.flags.to'),
+            summary: messages.getMessage('translations.convert.flags.to'),
             options: ['stf', 'xlsx'],
             required: true
         }),
-        infile: flags.string({
+        infile: Flags.string({
             char: 'i',
-            description: messages.getMessage('translations.convert.flags.infile'),
+            summary: messages.getMessage('translations.convert.flags.infile'),
             required: true
         }),
-        outfile: flags.string({
-            char: 'o',
-            description: messages.getMessage('translations.convert.flags.outfile'),
+        outfile: Flags.string({
+            char: 'd',
+            summary: messages.getMessage('translations.convert.flags.outfile'),
             required: true
         }),
-        metadata: flags.string({
+        metadata: Flags.string({
             char: 'm',
-            description: messages.getMessage('translations.convert.flags.metadata')
+            summary: messages.getMessage('translations.convert.flags.metadata')
         }),
-        sheets: flags.string({
+        sheets: Flags.string({
             char: 's',
-            description: messages.getMessage('translations.convert.flags.sheets')
+            summary: messages.getMessage('translations.convert.flags.sheets')
         }),
-        rowheadernum: flags.number({
+        rowheadernum: Flags.integer({
             char: 'r',
-            description: messages.getMessage('translations.convert.flags.rowheadernum'),
+            summary: messages.getMessage('translations.convert.flags.rowheadernum'),
             default: 1
         }),
-        loglevel: flags.enum({
-            description: messages.getMessage('general.flags.loglevel'),
+        loglevel: Flags.string({
+            summary: messages.getMessage('general.flags.loglevel'),
             default: 'info',
             required: false,
             options: [
@@ -107,30 +106,38 @@ export default class Publish extends SfdxCommand {
     // Comment this out if your command does not support a hub org username
     protected static supportsDevhubUsername = false;
 
-    // Set this to true if your command requires a project workspace; 'requiresProject' is false by default
-    protected static requiresProject = false;
+    protected actualFlags: {
+      from: string;
+      to: string;
+      infile: string;
+      outfile: string;
+      metadata: string;
+      sheets: string;
+      rowheadernum: number;
+      loglevel: string;
+    };
 
     public async run(): Promise<AnyJson> {
-        Mdata.setLogLevel(this.flags.loglevel, this.flags.json);
+        this.actualFlags = (await this.parse(Convert)).flags;
 
-        if (!Object.prototype.hasOwnProperty.call(ALLOWED_FROM_TO_COMBO, this.flags.from) ||
-            !ALLOWED_FROM_TO_COMBO[this.flags.from].includes(this.flags.to)) {
-            throw new Error(messages.getMessage('translations.convert.errors.invalidFromToCombo'));
+        if (!Object.prototype.hasOwnProperty.call(ALLOWED_FROM_TO_COMBO, this.actualFlags.from) ||
+            !(ALLOWED_FROM_TO_COMBO[this.actualFlags.from] as string[]).includes(this.actualFlags.to)) {
+            throw new SfError(messages.getMessage('translations.convert.errors.invalidFromToCombo'));
         }
 
         let dataTableList: TranslationDataTable[] = [];
-        if (this.flags.from === 'stf' && this.flags.to === 'xlsx') {
-            if (path.extname(this.flags.infile) === '.zip') {
-                dataTableList = await TranslationUtility.importSTFZipFile(this.flags.infile, 'utf8', this.flags.metadata ? this.flags.metadata.split(',') : []);
+        if (this.actualFlags.from === 'stf' && this.actualFlags.to === 'xlsx') {
+            if (path.extname(this.actualFlags.infile) === '.zip') {
+                dataTableList = await TranslationUtility.importSTFZipFile(this.actualFlags.infile, 'utf8', this.actualFlags.metadata ? this.actualFlags.metadata.split(',') : []);
             } else {
-                dataTableList.push(await TranslationUtility.importSTFFile(this.flags.infile, 'utf8'));
+                dataTableList.push(await TranslationUtility.importSTFFile(this.actualFlags.infile, 'utf8'));
             }
 
-            await ExcelUtility.toExcel(dataTableList, this.flags.outfile);
-        } else if (this.flags.from === 'xlsx' && this.flags.to === 'stf') {
-            dataTableList = await ExcelUtility.importFromExcel(this.flags.infile, this.flags.sheets ? this.flags.sheets.split(',') : [], this.flags.rowheadernum);
+            await ExcelUtility.toExcel(dataTableList, this.actualFlags.outfile);
+        } else if (this.actualFlags.from === 'xlsx' && this.actualFlags.to === 'stf') {
+            dataTableList = await ExcelUtility.importFromExcel<['Metadata Component' | 'Object/Type' | 'Sub Type 1' | 'Sub Type 2' | 'Label' | 'Translation' | 'Out of Date']>(this.actualFlags.infile, this.actualFlags.sheets ? this.actualFlags.sheets.split(',') : [], this.actualFlags.rowheadernum);
 
-            await TranslationUtility.exportToSTF(dataTableList, this.flags.outfile, 'utf8');
+            TranslationUtility.exportToSTF(dataTableList, this.actualFlags.outfile, 'utf8');
         }
 
         return null;

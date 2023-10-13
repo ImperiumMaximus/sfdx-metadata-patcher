@@ -1,5 +1,6 @@
 import { expect, test } from '@salesforce/command/lib/test';
 import { testSetup } from '@salesforce/core/lib/testSetup';
+import Sinon = require('sinon');
 import { stubMethod } from '@salesforce/ts-sinon';
 import { Messages } from '@salesforce/core';
 import * as ExcelJS from 'exceljs';
@@ -10,17 +11,16 @@ Messages.importMessagesDirectory(__dirname);
 
 // Load the specific messages for this file. Messages from @salesforce/command, @salesforce/core,
 // or any library that is using the messages framework can also be loaded this way.
-//const messages = Messages.loadMessages('sfdx-metadata-patcher', 'mdata');
+// const messages = Messages.loadMessages('sfdx-metadata-patcher', 'mdata');
 
 const $$ = testSetup();
 
 describe('statecountry:template', () => {
-    let xlsxWriteFileStub;
+    let xlsxWriteFileStub: Sinon.SinonStub;
 
     const commonStubs = function () {
 
-        stubMethod($$.SANDBOX, retrieveUtility, 'getAddressSettingsJson').callsFake((_: string, __: string) => {
-            return {
+        stubMethod($$.SANDBOX, retrieveUtility, 'getAddressSettingsJson').callsFake(() => ({
                 'AddressSettings': {
                     'countriesAndStates': [{
                         'countries': [
@@ -50,8 +50,7 @@ describe('statecountry:template', () => {
                         ]
                     }]
                 }
-            }
-        });
+            }));
         xlsxWriteFileStub = stubMethod($$.SANDBOX, ExcelJS.Workbook.prototype.xlsx, 'writeFile');
     };
 
@@ -60,7 +59,7 @@ describe('statecountry:template', () => {
     });
 
     test
-    .command(['mdata:statecountry:template', '-o', 'out.xlsx', '-u', 'testusername'])
+    .command(['mdata:statecountry:template', '-p', 'out.xlsx', '-u', 'testusername'])
     .it('generates an Excel file with the AddressSettings metadata XML contents retrieved from the target Org', () => {
         expect(xlsxWriteFileStub.called).to.be.true;
         expect(xlsxWriteFileStub.args[0][0]).to.equal('out.xlsx');

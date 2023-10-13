@@ -1,9 +1,8 @@
-import { flags, SfdxCommand } from '@salesforce/command';
+import { Flags, SfCommand } from '@salesforce/sf-plugins-core';
 import { Messages, Org } from '@salesforce/core';
 import { AnyJson } from '@salesforce/ts-types';
-import { Mdata } from '../../../mdata';
 import { ExcelUtility } from '../../../excelUtility';
-import { LoggerLevel, TranslationDataTable } from '../../../typeDefs';
+import { AddressSettingsMetadataCountry, AddressSettingsMetadataState, CountryDataTable, StatesDataTable } from '../../../typeDefs';
 import { getAddressSettingsJson } from '../../../retrieveUtility';
 
 // Initialize Messages with the current plugin directory
@@ -13,27 +12,31 @@ Messages.importMessagesDirectory(__dirname);
 // or any library that is using the messages framework can also be loaded this way.
 const messages = Messages.loadMessages('sfdx-metadata-patcher', 'mdata');
 
-export default class StateCountryTemplate extends SfdxCommand {
-    public static description = messages.getMessage('statecountry.template.description');
+export default class StateCountryTemplate extends SfCommand<AnyJson> {
+    public static readonly summary = messages.getMessage('statecountry.template.description');
 
-    public static examples = [
+    public static readonly examples = [
         `To generate an Excel template of the State / Country Picklist currently configured in the current default org
     $ sfdx mdata:statecountry:template -o /path/to/template/to/generate.xlsx`
 
     ];
 
-    protected static flagsConfig = {
-        outputpath: flags.string({
-            char: 'o',
-            description: messages.getMessage('statecountry.template.flags.outputpath'),
+    public static readonly flags = {
+        outputpath: Flags.string({
+            char: 'p',
+            summary: messages.getMessage('statecountry.template.flags.outputpath'),
             required: true
         }),
-        mdatafile: flags.string({
+        mdatafile: Flags.string({
             char: 'm',
-            description: messages.getMessage('statecountry.template.flags.mdatafile')
+            summary: messages.getMessage('statecountry.template.flags.mdatafile')
         }),
-        loglevel: flags.enum({
-            description: messages.getMessage('general.flags.loglevel'),
+        targetusername: Flags.string({
+          summary: messages.getMessage('general.flags.targetusername'),
+          char: 'u',
+        }),
+        loglevel: Flags.string({
+            summary: messages.getMessage('general.flags.loglevel'),
             default: 'info',
             required: false,
             options: [
@@ -59,46 +62,52 @@ export default class StateCountryTemplate extends SfdxCommand {
     // Comment this out if your command does not support a hub org username
     protected static supportsDevhubUsername = false;
 
-    // Set this to true if your command requires a project workspace; 'requiresProject' is false by default
-    protected static requiresProject = false;
+    protected actualFlags: {
+      outputpath: string;
+      mdatafile: string;
+      targetusername: string;
+      loglevel: string;
+    };
+
+    protected org: Org;
 
     protected countriesToCheck = {};
     protected statesToCheck = {};
 
     public async run(): Promise<AnyJson> {
-        Mdata.setLogLevel(this.flags.loglevel, this.flags.json);
+        this.actualFlags = (await this.parse(StateCountryTemplate)).flags;
 
-        this.org = await Org.create({ aliasOrUsername: this.flags.targetusername });
+        this.org = await Org.create({ aliasOrUsername: this.actualFlags.targetusername });
 
-        Mdata.log(messages.getMessage('general.infos.usingUsername', [this.org.getUsername()]), LoggerLevel.INFO);
+        this.log(messages.getMessage('general.infos.usingUsername', [this.org.getUsername()]));
 
-        const addressSettingsJson = await getAddressSettingsJson(this.flags.mdatafile, this.org.getUsername());
+        const addressSettingsJson = await getAddressSettingsJson(this.actualFlags.mdatafile, this.org.getUsername());
 
-        const templateSheets: TranslationDataTable[] = [];
+        const templateSheets: Array<(CountryDataTable | StatesDataTable)> = [];
 
-        const countryDataTable: TranslationDataTable = {
+        const countryDataTable: CountryDataTable = {
             name: 'Countries',
             columns: ['label', 'isoCode', 'integrationValue', 'active', 'visible'],
             rows: []
         };
-        const statesDataTable: TranslationDataTable = {
+        const statesDataTable: StatesDataTable = {
             name: 'States',
             columns: ['countryIsoCode', 'label', 'isoCode', 'integrationValue', 'active', 'visible'],
             rows: []
         };
 
-        addressSettingsJson['AddressSettings']['countriesAndStates'][0]['countries'].map((country: AnyJson) => {
-            countryDataTable.rows.push(countryDataTable.columns.reduce((acc: object, c: string) => {
+        addressSettingsJson['AddressSettings']['countriesAndStates'][0]['countries'].map((country: AddressSettingsMetadataCountry) => {
+            countryDataTable.rows.push(countryDataTable.columns.reduce((acc, c) => {
                 acc[c] = { value: country[c][0], type: 'string' };
                 return acc;
-            }, {}));
+            }, { label: null, isoCode: null, integrationValue: null, active: null, visible: null }));
 
             if (Object.prototype.hasOwnProperty.call(country, 'states')) {
-                country['states'].forEach((s: AnyJson) => {
-                    statesDataTable.rows.push(statesDataTable.columns.slice(1).reduce((sAcc: object, sc: string) => {
+                country['states'].forEach((s: AddressSettingsMetadataState & { countryIsoCode: string }) => {
+                    statesDataTable.rows.push(statesDataTable.columns.slice(1).reduce((sAcc, sc) => {
                         sAcc[sc] = { value: s[sc][0], type: 'string' };
                         return sAcc;
-                    }, { countryIsoCode: country['isoCode'][0] }));
+                    }, { countryIsoCode: country['isoCode'][0], label: null, isoCode: null, integrationValue: null, active: null, visible: null }));
                 });
             }
         });
@@ -106,7 +115,7 @@ export default class StateCountryTemplate extends SfdxCommand {
         templateSheets.push(countryDataTable);
         templateSheets.push(statesDataTable);
 
-        await ExcelUtility.toExcel(templateSheets, this.flags.outputpath);
+        await ExcelUtility.toExcel(templateSheets, this.actualFlags.outputpath);
 
         return null;
     }

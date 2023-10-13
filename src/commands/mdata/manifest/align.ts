@@ -1,10 +1,9 @@
 import * as fs from 'fs';
-import { flags, SfdxCommand } from '@salesforce/command';
 import { Messages , SfdxProject } from '@salesforce/core';
 import { ComponentSet } from '@salesforce/source-deploy-retrieve';
 import { AnyJson } from '@salesforce/ts-types';
 import * as xml2js from 'xml2js';
-import { Mdata } from '../../../mdata';
+import { Flags, SfCommand } from '@salesforce/sf-plugins-core';
 
 // Initialize Messages with the current plugin directory
 Messages.importMessagesDirectory(__dirname);
@@ -13,11 +12,11 @@ Messages.importMessagesDirectory(__dirname);
 // or any library that is using the messages framework can also be loaded this way.
 const messages = Messages.loadMessages('sfdx-metadata-patcher', 'mdata');
 
-export default class ManifestSort extends SfdxCommand {
+export default class ManifestSort extends SfCommand<AnyJson> {
 
-    public static description = messages.getMessage('manifest.align.description');
+    public static readonly summary = messages.getMessage('manifest.align.description');
 
-    public static examples = [
+    public static readonly examples = [
         `To align the manifest from the default package source directory
     $ sfdx mdata:manifest:align -x manifest/package.xml`,
 
@@ -32,26 +31,26 @@ export default class ManifestSort extends SfdxCommand {
 
     ];
 
-    protected static flagsConfig = {
-        rootdir: flags.string({
+    public static readonly flags = {
+        rootdir: Flags.string({
             char: 'r',
-            description: messages.getMessage('manifest.align.flags.rootdir')
+            summary: messages.getMessage('manifest.align.flags.rootdir')
         }),
-        sourcepath: flags.string({
+        sourcepath: Flags.string({
             char: 'p',
-            description: messages.getMessage('manifest.align.flags.sourcepath')
+            summary: messages.getMessage('manifest.align.flags.sourcepath')
         }),
-        manifest: flags.string({
+        manifest: Flags.string({
             char: 'x',
-            description: messages.getMessage('manifest.align.flags.manifest'),
+            summary: messages.getMessage('manifest.align.flags.manifest'),
             default: 'manifest/package.xml'
         }),
-        metadata: flags.string({
+        metadata: Flags.string({
             char: 'm',
-            description: messages.getMessage('manifest.align.flags.metadata')
+            summary: messages.getMessage('manifest.align.flags.metadata')
         }),
-        loglevel: flags.enum({
-            description: messages.getMessage('general.flags.loglevel'),
+        loglevel: Flags.string({
+            summary: messages.getMessage('general.flags.loglevel'),
             default: 'info',
             required: false,
             options: [
@@ -71,35 +70,43 @@ export default class ManifestSort extends SfdxCommand {
         })
     };
 
+    // Set this to true if your command requires a project workspace; 'requiresProject' is false by default
+    public static readonly requiresProject = true;
+
     // Comment this out if your command does not require an org username
     protected static requiresUsername = false;
 
     // Comment this out if your command does not support a hub org username
     protected static supportsDevhubUsername = false;
 
-    // Set this to true if your command requires a project workspace; 'requiresProject' is false by default
-    protected static requiresProject = true;
+    protected actualFlags: {
+      rootdir: string;
+      sourcepath: string;
+      manifest: string;
+      metadata: string;
+      loglevel: string;
+    };
 
     public async run(): Promise<AnyJson> {
-        Mdata.setLogLevel(this.flags.loglevel, this.flags.json);
+        this.actualFlags = (await this.parse(ManifestSort)).flags;
 
         const project = await SfdxProject.resolve();
 
         const paths: string[] = [];
 
-        if (this.flags.sourcepath) {
-            paths.push(...this.flags.sourcepath.split(','));
+        if (this.actualFlags.sourcepath) {
+            paths.push(...this.actualFlags.sourcepath.split(','));
         } else {
             paths.push(project.getDefaultPackage().fullPath);
         }
 
-        if (this.flags.rootdir) {
-            paths.push(this.flags.rootdir);
+        if (this.actualFlags.rootdir) {
+            paths.push(this.actualFlags.rootdir);
         }
 
         let include: ComponentSet;
-        if (this.flags.metadata) {
-            include = new ComponentSet(this.flags.metadata.split(',').map((m: string) => ({ fullName: ComponentSet.WILDCARD, type: m })));
+        if (this.actualFlags.metadata) {
+            include = new ComponentSet(this.actualFlags.metadata.split(',').map((m: string) => ({ fullName: ComponentSet.WILDCARD, type: m })));
         }
 
         const componentSet = ComponentSet.fromSource({
@@ -109,10 +116,10 @@ export default class ManifestSort extends SfdxCommand {
 
         const packageXml = componentSet.getPackageXml();
 
-        fs.writeFileSync(this.flags.manifest, packageXml);
+        fs.writeFileSync(this.actualFlags.manifest, packageXml);
 
-        if (this.flags.json) {
-            return await (new Promise((resolve, reject) => (new xml2js.Parser({ explicitArray: true }).parseString(packageXml, ((err, result) => {
+        if (this.jsonEnabled()) {
+            return (new Promise((resolve, reject) => (new xml2js.Parser({ explicitArray: true }).parseString(packageXml, ((err, result: AnyJson) => {
                 if (err) {
                     reject(err);
                 }

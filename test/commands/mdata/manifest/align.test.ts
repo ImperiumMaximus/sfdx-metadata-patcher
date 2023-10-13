@@ -1,11 +1,12 @@
+import * as fs from 'fs';
 import { expect, test } from '@salesforce/command/lib/test';
 import { testSetup } from '@salesforce/core/lib/testSetup';
-import { ComponentSet, FromSourceOptions } from '@salesforce/source-deploy-retrieve';
+import { ComponentSet } from '@salesforce/source-deploy-retrieve';
 import { stubMethod } from '@salesforce/ts-sinon';
-import * as fs from 'fs';
-import { SfdxProject } from '@salesforce/core';
+import { SfProject } from '@salesforce/core';
 import { Messages } from '@salesforce/core';
 import { before } from 'mocha';
+import { AnyJson } from '@salesforce/ts-types';
 import { parseXml } from '../../../../src/xmlUtility';
 
 // Initialize Messages with the current plugin directory
@@ -13,22 +14,22 @@ Messages.importMessagesDirectory(__dirname);
 
 // Load the specific messages for this file. Messages from @salesforce/command, @salesforce/core,
 // or any library that is using the messages framework can also be loaded this way.
-//const messages = Messages.loadMessages('sfdx-metadata-patcher', 'mdata');
+// const messages = Messages.loadMessages('sfdx-metadata-patcher', 'mdata');
 
 const $$ = testSetup();
 
 describe('manifest:align', () => {
-    let writeFileSyncStub;
-    let testPackageXml;
+    let writeFileSyncStub: sinon.SinonStub;
+    let testPackageXml: AnyJson;
     const commonStubs = function () {
-        /*const fsExistsSync = stubMethod($$.SANDBOX, fs, 'existsSync');
+        /* const fsExistsSync = stubMethod($$.SANDBOX, fs, 'existsSync');
 
         fsExistsSync.callsFake((filePath: string) => {
             if (filePath === 'manifest/package.xml' || filePath === 'manifest/package_bad.xml') return true;
             return fsExistsSync.wrappedMethod.call(this, filePath);
         });*/
 
-        /*const readFileSyncStub = stubMethod($$.SANDBOX, fs, 'readFileSync')
+        /* const readFileSyncStub = stubMethod($$.SANDBOX, fs, 'readFileSync')
 
         readFileSyncStub.callsFake((path: string) => {
             if (path.includes('package.xml')) {
@@ -38,21 +39,15 @@ describe('manifest:align', () => {
             }
             return readFileSyncStub.wrappedMethod.call(this, path).toString();
         })*/
-        stubMethod($$.SANDBOXES.PROJECT, SfdxProject.prototype, 'getDefaultPackage').callsFake(() => {
-            return [{
-                "fullPath": "force-app/",
-                "name": "force-app"
-            }]
-        });
+        stubMethod($$.SANDBOXES.PROJECT, SfProject.prototype, 'getDefaultPackage').callsFake(() => [{
+                'fullPath': 'force-app/',
+                'name': 'force-app'
+            }]);
 
 
-        stubMethod($$.SANDBOX, ComponentSet, 'fromSource').callsFake((options: FromSourceOptions) => {
-            return new ComponentSet();
-        });
+        stubMethod($$.SANDBOX, ComponentSet, 'fromSource').callsFake(() => new ComponentSet());
 
-        stubMethod($$.SANDBOX, ComponentSet.prototype, 'getPackageXml').callsFake(() => {
-            return testPackageXml;
-        });
+        stubMethod($$.SANDBOX, ComponentSet.prototype, 'getPackageXml').callsFake(() => testPackageXml);
 
         writeFileSyncStub = stubMethod($$.SANDBOX, fs, 'writeFileSync');
     }
@@ -100,6 +95,6 @@ describe('manifest:align', () => {
         const expectedJson = await parseXml(__dirname + '/../../../data/manifest/package.xml');
         expect(writeFileSyncStub.args[writeFileSyncStub.args.length - 1][0]).to.equal('manifest/package.xml');
         expect(writeFileSyncStub.args[writeFileSyncStub.args.length - 1][1]).to.equal(testPackageXml);
-        expect(JSON.parse(ctx.stdout).result).to.deep.equal(expectedJson);
+        expect((JSON.parse(ctx.stdout) as AnyJson)?.['result']).to.deep.equal(expectedJson);
     });
 });

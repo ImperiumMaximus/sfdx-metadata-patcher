@@ -1,9 +1,10 @@
+import * as fs from 'fs';
 import { expect, test } from '@salesforce/command/lib/test';
 import { testSetup } from '@salesforce/core/lib/testSetup';
 import { stubMethod } from '@salesforce/ts-sinon';
-import * as fs from 'fs';
 import * as xml2js from 'xml2js';
 import { Messages } from '@salesforce/core';
+import { AnyJson } from '@salesforce/ts-types';
 import { parseXml } from '../../../../src/xmlUtility';
 
 // Initialize Messages with the current plugin directory
@@ -17,24 +18,24 @@ const $$ = testSetup();
 
 describe('manifest:sort', () => {
 
-    let writeFileSyncStub;
+    let writeFileSyncStub: sinon.SinonStub;
     const commonStubs = function () {
         const fsExistsSync = stubMethod($$.SANDBOX, fs, 'existsSync');
 
         fsExistsSync.callsFake((filePath: string) => {
             if (filePath === 'manifest/package.xml' || filePath === 'manifest/package_bad.xml') return true;
-            return fsExistsSync.wrappedMethod.call(this, filePath);
+            return fsExistsSync.wrappedMethod.call(this, filePath) as boolean;
         });
 
         const readFileSyncStub = stubMethod($$.SANDBOX, fs, 'readFileSync')
 
         readFileSyncStub.callsFake((path: string) => {
             if (path.includes('package.xml')) {
-                return readFileSyncStub.wrappedMethod.call(this, __dirname + '/../../../data/manifest/package.xml');
+                return readFileSyncStub.wrappedMethod.call(this, __dirname + '/../../../data/manifest/package.xml') as string;
             } else if (path.includes('package_bad.xml')) {
-                return "<xml nbfi3wbgqwbfo></fifbwqfb>";
+                return '<xml nbfi3wbgqwbfo></fifbwqfb>';
             }
-            return readFileSyncStub.wrappedMethod.call(this, path).toString();
+            return (readFileSyncStub.wrappedMethod.call(this, path) as object).toString();
         })
 
         writeFileSyncStub = stubMethod($$.SANDBOX, fs, 'writeFileSync');
@@ -64,20 +65,20 @@ describe('manifest:sort', () => {
     .do(() => {
         commonStubs();
     })
-    .stdout()
+    .stderr()
     .command(['mdata:manifest:sort', '-x', 'manifest/package_notfound.xml'])
     .it('generates an error if the manifest file is not found', (ctx) => {
-        expect(ctx.stdout).to.include(messages.getMessage('manifest.sort.errors.noInputFileFound'));
+        expect(ctx.stderr).to.include(messages.getMessage('manifest.sort.errors.noInputFileFound'));
     });
 
     test
     .do(() => {
         commonStubs();
     })
-    .stdout()
+    .stderr()
     .command(['mdata:manifest:sort', '-x', 'manifest/package_bad.xml'])
     .it('generates an error if the manifest file is malformed', (ctx) => {
-        expect(ctx.stdout).to.include(messages.getMessage('manifest.sort.errors.badXml').replace('%s', ''));
+        expect(ctx.stderr).to.include(messages.getMessage('manifest.sort.errors.badXml', ['']).replace('%s', ''));
     });
 
     test
@@ -100,6 +101,6 @@ describe('manifest:sort', () => {
                 version: '1.0'
             }
         }).buildObject(expectedJson));
-        expect(JSON.parse(ctx.stdout).result).to.deep.equal(expectedJson);
+        expect((JSON.parse(ctx.stdout) as AnyJson)?.['result']).to.deep.equal(expectedJson);
     });
 });

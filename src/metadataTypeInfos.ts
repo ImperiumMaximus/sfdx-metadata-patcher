@@ -6,7 +6,12 @@
 //
 // These functions will throw an error if the JSON doesn't
 // match the expected interface, even if the JSON is valid.
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-shadow, prefer-arrow/prefer-arrow-functions, no-shadow, @typescript-eslint/naming-convention */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-shadow, no-shadow,
+  @typescript-eslint/naming-convention, @typescript-eslint/no-unsafe-call,
+  @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access,
+  @typescript-eslint/no-unsafe-argument,  @typescript-eslint/restrict-template-expressions,
+  @typescript-eslint/no-unsafe-return
+*/
 
 export interface MetadataTypeInfos {
     typeDefs: TypeDefs;
@@ -136,13 +141,13 @@ function transform(val: any, typ: any, getProps: any, key: any = ''): any {
             const typ = typs[i];
             try {
                 return transform(val, typ, getProps);
-            } catch (_) {}
+            } catch (_) { /* empty */ }
         }
         return invalidValue(typs, val);
     }
 
     function transformEnum(cases: string[], val: any): any {
-        if (cases.indexOf(val) !== -1) return val;
+        if (cases.includes(val)) return val;
         return invalidValue(cases, val);
     }
 
@@ -192,9 +197,9 @@ function transform(val: any, typ: any, getProps: any, key: any = ''): any {
     }
     if (Array.isArray(typ)) return transformEnum(typ, val);
     if (typeof typ === 'object') {
-        return typ.hasOwnProperty('unionMembers') ? transformUnion(typ.unionMembers, val)
-            : typ.hasOwnProperty('arrayItems')    ? transformArray(typ.arrayItems, val)
-                : typ.hasOwnProperty('props')         ? transformObject(getProps(typ), typ.additional, val)
+        return Object.prototype.hasOwnProperty.call(typ, 'unionMembers') ? transformUnion(typ.unionMembers, val)
+            : Object.prototype.hasOwnProperty.call(typ, 'arrayItems')    ? transformArray(typ.arrayItems, val)
+                : Object.prototype.hasOwnProperty.call(typ, 'props')         ? transformObject(getProps(typ), typ.additional, val)
                     : invalidValue(typ, val);
     }
     // Numbers can be parsed by Date but shouldn't be.
@@ -210,19 +215,19 @@ function uncast<T>(val: T, typ: any): any {
     return transform(val, typ, jsToJSONProps);
 }
 
-function a(typ: any) {
+function a(typ: any): object {
     return { arrayItems: typ };
 }
 
-function u(...typs: any[]) {
+function u(...typs: any[]): object {
     return { unionMembers: typs };
 }
 
-function o(props: any[], additional: any) {
+function o(props: any[], additional: any): object {
     return { props, additional };
 }
 
-function r(name: string) {
+function r(name: string): object {
     return { ref: name };
 }
 

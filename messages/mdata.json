@@ -1,7 +1,9 @@
 {
   "general": {
     "flags": {
-      "loglevel": "logging level for this command invocation"
+      "loglevel": "logging level for this command invocation",
+      "targetorg": "Username or alias of the target org",
+      "targetusername": "Username or alias of the target org"
     },
     "errors": {
       "noOrgFound": "No org configuration found for name %s"
@@ -83,7 +85,7 @@
     "testdependencies": {
       "description": "computes the list of (statically) dependant Apex Test Classes to a list of Apex Classes supplied in input up to a certain depth",
       "flags": {
-        "config": "show interactive prompt to configure the plugin (writes result on sfdx-project.json",
+        "config": "show interactive prompt to configure the plugin (writes result on sfdx-project.json)",
         "metadata": "comma-separated list of Apex Class names",
         "nameconv": "naming convention to apply to generate Apex Class Test names",
         "depth": "how many iterations to perform while navigating the tree of dependencies",

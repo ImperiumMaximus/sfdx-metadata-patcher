@@ -1,16 +1,10 @@
 {
-  "extends": "./node_modules/@salesforce/dev-config/tsconfig",
+  "extends": "@salesforce/dev-config/tsconfig",
   "compilerOptions": {
-    "declaration": true,
-    "outDir": "./lib",
-    "importHelpers": true,
-    "rootDir": "./src",
-    "lib": [
-      "dom"
-    ],
-    "target": "es6"
+    "outDir": "lib",
+    "rootDir": "src",
+    "typeRoots": ["./node_modules/@types", "./types"],
+    "target": "ES2021",
   },
-  "include": [
-    "./src/**/*"
-  ]
+  "include": ["./src/**/*.ts"]
 }

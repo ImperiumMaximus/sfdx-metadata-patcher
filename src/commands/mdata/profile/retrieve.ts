@@ -1,11 +1,9 @@
-import * as path from 'path';
-import { flags, SfdxCommand } from '@salesforce/command';
-import { Messages, Org, SfdxProject } from '@salesforce/core';
+import * as path from 'node:path'
+import { Flags, SfCommand } from '@salesforce/sf-plugins-core';
+import { Messages, Org, SfProject } from '@salesforce/core';
 import { ComponentSet } from '@salesforce/source-deploy-retrieve';
 import { AnyJson } from '@salesforce/ts-types';
-import { Mdata } from '../../../mdata';
 import { retrieveMetadataButKeepSubset } from '../../../retrieveUtility';
-import { LoggerLevel } from '../../../typeDefs';
 
 // Initialize Messages with the current plugin directory
 Messages.importMessagesDirectory(__dirname);
@@ -14,11 +12,11 @@ Messages.importMessagesDirectory(__dirname);
 // or any library that is using the messages framework can also be loaded this way.
 const messages = Messages.loadMessages('sfdx-metadata-patcher', 'mdata');
 
-export default class ProfileRetrieve extends SfdxCommand {
+export default class ProfileRetrieve extends SfCommand<AnyJson> {
 
-    public static description = messages.getMessage('profile.retrieve.description');
+    public static readonly summary = messages.getMessage('profile.retrieve.description');
 
-    public static examples = [
+    public static readonly examples = [
         `To retrieve the profiles in the default package source directory
     $ sfdx mdata:permsets:retrieve`,
 
@@ -39,30 +37,34 @@ export default class ProfileRetrieve extends SfdxCommand {
 
     ];
 
-    protected static flagsConfig = {
-        rootdir: flags.string({
+    public static readonly flags = {
+        rootdir: Flags.string({
             char: 'r',
-            description: messages.getMessage('profile.retrieve.flags.rootdir')
+            summary: messages.getMessage('profile.retrieve.flags.rootdir')
         }),
-        sourcepath: flags.string({
+        sourcepath: Flags.string({
             char: 'p',
-            description: messages.getMessage('profile.retrieve.flags.sourcepath')
+            summary: messages.getMessage('profile.retrieve.flags.sourcepath')
         }),
-        manifest: flags.string({
+        targetusername: Flags.string({
+          summary: messages.getMessage('general.flags.targetusername'),
+          char: 'u',
+        }),
+        manifest: Flags.string({
             char: 'x',
-            description: messages.getMessage('profile.retrieve.flags.manifest'),
+            summary: messages.getMessage('profile.retrieve.flags.manifest'),
             default: 'manifest/package.xml'
         }),
-        profiles: flags.string({
+        profiles: Flags.string({
             char: 'm',
-            description: messages.getMessage('profile.retrieve.flags.profiles')
+            summary: messages.getMessage('profile.retrieve.flags.profiles')
         }),
-        outdir: flags.string({
+        outdir: Flags.string({
             char: 'd',
-            description: messages.getMessage('profile.retrieve.flags.outdir')
+            summary: messages.getMessage('profile.retrieve.flags.outdir')
         }),
-        loglevel: flags.enum({
-            description: messages.getMessage('general.flags.loglevel'),
+        loglevel: Flags.string({
+            summary: messages.getMessage('general.flags.loglevel'),
             default: 'info',
             required: false,
             options: [
@@ -82,53 +84,61 @@ export default class ProfileRetrieve extends SfdxCommand {
         })
     };
 
+    // Set this to true if your command requires a project workspace; 'requiresProject' is false by default
+    public static readonly requiresProject = true;
+
     // Comment this out if your command does not require an org username
     protected static requiresUsername = true;
 
     // Comment this out if your command does not support a hub org username
     protected static supportsDevhubUsername = false;
 
-    // Set this to true if your command requires a project workspace; 'requiresProject' is false by default
-    protected static requiresProject = true;
+    protected actualFlags: {
+      rootdir: string;
+      sourcepath: string;
+      targetusername: string;
+      manifest: string;
+      profiles: string;
+      outdir: string;
+      loglevel: string;
+    };
+
+    protected org: Org;
 
     public async run(): Promise<AnyJson> {
-        Mdata.setLogLevel(this.flags.loglevel, this.flags.json);
+        this.actualFlags = (await this.parse(ProfileRetrieve)).flags;
 
-        this.org = await Org.create({ aliasOrUsername: this.flags.targetusername });
+        this.org = await Org.create({ aliasOrUsername: this.actualFlags.targetusername });
 
-        Mdata.log(messages.getMessage('general.infos.usingUsername', [this.org.getUsername()]), LoggerLevel.INFO);
+        this.log(messages.getMessage('general.infos.usingUsername', [this.org.getUsername()]));
 
-        const project = await SfdxProject.resolve();
+        const project = await SfProject.resolve();
 
         const paths: string[] = [];
 
-        if (this.flags.sourcepath) {
-            paths.push(...this.flags.sourcepath.split(','));
+        if (this.actualFlags.sourcepath) {
+            paths.push(...this.actualFlags.sourcepath.split(','));
         } else {
             paths.push(project.getDefaultPackage().fullPath);
         }
 
-        if (this.flags.rootdir) {
-            paths.push(this.flags.rootdir);
+        if (this.actualFlags.rootdir) {
+            paths.push(this.actualFlags.rootdir);
         }
 
         let outDir = path.join(project.getDefaultPackage().fullPath, 'main', 'default');
-        if (this.flags.outdir) {
-            outDir = this.flags.outdir;
+        if (this.actualFlags.outdir) {
+            outDir = this.actualFlags.outdir;
         }
 
         const componentSet = ComponentSet.fromSource({
             fsPaths: paths
         });
 
-        const retrievedFiles = await retrieveMetadataButKeepSubset(this.org.getUsername(), componentSet, 'Profile', 'profiles', outDir, this.flags.profiles);
+        const retrievedFiles = await retrieveMetadataButKeepSubset(this.org.getUsername(), componentSet, 'Profile', 'profiles', outDir, this.actualFlags.profiles);
 
-        Mdata.log(messages.getMessage('general.infos.done'), LoggerLevel.INFO);
+        this.log(messages.getMessage('general.infos.done'));
 
-        if (this.flags.json) {
-            return retrievedFiles;
-        }
-
-        return null;
+        return retrievedFiles;
     }
 }

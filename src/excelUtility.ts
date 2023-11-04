@@ -1,9 +1,9 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs'
+import * as path from 'node:path'
 import { Messages } from '@salesforce/core';
 import { AnyJson } from '@salesforce/ts-types';
 import * as ExcelJS from 'exceljs';
-import { TranslationDataTable } from './typeDefs';
+import { ExcelDataTable } from './typeDefs';
 
 Messages.importMessagesDirectory(__dirname);
 
@@ -12,13 +12,13 @@ const messages = Messages.loadMessages('sfdx-metadata-patcher', 'mdata');
 export class ExcelUtility {
     private static groupHeaderSeparator = '\n';
 
-    public static async toExcel(dataTableList: TranslationDataTable[], saveTofilePath: string) {
+    public static async toExcel<C extends string[]>(dataTableList: Array<ExcelDataTable<C[number]>>, saveTofilePath: string): Promise<void> {
         if (!fs.existsSync(path.dirname(saveTofilePath))) {
             throw new Error(messages.getMessage('translations.convert.errors.invalidSaveFilePath'));
         }
 
         const workbook = new ExcelJS.Workbook();
-        const usedSheets = [];
+        const usedSheets: string[] = [];
 
         dataTableList.forEach(dataTable => {
             const worksheetName = this.generateSheetName(dataTable.name, usedSheets);
@@ -55,7 +55,7 @@ export class ExcelUtility {
             dataTable.rows.forEach((r, i) => {
                 dataTable.columns.forEach((c, j) => {
                     const cell = worksheet.getRow(i + headerGroups + 1).getCell(j + 1);
-                    cell.value = this.formatCellForUpdate(r[c]);
+                    cell.value = this.formatCellForUpdate(r[c] as AnyJson);
                 });
             });
         });
@@ -63,7 +63,7 @@ export class ExcelUtility {
         await workbook.xlsx.writeFile(saveTofilePath);
     }
 
-    public static async importFromExcel(aPath: string, sheetNames: string[], aRowHeader: number): Promise<TranslationDataTable[]> {
+    public static async importFromExcel<C extends readonly string[]>(aPath: string, sheetNames: string[], aRowHeader: number): Promise<Array<ExcelDataTable<C[number]>>> {
         if (!fs.existsSync(aPath)) {
             throw new Error(messages.getMessage('translations.convert.errors.invalidFileName'));
         }
@@ -72,9 +72,9 @@ export class ExcelUtility {
         workbook = await workbook.xlsx.readFile(aPath);
 
         let worksheets: ExcelJS.Worksheet[] = workbook.worksheets;
-        const dataTableList: TranslationDataTable[] = [];
+        const dataTableList: Array<ExcelDataTable<C[number]>> = [];
 
-        if (sheetNames && sheetNames.length) {
+        if (sheetNames?.length) {
             const worksheetSubList = workbook.worksheets.filter(ws => sheetNames.includes(ws.name));
             if (worksheetSubList.length !== sheetNames.length) {
                 throw new Error(messages.getMessage('translations.convert.errors.oneOrMoreSheetsNotFound'));
@@ -86,17 +86,17 @@ export class ExcelUtility {
             const numRows = ws.actualRowCount;
             const numCols = ws.actualColumnCount;
             const numHeaderGroups = this.getNumberOfHeaderGroupsInWorksheet(aRowHeader, ws);
-            const extractedLines: TranslationDataTable = { name: ws.name, columns: [], rows: [] };
-            this.getExcelSheetInfo(ws, extractedLines, aRowHeader, numHeaderGroups, numCols);
+            const extractedLines: ExcelDataTable<C[number]> = { name: ws.name, columns: [], rows: [] };
+            this.getExcelSheetInfo<C[number]>(ws, extractedLines, aRowHeader, numHeaderGroups, numCols);
 
             for (let i = aRowHeader + numHeaderGroups; i <= numRows; i++) {
-                const extractedRow = {};
+                const extractedRow: { [key in C[number]]: string } = {} as { [key in C[number]]: string };
                 let skipAddToDataTable = true;
                 for (let j = 1; j <= numCols; j++) {
                     const cell = ws.getRow(i).getCell(j);
                     if (cell.value !== null && cell.value.toString() !== '') {
                         skipAddToDataTable = false;
-                        extractedRow[extractedLines.columns[j - 1]] = cell.value;
+                        extractedRow[extractedLines.columns[j - 1]] = cell.value.toString();
                     }
                 }
                 if (!skipAddToDataTable) {
@@ -114,16 +114,16 @@ export class ExcelUtility {
         let sheetNum = 1;
         let sheetName = originalName;
         if (originalName.length > maxSheetNameLength) {
-            sheetName = this.truncate(originalName, maxSheetNameLength - sheetNum.toString().length - 1) + '_' + sheetNum;
+            sheetName = `${this.truncate(originalName, maxSheetNameLength - sheetNum.toString().length - 1)}_${sheetNum}`;
         }
         while (usedSheets.includes(sheetName)) {
-            sheetName = this.truncate(originalName, maxSheetNameLength - sheetNum.toString().length - 1) + '_' + sheetNum;
+            sheetName = `${this.truncate(originalName, maxSheetNameLength - sheetNum.toString().length - 1)}_${sheetNum}`;
             sheetNum++;
         }
         return sheetName;
     }
 
-    private static truncate(source: string, len: number) {
+    private static truncate(source: string, len: number): string {
         if (source.length > len) {
             return source.substr(0, len);
         }
@@ -160,12 +160,12 @@ export class ExcelUtility {
         return '';
     }
 
-    private static formatCellForUpdate(rawObjectOrValue: AnyJson | string) {
+    private static formatCellForUpdate(rawObjectOrValue: AnyJson | string): string | Date {
         let rawValue: string;
         let cellType: string = null;
         if (typeof rawObjectOrValue === 'object' && rawObjectOrValue !== null) {
-            rawValue = rawObjectOrValue['value'].toString();
-            cellType = rawObjectOrValue['type'];
+            rawValue = (rawObjectOrValue['value'] as object).toString();
+            cellType = (rawObjectOrValue['type'] as string);
         } else {
             rawValue = rawObjectOrValue as string;
         }
@@ -182,42 +182,42 @@ export class ExcelUtility {
         return rawValue;
     }
 
-    private static getExcelSheetInfo(worksheet: ExcelJS.Worksheet, extractedDataTable: TranslationDataTable, aRowHeader: number, numHeaderGroups: number, numCols: number) {
+    private static getExcelSheetInfo<C extends string>(worksheet: ExcelJS.Worksheet, extractedDataTable: ExcelDataTable<C>, aRowHeader: number, numHeaderGroups: number, numCols: number): void {
         for (let i = 1; i <= numCols; i++) {
-            const columnName = this.getColumnName(aRowHeader, i, numHeaderGroups, worksheet);
+            const columnName = this.getColumnName<C>(aRowHeader, i, numHeaderGroups, worksheet);
             if (columnName && columnName !== '') {
                 extractedDataTable.columns.push(columnName);
             }
         }
     }
 
-    private static getColumnName(headerRow: number, colNumber: number, headerColumnNumber: number, worksheet: ExcelJS.Worksheet): string {
+    private static getColumnName<C extends string>(headerRow: number, colNumber: number, headerColumnNumber: number, worksheet: ExcelJS.Worksheet): C {
         let columnName = '';
 
         for (let i = headerRow; i < headerRow + headerColumnNumber; i++) {
             let cell = worksheet.getRow(i).getCell(colNumber);
             if (!cell.isMerged) {
-                columnName += cell.value + this.groupHeaderSeparator;
+                columnName += `${cell.value.toString()}${this.groupHeaderSeparator}`;
                 continue;
             }
             cell = cell.master;
-            columnName += cell.value + this.groupHeaderSeparator;
+            columnName += `${cell.value.toString()}${this.groupHeaderSeparator}`;
         }
 
-        return columnName.substr(0, columnName.length - this.groupHeaderSeparator.length);
+        return columnName.substr(0, columnName.length - this.groupHeaderSeparator.length) as C;
     }
 
-    private static isNumeric(str) {
+    private static isNumeric(str): boolean {
         if (typeof str !== 'string') return false; // we only process strings!
         return !isNaN(str as unknown as number) && // use type coercion to parse the _entirety_ of the string (`parseFloat` alone does not do this)...
             !isNaN(parseFloat(str)); // ...and ensure strings of whitespace fail
     }
 
-    private static isValidDate(d: Date) {
+    private static isValidDate(d: Date): boolean {
         return d instanceof Date && !isNaN(d as unknown as number);
     }
 
-    private static mergeHeadersIfNeeded(headerRow: number, numHeaderGroups: number, numCol: number, worksheet: ExcelJS.Worksheet) {
+    private static mergeHeadersIfNeeded(headerRow: number, numHeaderGroups: number, numCol: number, worksheet: ExcelJS.Worksheet): void {
         // Merge horizontally headers cells having same value
         for (let i = headerRow; i <= headerRow + numHeaderGroups - 1; i++) {
             let curValue: ExcelJS.CellValue = null;

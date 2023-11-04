@@ -1,9 +1,10 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs'
+import * as path from 'node:path'
 import { Messages } from '@salesforce/core';
 import * as csvParse from 'csv-parse';
 import * as JSZip from 'jszip';
 import * as lineReader from 'line-reader';
+import { AnyJson } from '@salesforce/ts-types';
 import { StfType, TranslationDataTable } from './typeDefs';
 import { WritableMemoryStream } from './writableStream';
 
@@ -34,7 +35,7 @@ export class TranslationUtility {
         return this.importSTFFileWithReader(reader, filters);
     }
 
-    public static async exportToSTF(dataTableList: TranslationDataTable[], stfFolderPath: string, encoding: BufferEncoding) {
+    public static exportToSTF(dataTableList: TranslationDataTable[], stfFolderPath: string, encoding: BufferEncoding): void {
         if (!fs.existsSync(stfFolderPath)) {
             throw new Error(messages.getMessage('translations.convert.errors.invalidFileName'));
         }
@@ -80,34 +81,34 @@ export class TranslationUtility {
                     throw new Error(messages.getMessage('translations.convert.errors.invalidStfNoHeader'));
                 }
 
-                let lastReadLine: string = '';
-                let translatedChunk: string = '';
-                let untranslatedChunk: string = '';
+                let lastReadLine = '';
+                let translatedChunk = '';
+                let untranslatedChunk = '';
 
                 if (header === '# KEY\tLABEL\tTRANSLATION\tOUT OF DATE') {
                     const { csvText, lastLine } = await this.readCSVInfo('# KEY\tLABEL\tTRANSLATION\tOUT OF DATE', reader);
                     translatedChunk = csvText;
-                    lastReadLine = lastLine;
+                    lastReadLine = lastLine ?? '';
                 }
                 if (header === '# KEY\tLABEL' || lastReadLine === '# KEY\tLABEL') {
                     const { csvText, lastLine } = await this.readCSVInfo('# KEY\tLABEL', reader);
                     untranslatedChunk = csvText;
-                    lastReadLine = lastLine;
+                    lastReadLine = lastLine ?? '';
                 } else {
                     header = await this.readLinesTill('# KEY\tLABEL', reader);
                     if (header) {
                         const { csvText, lastLine } = await this.readCSVInfo(header, reader);
                         untranslatedChunk = csvText;
-                        lastReadLine = lastLine;
+                        lastReadLine = lastLine ?? '';
                     }
                 }
 
-                let translatedChunkCsv = null;
+                let translatedChunkCsv: AnyJson[] | null = null;
                 if (translatedChunk) {
                     translatedChunkCsv = await this.parseCSV(translatedChunk);
                 }
 
-                let untranslatedChunkCsv = null;
+                let untranslatedChunkCsv: AnyJson[] | null = null;
                 if (untranslatedChunk) {
                     untranslatedChunkCsv = await this.parseCSV(untranslatedChunk);
                 }
@@ -134,16 +135,17 @@ export class TranslationUtility {
         return dataTable;
     }
 
-    private static async readLinesTill(textToSearch: string, reader: Reader): Promise<string> {
+    private static async readLinesTill(textToSearch: string, reader: Reader): Promise<string | null | undefined> {
         let line = await this.readLine(reader);
 
         while (line != null && !line.startsWith(textToSearch)) {
+            // eslint-disable-next-line no-await-in-loop
             line = await this.readLine(reader);
         }
         return line;
     }
 
-    private static readLine(reader: Reader): Promise<string> {
+    private static readLine(reader: Reader): Promise<string | null | undefined> {
         return new Promise((res, rej) => {
             if (!reader.hasNextLine()) {
                 res(null);
@@ -173,7 +175,7 @@ export class TranslationUtility {
         });
     }
 
-    private static async extractFromSTFHeader(key: string, reader: Reader) {
+    private static async extractFromSTFHeader(key: string, reader: Reader): Promise<string> {
         const keyFind = await this.readLinesTill(key, reader);
         if (keyFind == null || keyFind.length <= key.length + 1) {
             throw new Error(messages.getMessage('translations.convert.errors.invalidStfKeyNotFound', [key]));
@@ -182,8 +184,8 @@ export class TranslationUtility {
         return keyFind.substring(key.length + 1);
     }
 
-    private static async readCSVInfo(header: string, reader: Reader) {
-        let lastLine = null;
+    private static async readCSVInfo(header: string, reader: Reader): Promise<{ csvText: string; lastLine: string | null | undefined }> {
+        let lastLine: string | null | undefined = null;
         let csvText = '"' + header.replace(/\t/g, '"\t"').replace(/\t/g, ',') + '"';
 
         let line = await this.readLine(reader);
@@ -191,24 +193,25 @@ export class TranslationUtility {
             if (line !== '') {
                 csvText += '\n' + '"' + line.replace(/"/g, '""').replace(/\t/g, '","').replace(/\\t/g, '\t').replace(/\\n/g, '\n').replace(/\\r/g, '\r') + '"';
             }
+            // eslint-disable-next-line no-await-in-loop
             line = await this.readLine(reader);
         }
         lastLine = line;
         return { csvText, lastLine };
     }
 
-    private static async parseCSV(csvText: string) {
+    private static async parseCSV(csvText: string): Promise<AnyJson[]> {
         return new Promise((res, rej) => {
-            csvParse(csvText, { columns: true }, (err, records) => {
+            csvParse(csvText, { columns: true }, (err, records: AnyJson[]) => {
                 if (err) rej(err);
                 res(records);
             });
         });
     }
 
-    private static generateRowsFromSTFDataTable(resultTable: TranslationDataTable, csvTable: object[], stfFileType: StfType, filters?: string[]) {
-        (filters && filters.length ? csvTable.filter(csvRow => filters.includes((csvRow['# KEY'] as string)) || filters.some(f => (csvRow['# KEY'] as string).startsWith(f))) : csvTable).forEach(csvRow => {
-            const keyChunks = (csvRow['# KEY'] as string).split('.');
+    private static generateRowsFromSTFDataTable(resultTable: TranslationDataTable, csvTable: AnyJson[], stfFileType: StfType, filters?: string[]): void {
+        (filters?.length ? csvTable.filter(csvRow => filters.includes((csvRow?.['# KEY'] as string)) || filters.some(f => (csvRow?.['# KEY'] as string).startsWith(f))) : csvTable).forEach(csvRow => {
+            const keyChunks = (csvRow?.['# KEY'] as string).split('.');
             if (keyChunks.length < 2) {
                 throw new Error(messages.getMessage('translations.convert.errors.invalidStfFormat'));
             }
@@ -217,23 +220,23 @@ export class TranslationUtility {
                 numColumns = 2;
             }
             for (let i = 1; i <= numColumns; i++) {
-                if (!resultTable.columns.includes(`Sub Type ${i}`)) {
-                    resultTable.columns.splice(i + 1, 0, `Sub Type ${i}`);
+                if (!resultTable.columns.includes(`Sub Type ${i}` as 'Sub Type 1' | 'Sub Type 2')) {
+                    resultTable.columns.splice(i + 1, 0, `Sub Type ${i}` as 'Sub Type 1' | 'Sub Type 2');
                 }
             }
 
-            const resultRow = {};
+            const resultRow = {'Metadata Component': '', 'Object/Type': '', Label: '', Translation: '', 'Out of Date': '', 'Sub Type 1': '', 'Sub Type 2': ''};
             resultRow['Metadata Component'] = keyChunks[0];
             resultRow['Object/Type'] = keyChunks[1];
-            resultRow['Label'] = csvRow['LABEL'];
+            resultRow['Label'] = csvRow?.['LABEL'] as string;
             if (Object.prototype.hasOwnProperty.call(csvRow, 'TRANSLATION')) {
-                resultRow['Translation'] = csvRow['TRANSLATION'];
+                resultRow['Translation'] = csvRow?.['TRANSLATION'] as string;
             } else if (stfFileType === StfType.Source) {
                 resultRow['Translation'] = '{!--Unknown--}';
             }
 
             if (Object.prototype.hasOwnProperty.call(csvRow, 'OUT OF DATE')) {
-                if (csvRow['OUT OF DATE'] === '*') {
+                if (csvRow?.['OUT OF DATE'] === '*') {
                     resultRow['Out of Date'] = 'Yes';
                 } else {
                     resultRow['Out of Date'] = 'No';
@@ -244,7 +247,7 @@ export class TranslationUtility {
                 resultRow['Out of Date'] = 'No';
             }
 
-            for (let j = 1; j <= numColumns; j++)  {
+            for (let j = 1; j <= numColumns; j++) {
                 let subType = keyChunks[j + 1];
                 if (j === numColumns && keyChunks.length > 4) {
                     for (let k = 2 + numColumns + 1; k <= keyChunks.length; k++) {
@@ -257,14 +260,14 @@ export class TranslationUtility {
         });
     }
 
-    private static generateFileName(extension: string, languageCode: string) {
+    private static generateFileName(extension: string, languageCode: string): string {
         if (languageCode) {
             return 'Bilingual_' + languageCode + '_' + new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '').replace(/:/g, '-').replace(/ /g, '_') + extension;
         }
         return 'Bilingual_' + new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '').replace(/:/g, '-').replace(/ /g, '_') + extension;
     }
 
-    private static writeLine(writableStream: NodeJS.WritableStream, line: string) {
+    private static writeLine(writableStream: NodeJS.WritableStream, line: string): void {
         writableStream.write(line + '\n');
     }
 
@@ -276,19 +279,15 @@ export class TranslationUtility {
         return new WritableMemoryStream(encoding);
     }
 
-    private static generateSTFStream(dataTable: TranslationDataTable, writableStream: NodeJS.WritableStream) {
+    private static generateSTFStream(dataTable: TranslationDataTable, writableStream: NodeJS.WritableStream): void {
         this.generateSTFHeader(dataTable.name, writableStream);
 
-        try {
-            dataTable.rows.forEach(r => {
-                this.generateSTFRow(r, writableStream);
-            });
-        } catch (e) {
-            throw e;
-        }
+        dataTable.rows.forEach(r => {
+          this.generateSTFRow(r, writableStream);
+        });
     }
 
-    private static generateSTFHeader(languageCode: string, writableStream: NodeJS.WritableStream) {
+    private static generateSTFHeader(languageCode: string, writableStream: NodeJS.WritableStream): void {
         this.writeLine(writableStream, '# Use the Bilingual file to review translations, edit labels that have already been translated, and add translations for labels that haven\'t been translated.');
         this.writeLine(writableStream, '# - The TRANSLATED section of the file contains the text that has been translated and needs to be reviewed.');
         this.writeLine(writableStream, '# - The UNTRANSLATED section of the file contains text that hasn\'t been translated. You can replace untranslated labels in the LABEL column with translated values.');
@@ -313,21 +312,21 @@ export class TranslationUtility {
         this.writeLine(writableStream, '');
     }
 
-    private static generateSTFRow(row: object, writableStream: NodeJS.WritableStream) {
-        let translation: string = row['Translation'];
+    private static generateSTFRow(row: object, writableStream: NodeJS.WritableStream): void {
+        let translation: string = row['Translation'] as string;
         if (!translation || translation === '{!--Unknown--}') {
             return;
         }
 
-        let key: string = `${row['Metadata Component']}.${row['Object/Type']}`;
+        let key = `${row['Metadata Component'] as string}.${row['Object/Type'] as string}`;
         if (row['Sub Type 1']) {
-            key += `.${row['Sub Type 1']}`;
+            key += `.${row['Sub Type 1'] as string}`;
             if (row['Sub Type 2']) {
-                key += `.${row['Sub Type 2']}`;
+                key += `.${row['Sub Type 2'] as string}`;
             }
         }
 
-        const label = row['Label'].replace(/\t/g, '\\t').replace(/\n/g, '\\n').replace(/\r/g, '\\r');
+        const label = (row['Label'] as string).replace(/\t/g, '\\t').replace(/\n/g, '\\n').replace(/\r/g, '\\r');
         translation = translation.replace(/\t/g, '\\t').replace(/\n/g, '\\n').replace(/\r/g, '\\r');
         this.writeLine(writableStream, `${key}\t${label}\t${translation}\t-`);
     }

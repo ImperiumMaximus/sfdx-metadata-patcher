@@ -1,4 +1,4 @@
-import * as os from 'os';
+import * as os from 'node:os'
 import * as webdriver from 'selenium-webdriver';
 import * as chrome from 'selenium-webdriver/chrome';
 import * as chromedriver from 'chromedriver';
@@ -27,13 +27,13 @@ export class SeleniumUtility {
             driver.executeScript('return document.readyState').then(readyState => readyState === 'complete'));
     }
 
-    public static async clearAndFillTextInput(driver: webdriver.WebDriver, name: string, value: string) {
+    public static async clearAndFillTextInput(driver: webdriver.WebDriver, name: string, value: string): Promise<void> {
         await driver.findElement(webdriver.By.name(name)).sendKeys(webdriver.Key.chord(os.platform() === 'darwin' ? webdriver.Key.COMMAND : webdriver.Key.CONTROL, 'a'),
             webdriver.Key.CANCEL,
             value);
     }
 
-    public static async fillTextInput(driver: webdriver.WebDriver, name: string, value: string) {
+    public static async fillTextInput(driver: webdriver.WebDriver, name: string, value: string): Promise<void> {
         await driver.findElement(webdriver.By.name(name)).sendKeys(value);
     }
 
@@ -53,17 +53,17 @@ export class SeleniumUtility {
         return false;
     }
 
-    public static async waitToBeStaleness(driver: webdriver.WebDriver, name: string) {
+    public static async waitToBeStaleness(driver: webdriver.WebDriver, name: string): Promise<void> {
         const element = await driver.findElement(webdriver.By.name(name));
         await driver.wait(stalenessOf(element));
     }
 
-    public static async clickButton(driver: webdriver.WebDriver, name: string) {
+    public static async clickButton(driver: webdriver.WebDriver, name: string): Promise<void> {
         await driver.wait(() =>
             driver.executeScript('arguments[0].click()', driver.findElement(webdriver.By.name(name))).then(() => true));
     }
 
-    public static async elementExists(driver: webdriver.WebDriver, name: string) {
+    public static async elementExists(driver: webdriver.WebDriver, name: string): Promise<boolean> {
         return driver.findElement(webdriver.By.name(name)).then(el => !!el).catch(() => false);
     }
 }

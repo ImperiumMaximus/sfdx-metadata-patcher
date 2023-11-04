@@ -1,16 +1,6 @@
 /* eslint-disable no-shadow, @typescript-eslint/naming-convention */
 
-import { Command, Hook } from '@oclif/config';
 import { JsonMap } from '@salesforce/ts-types';
-
-export type HookFunction = (this: Hook.Context, options: HookOptions) => void;
-
-export type HookOptions = {
-    Command: Command.Class;
-    argv: string[];
-    commandId: string;
-    result?: PreDeployResult;
-};
 
 export type PreDeployResult = {
     [aggregateName: string]: {

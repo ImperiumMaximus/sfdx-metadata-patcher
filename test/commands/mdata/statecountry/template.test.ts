@@ -1,10 +1,11 @@
-import { expect, test } from '@salesforce/command/lib/test';
-import { testSetup } from '@salesforce/core/lib/testSetup';
+import { expect } from 'chai';
+import { TestContext } from '@salesforce/core/lib/testSetup';
 import Sinon = require('sinon');
 import { stubMethod } from '@salesforce/ts-sinon';
 import { Messages } from '@salesforce/core';
 import * as ExcelJS from 'exceljs';
 import * as retrieveUtility from '../../../../src/retrieveUtility';
+import StateCountryTemplate from '../../../../src/commands/mdata/statecountry/template';
 
 // Initialize Messages with the current plugin directory
 Messages.importMessagesDirectory(__dirname);
@@ -13,9 +14,9 @@ Messages.importMessagesDirectory(__dirname);
 // or any library that is using the messages framework can also be loaded this way.
 // const messages = Messages.loadMessages('sfdx-metadata-patcher', 'mdata');
 
-const $$ = testSetup();
-
 describe('statecountry:template', () => {
+    const $$ = new TestContext();
+
     let xlsxWriteFileStub: Sinon.SinonStub;
 
     const commonStubs = function () {
@@ -58,9 +59,12 @@ describe('statecountry:template', () => {
         commonStubs();
     });
 
-    test
-    .command(['mdata:statecountry:template', '-p', 'out.xlsx', '-u', 'testusername'])
-    .it('generates an Excel file with the AddressSettings metadata XML contents retrieved from the target Org', () => {
+    afterEach(() => {
+        $$.restore();
+    });
+
+    it('generates an Excel file with the AddressSettings metadata XML contents retrieved from the target Org', async () => {
+        await StateCountryTemplate.run(['-p', 'out.xlsx', '-u', 'testusername']);
         expect(xlsxWriteFileStub.called).to.be.true;
         expect(xlsxWriteFileStub.args[0][0]).to.equal('out.xlsx');
     });

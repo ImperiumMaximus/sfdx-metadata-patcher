@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import { Messages , SfdxProject } from '@salesforce/core';
+import { Messages , SfProject } from '@salesforce/core';
 import { ComponentSet } from '@salesforce/source-deploy-retrieve';
 import { AnyJson } from '@salesforce/ts-types';
 import * as xml2js from 'xml2js';
@@ -12,7 +12,7 @@ Messages.importMessagesDirectory(__dirname);
 // or any library that is using the messages framework can also be loaded this way.
 const messages = Messages.loadMessages('sfdx-metadata-patcher', 'mdata');
 
-export default class ManifestSort extends SfCommand<AnyJson> {
+export default class ManifestAlign extends SfCommand<AnyJson> {
 
     public static readonly summary = messages.getMessage('manifest.align.description');
 
@@ -88,9 +88,9 @@ export default class ManifestSort extends SfCommand<AnyJson> {
     };
 
     public async run(): Promise<AnyJson> {
-        this.actualFlags = (await this.parse(ManifestSort)).flags;
+        this.actualFlags = (await this.parse(ManifestAlign)).flags;
 
-        const project = await SfdxProject.resolve();
+        const project = await SfProject.resolve();
 
         const paths: string[] = [];
 

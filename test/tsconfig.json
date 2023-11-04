@@ -3,6 +3,6 @@
   "include": ["./**/*.ts"],
   "compilerOptions": {
     "skipLibCheck": true,
-    "strictNullChecks": true
+    "strictNullChecks": false
   }
 }

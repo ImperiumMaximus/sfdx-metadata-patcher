@@ -1,13 +1,15 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { expect, test } from '@salesforce/command/lib/test';
-import { testSetup } from '@salesforce/core/lib/testSetup';
+import { expect } from 'chai';
+import { TestContext } from '@salesforce/core/lib/testSetup';
 import { stubMethod } from '@salesforce/ts-sinon';
+import { stubSfCommandUx } from '@salesforce/sf-plugins-core';
 import { Messages } from '@salesforce/core';
 import * as ExcelJS from 'exceljs';
 import * as XLSX from 'exceljs/lib/xlsx/xlsx';
 import * as retrieveUtility from '../../../../src/retrieveUtility';
 import { SeleniumUtility } from '../../../../src/seleniumUtility';
+import StateCountryConfigure from '../../../../src/commands/mdata/statecountry/configure';
 
 // Initialize Messages with the current plugin directory
 Messages.importMessagesDirectory(__dirname);
@@ -16,9 +18,10 @@ Messages.importMessagesDirectory(__dirname);
 // or any library that is using the messages framework can also be loaded this way.
 const messages = Messages.loadMessages('sfdx-metadata-patcher', 'mdata');
 
-const $$ = testSetup();
-
 describe('statecountry:configure', () => {
+    const $$ = new TestContext();
+    let sfCommandStubs: ReturnType<typeof stubSfCommandUx>;
+
     const commonStubs = function (rename: boolean) {
 
         let currentUrl: string;
@@ -228,72 +231,77 @@ describe('statecountry:configure', () => {
         stubMethod($$.SANDBOX, SeleniumUtility, 'elementExists').callsFake(() => true);
     };
 
-    test
-        .stdout()
-        .do(() => {
-            commonStubs(true);
-            // Workaround in order to have a consistent instance of an ExcelJS.Workbook.
-            // For some reason the instance created in the actual code doesn't have
-            // its properties correctly populated, though this happens only during
-            // test execution.
-            const wb = new ExcelJS.Workbook();
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return
-            $$.SANDBOX.replaceGetter(wb, 'xlsx', () => new XLSX(wb));
+    beforeEach(() => {
+        sfCommandStubs = stubSfCommandUx($$.SANDBOX);
+    });
 
-            const existsSyncStub = stubMethod($$.SANDBOX, fs, 'existsSync')
-            existsSyncStub.callsFake((_path: string) => {
-                if (_path.includes('mappings.xlsx')) {
-                    return true;
-                }
-                return existsSyncStub.wrappedMethod.call(this, _path) as boolean;
-            })
+    afterEach(() => {
+        $$.restore();
+    })
 
-            const xlsxReadStub = stubMethod($$.SANDBOX, ExcelJS.Workbook.prototype.xlsx, 'readFile');
-            xlsxReadStub.callsFake(async (_path: string) => {
-                if (_path.includes('mappings.xlsx')) {
-                    return wb.xlsx.read(fs.createReadStream(_path));
-                }
-                return null;
-            });
+    it('Configure new and existing country/state picklist values renaming existing conflicting ones', async () => {
+        commonStubs(true);
+
+        const wb = new ExcelJS.Workbook();
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return
+        $$.SANDBOX.replaceGetter(wb, 'xlsx', () => new XLSX(wb));
+
+        const existsSyncStub = stubMethod($$.SANDBOX, fs, 'existsSync')
+        existsSyncStub.callsFake((_path: string) => {
+            if (_path.includes('mappings.xlsx')) {
+                return true;
+            }
+            return existsSyncStub.wrappedMethod.call(this, _path) as boolean;
         })
-        .command(['mdata:statecountry:configure', '-f', path.join(__dirname, '..', '..', '..', 'data', 'statecountry', 'mappings.xlsx'), '-c', 'rename', '-u', 'username'])
-        .withOrg({ username: 'test@org.com' }, true)
-        .it('Configure new and existing country/state picklist values renaming existing conflicting ones', (ctx) => {
-            expect(ctx.stdout).to.contain(messages.getMessage('statecountry.configure.infos.checkOkMessage'));
+
+        const xlsxReadStub = stubMethod($$.SANDBOX, ExcelJS.Workbook.prototype.xlsx, 'readFile');
+        xlsxReadStub.callsFake(async (_path: string) => {
+            if (_path.includes('mappings.xlsx')) {
+                return wb.xlsx.read(fs.createReadStream(_path));
+            }
+            return null;
         });
 
+        await StateCountryConfigure.run(['-f', path.join(__dirname, '..', '..', '..', 'data', 'statecountry', 'mappings.xlsx'), '-c', 'rename', '-u', 'username']);
+        const output = sfCommandStubs.log
+            .getCalls()
+            .flatMap((c) => c.args)
+            .join('\n');
 
-    test
-        .stdout()
-        .do(() => {
-            commonStubs(false);
-            // Workaround in order to have a consistent instance of an ExcelJS.Workbook.
-            // For some reason the instance created in the actual code doesn't have
-            // its properties correctly populated, though this happens only during
-            // test execution.
-            const wb = new ExcelJS.Workbook();
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return
-            $$.SANDBOX.replaceGetter(wb, 'xlsx', () => new XLSX(wb));
+        expect(output).to.contain(messages.getMessage('statecountry.configure.infos.checkOkMessage'));
+    });
 
-            const existsSyncStub = stubMethod($$.SANDBOX, fs, 'existsSync')
-            existsSyncStub.callsFake((_path: string) => {
-                if (_path.includes('mappings.xlsx')) {
-                    return true;
-                }
-                return existsSyncStub.wrappedMethod.call(this, _path) as boolean;
-            })
+    it('Configure new and existing country/state picklist values skipping existing ones', async () => {
+        commonStubs(false);
+        // Workaround in order to have a consistent instance of an ExcelJS.Workbook.
+        // For some reason the instance created in the actual code doesn't have
+        // its properties correctly populated, though this happens only during
+        // test execution.
+        const wb = new ExcelJS.Workbook();
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return
+        $$.SANDBOX.replaceGetter(wb, 'xlsx', () => new XLSX(wb));
 
-            const xlsxReadStub = stubMethod($$.SANDBOX, ExcelJS.Workbook.prototype.xlsx, 'readFile');
-            xlsxReadStub.callsFake(async (_path: string) => {
-                if (_path.includes('mappings.xlsx')) {
-                    return wb.xlsx.read(fs.createReadStream(_path));
-                }
-                return null;
-            });
+        const existsSyncStub = stubMethod($$.SANDBOX, fs, 'existsSync')
+        existsSyncStub.callsFake((_path: string) => {
+            if (_path.includes('mappings.xlsx')) {
+                return true;
+            }
+            return existsSyncStub.wrappedMethod.call(this, _path) as boolean;
         })
-        .command(['mdata:statecountry:configure', '-f', path.join(__dirname, '..', '..', '..', 'data', 'statecountry', 'mappings.xlsx'), '-c', 'skip', '-u', 'username'])
-        .withOrg({ username: 'test@org.com' }, true)
-        .it('Configure new and existing country/state picklist values skipping existing ones', (ctx) => {
-            expect(ctx.stdout).to.contain(messages.getMessage('statecountry.configure.infos.checkOkMessage'));
+
+        const xlsxReadStub = stubMethod($$.SANDBOX, ExcelJS.Workbook.prototype.xlsx, 'readFile');
+        xlsxReadStub.callsFake(async (_path: string) => {
+            if (_path.includes('mappings.xlsx')) {
+                return wb.xlsx.read(fs.createReadStream(_path));
+            }
+            return null;
         });
+
+        await StateCountryConfigure.run(['-f', path.join(__dirname, '..', '..', '..', 'data', 'statecountry', 'mappings.xlsx'), '-c', 'skip', '-u', 'username']);
+        const output = sfCommandStubs.log
+            .getCalls()
+            .flatMap((c) => c.args)
+            .join('\n');
+        expect(output).to.contain(messages.getMessage('statecountry.configure.infos.checkOkMessage'));
+    });
 });

@@ -1,11 +1,13 @@
 import * as fs from 'fs';
-import { expect, test } from '@salesforce/command/lib/test';
-import { testSetup } from '@salesforce/core/lib/testSetup';
+import { expect } from 'chai';
+import { TestContext } from '@salesforce/core/lib/testSetup';
 import { stubMethod } from '@salesforce/ts-sinon';
 import * as xml2js from 'xml2js';
+import { stubSfCommandUx } from '@salesforce/sf-plugins-core';
 import { Messages } from '@salesforce/core';
-import { AnyJson } from '@salesforce/ts-types';
 import { parseXml } from '../../../../src/xmlUtility';
+import ManifestSort from '../../../../src/commands/mdata/manifest/sort';
+
 
 // Initialize Messages with the current plugin directory
 Messages.importMessagesDirectory(__dirname);
@@ -14,9 +16,9 @@ Messages.importMessagesDirectory(__dirname);
 // or any library that is using the messages framework can also be loaded this way.
 const messages = Messages.loadMessages('sfdx-metadata-patcher', 'mdata');
 
-const $$ = testSetup();
-
 describe('manifest:sort', () => {
+    const $$ = new TestContext();
+    let sfCommandStubs: ReturnType<typeof stubSfCommandUx>;
 
     let writeFileSyncStub: sinon.SinonStub;
     const commonStubs = function () {
@@ -41,12 +43,17 @@ describe('manifest:sort', () => {
         writeFileSyncStub = stubMethod($$.SANDBOX, fs, 'writeFileSync');
     }
 
-    test
-    .do(() => {
+    beforeEach(() => {
+        sfCommandStubs = stubSfCommandUx($$.SANDBOX);
         commonStubs();
+    });
+
+    afterEach(() => {
+        $$.restore();
     })
-    .command(['mdata:manifest:sort', '-x', 'manifest/package.xml'])
-    .it('sorts alphabetically the components of a manifest file', async () => {
+
+    it('sorts alphabetically the components of a manifest file', async () => {
+        await ManifestSort.run(['-x', 'manifest/package.xml']);
         expect(writeFileSyncStub.args[writeFileSyncStub.args.length - 1][0]).to.equal('manifest/package.xml');
         expect(writeFileSyncStub.args[writeFileSyncStub.args.length - 1][1]).to.equal(new xml2js.Builder({
             renderOpts: {
@@ -61,33 +68,26 @@ describe('manifest:sort', () => {
         }).buildObject(await parseXml(__dirname + '/../../../data/manifest/package_sorted.xml')));
     });
 
-    test
-    .do(() => {
-        commonStubs();
-    })
-    .stderr()
-    .command(['mdata:manifest:sort', '-x', 'manifest/package_notfound.xml'])
-    .it('generates an error if the manifest file is not found', (ctx) => {
-        expect(ctx.stderr).to.include(messages.getMessage('manifest.sort.errors.noInputFileFound'));
+    it('generates an error if the manifest file is not found', async () => {
+        await ManifestSort.run(['-x', 'manifest/package_notfound.xml']);
+        const output = sfCommandStubs.logToStderr
+        .getCalls()
+        .flatMap((c) => c.args)
+        .join('\n');
+        expect(output).to.include(messages.getMessage('manifest.sort.errors.noInputFileFound'));
     });
 
-    test
-    .do(() => {
-        commonStubs();
-    })
-    .stderr()
-    .command(['mdata:manifest:sort', '-x', 'manifest/package_bad.xml'])
-    .it('generates an error if the manifest file is malformed', (ctx) => {
-        expect(ctx.stderr).to.include(messages.getMessage('manifest.sort.errors.badXml', ['']).replace('%s', ''));
+    it('generates an error if the manifest file is malformed', async () => {
+        await ManifestSort.run(['-x', 'manifest/package_bad.xml']);
+        const output = sfCommandStubs.logToStderr
+        .getCalls()
+        .flatMap((c) => c.args)
+        .join('\n');
+        expect(output).to.include(messages.getMessage('manifest.sort.errors.badXml', ['']).replace('%s', ''));
     });
 
-    test
-    .do(() => {
-        commonStubs();
-    })
-    .stdout()
-    .command(['mdata:manifest:sort', '-x', 'manifest/package.xml', '--json'])
-    .it('sorts alphabetically the components of a manifest file and outputs the result as a JSON', async (ctx) => {
+    it('sorts alphabetically the components of a manifest file and outputs the result as a JSON', async () => {
+        const output = await ManifestSort.run(['-x', 'manifest/package.xml', '--json']);
         const expectedJson = await parseXml(__dirname + '/../../../data/manifest/package_sorted.xml');
         expect(writeFileSyncStub.args[writeFileSyncStub.args.length - 1][0]).to.equal('manifest/package.xml');
         expect(writeFileSyncStub.args[writeFileSyncStub.args.length - 1][1]).to.equal(new xml2js.Builder({
@@ -101,6 +101,6 @@ describe('manifest:sort', () => {
                 version: '1.0'
             }
         }).buildObject(expectedJson));
-        expect((JSON.parse(ctx.stdout) as AnyJson)?.['result']).to.deep.equal(expectedJson);
+        expect(output).to.deep.equal(expectedJson);
     });
 });

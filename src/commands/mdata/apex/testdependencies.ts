@@ -235,7 +235,7 @@ export default class TestDependencies extends SfCommand<AnyJson> {
 
         if (strategy === 'full') {
             if (!this.jsonEnabled()) {
-                console.log(`-l ${testLevel}`);
+                this.log(`-l ${testLevel}`);
             }
             return { testLevel, classList: [] };
         }
@@ -243,7 +243,7 @@ export default class TestDependencies extends SfCommand<AnyJson> {
         if (!frontier.size) {
             testLevel = this.actualFlags.prod ? 'RunLocalTests' : 'NoTestRun';
             if (!this.jsonEnabled()) {
-                console.log(`-l ${testLevel}`);
+                this.log(`-l ${testLevel}`);
             }
             return { testLevel, classList: [] };
         }
@@ -324,13 +324,13 @@ export default class TestDependencies extends SfCommand<AnyJson> {
 
         if (apexTestClasses.size === 0 || TestDependencies.eqSet(allApexTestClasses, apexTestClasses)) {
             if (!this.jsonEnabled()) {
-                console.log(`-l ${testLevel}`);
+                this.log(`-l ${testLevel}`);
             }
             return { testLevel, classList: [] };
         } else {
             testLevel = 'RunSpecifiedTests';
             if (!this.jsonEnabled()) {
-                console.log(`-l ${testLevel} -r ${Array.from(apexTestClasses).join(',')}`);
+                this.log(`-l ${testLevel} -r ${Array.from(apexTestClasses).join(',')}`);
             }
             return { testLevel, classList: Array.from(apexTestClasses) };
         }

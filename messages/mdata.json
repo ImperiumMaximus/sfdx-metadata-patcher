@@ -17,7 +17,8 @@
     "publish": {
       "description": "publishes one or more Experience Cloud communities",
       "flags": {
-        "name": "comma-separated list of community names"
+        "name": "comma-separated list of community names",
+        "wait": "wait (in ms) between publishing one community from the next one (min: 0ms, max: 120000ms)"
       },
       "infos": {
         "progressBarFormat": "Publishing [{bar}] {percentage}% | {value}/{total} | Community: {communityName}"

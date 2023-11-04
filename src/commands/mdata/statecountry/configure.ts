@@ -118,7 +118,7 @@ export default class StateCountryConfigure extends SfCommand<AnyJson> {
         }, {});
 
         const statesByCountryByIntValue: { [key: string]: { [key: string]: AddressSettingsMetadataState } } = addressSettingsJson['AddressSettings']['countriesAndStates'][0]['countries']
-            .filter((country: AnyJson) => Object.prototype.hasOwnProperty.call(country, 'states'))
+            .filter((country: AnyJson) => Object.prototype.hasOwnProperty.call(country, 'states') as boolean)
             .reduce((acc: { [key: string]: {
               [key: string]: AddressSettingsMetadataState;
             }; }, country: AddressSettingsMetadataCountry) => {

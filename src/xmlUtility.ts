@@ -1,4 +1,4 @@
-import * as fs from 'fs';
+import * as fs from 'node:fs'
 import { JsonMap } from '@salesforce/ts-types';
 import * as xml2js from 'xml2js';
 
@@ -33,7 +33,8 @@ export const parseXmlFromStream = (stream: NodeJS.ReadableStream): Promise<JsonM
     const chunks: Buffer[] = [];
 
     new Promise((res, rej) => {
-        stream.on('data', (chunk: object) => chunks.push(Buffer.from(chunk)));
+        /* eslint-disable @typescript-eslint/no-unsafe-argument */
+        stream.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
         stream.on('error', err => rej(err));
         stream.on('end', () => res(Buffer.concat(chunks).toString('utf8')));
     }).then((data: string) => {

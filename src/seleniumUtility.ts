@@ -1,4 +1,4 @@
-import * as os from 'os';
+import * as os from 'node:os'
 import * as webdriver from 'selenium-webdriver';
 import * as chrome from 'selenium-webdriver/chrome';
 import * as chromedriver from 'chromedriver';

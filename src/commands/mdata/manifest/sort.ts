@@ -1,4 +1,4 @@
-import * as fs from 'fs';
+import * as fs from 'node:fs'
 import { Messages } from '@salesforce/core';
 import { AnyJson } from '@salesforce/ts-types';
 import { Flags, SfCommand } from '@salesforce/sf-plugins-core';

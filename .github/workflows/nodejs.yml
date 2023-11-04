@@ -13,7 +13,7 @@ jobs:
     env:
       CI: true
       OS: ${{ matrix.os }}
-      NODE: '14.16'
+      NODE: '16.20'
 
     steps:
     - uses: actions/checkout@v2

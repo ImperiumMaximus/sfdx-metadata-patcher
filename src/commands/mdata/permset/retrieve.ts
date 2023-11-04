@@ -1,4 +1,4 @@
-import * as path from 'path';
+import * as path from 'node:path'
 import { Flags, SfCommand } from '@salesforce/sf-plugins-core';
 import { Messages, Org, SfProject } from '@salesforce/core';
 import { ComponentSet } from '@salesforce/source-deploy-retrieve';

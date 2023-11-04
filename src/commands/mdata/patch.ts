@@ -7,7 +7,7 @@
  * original implementation using gulp with the legacy "src/" folder structure.
  * This has been ported and adapted to work as a SF CLI plugin supporting the source "force-app" folder structure
  **/
-import * as fs from 'fs';
+import * as fs from 'node:fs'
 import path = require('path');
 import { Flags, SfCommand } from '@salesforce/sf-plugins-core';
 import { Messages, PackageDir, SfProject } from '@salesforce/core';

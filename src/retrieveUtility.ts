@@ -1,7 +1,7 @@
 
-import { once } from 'events';
-import * as fs from 'fs';
-import * as path from 'path';
+import { once } from 'node:events'
+import * as fs from 'node:fs'
+import * as path from 'node:path'
 import { Messages } from '@salesforce/core';
 import { ComponentSet } from '@salesforce/source-deploy-retrieve';
 import * as JSZip from 'jszip';

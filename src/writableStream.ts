@@ -1,4 +1,4 @@
-import * as stream from 'stream';
+import * as stream from 'node:stream'
 
 export class WritableMemoryStream extends stream.Writable {
 
@@ -11,7 +11,7 @@ export class WritableMemoryStream extends stream.Writable {
         this.memStore = Buffer.from('', encoding);
     }
 
-    public _write(chunk, encoding?: string, cb?: (error: Error | null) => void): boolean {
+    public _write(chunk, encoding?: BufferEncoding, cb?: (error: Error | null) => void): boolean {
         try {
             const buffer = (Buffer.isBuffer(chunk)) ?
                 chunk :

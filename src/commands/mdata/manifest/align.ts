@@ -1,4 +1,4 @@
-import * as fs from 'fs';
+import * as fs from 'node:fs'
 import { Messages , SfProject } from '@salesforce/core';
 import { ComponentSet } from '@salesforce/source-deploy-retrieve';
 import { AnyJson } from '@salesforce/ts-types';
@@ -114,7 +114,7 @@ export default class ManifestAlign extends SfCommand<AnyJson> {
             include
         });
 
-        const packageXml = componentSet.getPackageXml();
+        const packageXml = await componentSet.getPackageXml();
 
         fs.writeFileSync(this.actualFlags.manifest, packageXml);
 

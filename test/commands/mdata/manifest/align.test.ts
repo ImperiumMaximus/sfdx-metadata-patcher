@@ -1,4 +1,4 @@
-import * as fs from 'fs';
+import * as fs from 'node:fs'
 import { expect } from 'chai';
 import { TestContext } from '@salesforce/core/lib/testSetup';
 import { ComponentSet } from '@salesforce/source-deploy-retrieve';

@@ -87,6 +87,7 @@
     "node": ">=16.0.0"
   },
   "files": [
+    "/cfg",
     "/lib",
     "/messages",
     "/oclif.manifest.json"

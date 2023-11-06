@@ -81,7 +81,7 @@ EXAMPLES
       $ sfdx mdata:apex:testdependencies -x package.xml -d destructiveChanges.xml --usecodecoverage
 ```
 
-_See code: [src/commands/mdata/apex/testdependencies.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.9.1/src/commands/mdata/apex/testdependencies.ts)_
+_See code: [src/commands/mdata/apex/testdependencies.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.9.2/src/commands/mdata/apex/testdependencies.ts)_
 
 ## `sf mdata communities publish`
 
@@ -89,12 +89,14 @@ publishes one or more Experience Cloud communities
 
 ```
 USAGE
-  $ sf mdata communities publish [--json] [-n <value>] [-u <value>] [--loglevel
+  $ sf mdata communities publish [--json] [-n <value>] [-w <value>] [-u <value>] [--loglevel
     trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
 
 FLAGS
   -n, --name=<value>            comma-separated list of community names
   -u, --targetusername=<value>  Username or alias of the target org
+  -w, --wait=<value>            wait (in ms) between publishing one community from the next one (min: 0ms, max:
+                                120000ms)
   --loglevel=<option>           [default: info] logging level for this command invocation
                                 <options: trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL>
 
@@ -118,7 +120,7 @@ EXAMPLES
       $ sfdx mdata:communities:publish -n Customer -u admin.user@uat.myorg.com
 ```
 
-_See code: [src/commands/mdata/communities/publish.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.9.1/src/commands/mdata/communities/publish.ts)_
+_See code: [src/commands/mdata/communities/publish.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.9.2/src/commands/mdata/communities/publish.ts)_
 
 ## `sf mdata manifest align`
 
@@ -156,7 +158,7 @@ EXAMPLES
       $ sfdx mdata:manifest:align -m ApexClass,ApexTrigger,CustomObject -x manifest/package.xml
 ```
 
-_See code: [src/commands/mdata/manifest/align.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.9.1/src/commands/mdata/manifest/align.ts)_
+_See code: [src/commands/mdata/manifest/align.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.9.2/src/commands/mdata/manifest/align.ts)_
 
 ## `sf mdata manifest sort`
 
@@ -180,7 +182,7 @@ EXAMPLES
       $ sfdx mdata:manifest:sort -x manifest/package.xml
 ```
 
-_See code: [src/commands/mdata/manifest/sort.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.9.1/src/commands/mdata/manifest/sort.ts)_
+_See code: [src/commands/mdata/manifest/sort.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.9.2/src/commands/mdata/manifest/sort.ts)_
 
 ## `sf mdata patch`
 
@@ -206,7 +208,7 @@ GLOBAL FLAGS
   --json  Format output as json.
 ```
 
-_See code: [src/commands/mdata/patch.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.9.1/src/commands/mdata/patch.ts)_
+_See code: [src/commands/mdata/patch.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.9.2/src/commands/mdata/patch.ts)_
 
 ## `sf mdata permset retrieve`
 
@@ -252,7 +254,7 @@ EXAMPLES
       $ sfdx mdata:permsets:retrieve -m "MyCoolPermSet1,MyCoolPermSet2"
 ```
 
-_See code: [src/commands/mdata/permset/retrieve.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.9.1/src/commands/mdata/permset/retrieve.ts)_
+_See code: [src/commands/mdata/permset/retrieve.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.9.2/src/commands/mdata/permset/retrieve.ts)_
 
 ## `sf mdata profile retrieve`
 
@@ -298,7 +300,7 @@ EXAMPLES
       $ sfdx mdata:permsets:retrieve -m "Admin,Read Only,Custom: Sales Profile"
 ```
 
-_See code: [src/commands/mdata/profile/retrieve.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.9.1/src/commands/mdata/profile/retrieve.ts)_
+_See code: [src/commands/mdata/profile/retrieve.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.9.2/src/commands/mdata/profile/retrieve.ts)_
 
 ## `sf mdata statecountry configure`
 
@@ -336,7 +338,7 @@ EXAMPLES
       $ sfdx mdata:statecountry:configure -f /path/to/state/country/to/configure.xlsx
 ```
 
-_See code: [src/commands/mdata/statecountry/configure.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.9.1/src/commands/mdata/statecountry/configure.ts)_
+_See code: [src/commands/mdata/statecountry/configure.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.9.2/src/commands/mdata/statecountry/configure.ts)_
 
 ## `sf mdata statecountry template`
 
@@ -364,7 +366,7 @@ EXAMPLES
       $ sfdx mdata:statecountry:template -o /path/to/template/to/generate.xlsx
 ```
 
-_See code: [src/commands/mdata/statecountry/template.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.9.1/src/commands/mdata/statecountry/template.ts)_
+_See code: [src/commands/mdata/statecountry/template.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.9.2/src/commands/mdata/statecountry/template.ts)_
 
 ## `sf mdata translations convert`
 
@@ -392,5 +394,5 @@ GLOBAL FLAGS
   --json  Format output as json.
 ```
 
-_See code: [src/commands/mdata/translations/convert.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.9.1/src/commands/mdata/translations/convert.ts)_
+_See code: [src/commands/mdata/translations/convert.ts](https://github.com/ImperiumMaximus/sfdx-metadata-patcher/blob/v0.9.2/src/commands/mdata/translations/convert.ts)_
 <!-- commandsstop -->

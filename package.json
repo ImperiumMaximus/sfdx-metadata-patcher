@@ -120,7 +120,7 @@
     "docs": "sf-docs",
     "format": "wireit",
     "lint": "wireit",
-    "postinstall": "yarn husky install",
+    "postinstall": "node -e \"if (process.env.NODE_ENV !== 'production'){process.exit(1)} \" || yarn husky install",
     "postpack": "shx rm -f oclif.manifest.json",
     "prepack": "sf-prepack",
     "test": "wireit",

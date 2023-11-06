@@ -37,9 +37,14 @@ export default class Publish extends SfCommand<AnyJson> {
             char: 'n',
             summary: messages.getMessage('communities.publish.flags.name')
         }),
+        wait: Flags.integer({
+            char: 'w',
+            summary: messages.getMessage('communities.publish.flags.wait'),
+            default: 0
+        }),
         targetusername: Flags.string({
-          summary: messages.getMessage('general.flags.targetusername'),
-          char: 'u',
+            summary: messages.getMessage('general.flags.targetusername'),
+            char: 'u',
         }),
         loglevel: Flags.string({
             summary: messages.getMessage('general.flags.loglevel'),
@@ -69,9 +74,10 @@ export default class Publish extends SfCommand<AnyJson> {
     protected static supportsDevhubUsername = false;
 
     protected actualFlags: {
-      name: string;
-      targetusername: string;
-      loglevel: string;
+        name: string;
+        targetusername: string;
+        loglevel: string;
+        wait: number;
     };
 
     protected org: Org;
@@ -98,6 +104,14 @@ export default class Publish extends SfCommand<AnyJson> {
             return messages.getMessage('communities.publish.errors.noCommunitiesFound');
         }
 
+        if (this.actualFlags.wait < 0) {
+            this.actualFlags.wait = 0;
+        }
+
+        if (this.actualFlags.wait > 120000) {
+            this.actualFlags.wait = 120000;
+        }
+
         let bar: cliProgress.SingleBar;
         const publishResults = [];
 
@@ -112,6 +126,9 @@ export default class Publish extends SfCommand<AnyJson> {
             const r = await prevPublishPromise;
             if (i) {
                 publishResults.push(r);
+                await (new Promise((resolve) => {
+                    setTimeout(resolve, this.actualFlags.wait);
+                }));
             }
             if (!this.jsonEnabled()) {
                 bar.increment(1, { communityName: c.name });

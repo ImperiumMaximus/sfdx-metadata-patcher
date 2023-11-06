@@ -1,7 +1,7 @@
 {
   "name": "sfdx-metadata-patcher",
   "description": "A Salesforce DX Plugin to hotpatch metadata before deployments",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "author": "Raffaele Fioratto",
   "bugs": "https://github.com/ImperiumMaximus/sfdx-metadata-patcher/issues",
   "dependencies": {
@@ -120,7 +120,7 @@
     "docs": "sf-docs",
     "format": "wireit",
     "lint": "wireit",
-    "postinstall": "yarn husky install",
+    "postinstall": "node -e \"if (process.env.NODE_ENV !== 'production'){process.exit(1)} \" || yarn husky install",
     "postpack": "shx rm -f oclif.manifest.json",
     "prepack": "sf-prepack",
     "test": "wireit",

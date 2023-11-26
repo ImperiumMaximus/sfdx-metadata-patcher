@@ -9,7 +9,7 @@
     "@salesforce/core": "^5.2.10",
     "@salesforce/kit": "^3.0.8",
     "@salesforce/sf-plugins-core": "^3.1.14",
-    "@salesforce/source-deploy-retrieve": "^9.7.24",
+    "@salesforce/source-deploy-retrieve": "^9.8.4",
     "@salesforce/ts-types": "^2.0.8",
     "@types/cli-progress": "^3.11.0",
     "@types/micromatch": "^4.0.1",

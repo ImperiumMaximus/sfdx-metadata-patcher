@@ -1401,10 +1401,10 @@
   resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.200.tgz#435b6035c7eba9cdf1e039af8212c9e9281e7149"
   integrity sha512-YI/M/4HRImtNf3pJgbF+W6FrXovqj+T+/HpENLTooK9PnkacBsDpeP3IpHab40CClUfhNmdM2WTNP2sa2dni5Q==
 
-"@types/micromatch@^4.0.1":
-  version "4.0.4"
-  resolved "https://registry.yarnpkg.com/@types/micromatch/-/micromatch-4.0.4.tgz#775c32e6ca3933652c8ce7567bd51662db9a20ef"
-  integrity sha512-ZeDgs/tFSdUqkAZmgdnu5enRwFXJ+nIF4TxK5ENw6x0bvfcgMD1H3GnTS+fIkBUcvijQNF7ZOa2tuOtOaEjt3w==
+"@types/micromatch@^4.0.5":
+  version "4.0.6"
+  resolved "https://registry.yarnpkg.com/@types/micromatch/-/micromatch-4.0.6.tgz#340535c2b90098ace8fc5e7eaec8562deedb4f2f"
+  integrity sha512-2eulCHWqjEpk9/vyic4tBhI8a9qQEl6DaK2n/sF7TweX9YESlypgKyhXMDGt4DAOy/jhLPvVrZc8pTDAMsplJA==
   dependencies:
     "@types/braces" "*"
 

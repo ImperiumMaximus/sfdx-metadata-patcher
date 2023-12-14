@@ -24,7 +24,7 @@
     "line-reader": "^0.4.0",
     "micromatch": "^4.0.2",
     "pino": "^8.11.0",
-    "pino-pretty": "^10.0.0",
+    "pino-pretty": "^10.3.0",
     "prompts": "^2.4.1",
     "selenium-webdriver": "^4.14.0",
     "sqlstring": "^2.3.2",

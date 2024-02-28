@@ -28,7 +28,7 @@
     "prompts": "^2.4.1",
     "selenium-webdriver": "^4.14.0",
     "sqlstring": "^2.3.2",
-    "tmp": "^0.2.1",
+    "tmp": "^0.2.2",
     "tslib": "^2"
   },
   "devDependencies": {

@@ -22,7 +22,7 @@
     "json-query": "^2.2.2",
     "jszip": "^3.10.1",
     "line-reader": "^0.4.0",
-    "micromatch": "^4.0.2",
+    "micromatch": "^4.0.6",
     "pino": "^8.11.0",
     "pino-pretty": "^10.0.0",
     "prompts": "^2.4.1",

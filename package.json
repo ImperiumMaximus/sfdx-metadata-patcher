@@ -5,10 +5,10 @@
   "author": "Raffaele Fioratto",
   "bugs": "https://github.com/ImperiumMaximus/sfdx-metadata-patcher/issues",
   "dependencies": {
-    "@oclif/core": "^2.11.8",
+    "@oclif/core": "^4.0.0",
     "@salesforce/core": "^5.2.10",
     "@salesforce/kit": "^3.0.8",
-    "@salesforce/sf-plugins-core": "^3.1.14",
+    "@salesforce/sf-plugins-core": "^10.0.0",
     "@salesforce/source-deploy-retrieve": "^9.7.24",
     "@salesforce/ts-types": "^2.0.8",
     "@types/cli-progress": "^3.11.0",
